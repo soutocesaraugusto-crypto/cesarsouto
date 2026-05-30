@@ -1,0 +1,367 @@
+# Context Manifest: exec-ceo-strategy
+# Execution variables for C-level strategic decision making
+# Pulls EVERYTHING relevant for a CEO to decide:
+# identity, financials, operations, market, team, proof, roadmap
+#
+# Difference from diagnose-business: diagnose measures HEALTH, exec pulls DATA to decide.
+# The CEO doesn't want "completeness 67%" — they want the actual field value.
+
+manifest:
+  id: exec-ceo-strategy
+  version: "1.0.0"
+  description: >
+    Execution context for strategic decisions.
+    Pulls complete business view: identity, financials, team,
+    operations, market, roadmap. Used by vision-strategist, board,
+    and any task requiring 360-degree business visibility.
+  total_variables: 48
+  agent: vision-strategist
+  category: execution
+
+params:
+  required:
+    - slug  # business slug
+  optional:
+    - product  # if decision is product-specific
+
+variables:
+
+  # === BLOCK 1: CORPORATE IDENTITY ===
+
+  - id: trade_name
+    source: "company/company-profile.yaml"
+    field: company_essence.trade_name
+    type: string
+    block: identity
+
+  - id: one_liner
+    source: "company/company-profile.yaml"
+    field: company_essence.one_liner
+    type: string
+    block: identity
+
+  - id: company_stage
+    source: "company/company-profile.yaml"
+    field: stage.current_stage
+    type: string
+    block: identity
+
+  - id: headquarters
+    source: "company/company-profile.yaml"
+    field: company_essence.headquarters
+    type: string
+    block: identity
+
+  - id: year_founded
+    source: "company/company-profile.yaml"
+    field: company_essence.year_founded
+    type: integer
+    block: identity
+
+  - id: mission
+    source: "brand/brandbook.yaml"
+    field: core.mission_statement
+    type: string
+    block: identity
+
+  - id: vision
+    source: "brand/brandbook.yaml"
+    field: core.vision_statement
+    type: string
+    block: identity
+
+  - id: brand_purpose
+    source: "brand/brandbook.yaml"
+    field: core.purpose
+    type: string
+    block: identity
+
+  - id: strategic_roadmap
+    source: "company/company-profile.yaml"
+    field: strategic_roadmap
+    type: object
+    block: identity
+
+  # === BLOCK 2: FINANCIALS & METRICS ===
+
+  - id: annual_revenue
+    source: "company/company-profile.yaml"
+    field: key_metrics.annual_revenue
+    type: string
+    block: financials
+
+  - id: yoy_growth
+    source: "company/company-profile.yaml"
+    field: key_metrics.yoy_growth
+    type: string
+    block: financials
+
+  - id: customer_count
+    source: "company/company-profile.yaml"
+    field: key_metrics.customer_count
+    type: integer
+    block: financials
+
+  - id: north_star_metric
+    source: "operations/kpi-scorecards.yaml"
+    field: north_star.metric_name
+    type: string
+    block: financials
+
+  - id: revenue_metrics
+    source: "operations/kpi-scorecards.yaml"
+    field: revenue_metrics
+    type: object
+    block: financials
+
+  - id: acquisition_metrics
+    source: "operations/kpi-scorecards.yaml"
+    field: acquisition_metrics
+    type: object
+    block: financials
+
+  - id: retention_metrics
+    source: "operations/kpi-scorecards.yaml"
+    field: retention_metrics
+    type: object
+    block: financials
+
+  - id: kpi_strength_score
+    source: "operations/kpi-scorecards.yaml"
+    field: kpi_strength_score
+    type: score_block
+    block: financials
+
+  # === BLOCK 3: TEAM & OPERATIONS ===
+
+  - id: team_headcount
+    source: "operations/team-structure.yaml"
+    field: current_team.total_headcount
+    type: integer
+    block: team
+
+  - id: leadership_team
+    source: "operations/team-structure.yaml"
+    field: current_team.leadership
+    type: array
+    block: team
+
+  - id: founder_wearing_hats
+    source: "operations/team-structure.yaml"
+    field: current_team.founder_wearing_hats
+    type: string
+    block: team
+
+  - id: hiring_priority
+    source: "operations/team-structure.yaml"
+    field: hiring_priority
+    type: object
+    block: team
+
+  - id: team_strength_score
+    source: "operations/team-structure.yaml"
+    field: team_strength_score
+    type: score_block
+    block: team
+
+  - id: key_tools
+    source: "operations/team-structure.yaml"
+    field: current_team.key_tools
+    type: array
+    block: team
+
+  # === BLOCK 4: PRICING & BUSINESS MODEL ===
+
+  - id: pricing_model
+    source: "operations/pricing-strategy.yaml"
+    field: pricing_foundation.pricing_model
+    type: string
+    block: business_model
+
+  - id: pricing_competitive_position
+    source: "operations/pricing-strategy.yaml"
+    field: competitive_position.your_position
+    type: string
+    block: business_model
+
+  - id: pricing_strength_score
+    source: "operations/pricing-strategy.yaml"
+    field: pricing_strength_score
+    type: score_block
+    block: business_model
+
+  - id: commission_philosophy
+    source: "operations/commission-design.yaml"
+    field: compensation_philosophy.approach
+    type: string
+    block: business_model
+
+  # === BLOCK 5: MARKET & POSITIONING ===
+
+  - id: icp_name
+    source: "company/icp.yaml"
+    field: core_icp.icp_name
+    type: string
+    block: market
+
+  - id: icp_fit_percentage
+    source: "company/icp.yaml"
+    field: core_icp.fit_percentage
+    type: percentage
+    block: market
+
+  - id: awareness_level
+    source: "company/diagnosis.yaml"
+    field: market_awareness_level.identified_level
+    type: string
+    block: market
+
+  - id: sophistication_stage
+    source: "company/diagnosis.yaml"
+    field: market_sophistication_stage.identified_stage
+    type: string
+    block: market
+
+  - id: competitive_positioning
+    source: "brand/brandbook.yaml"
+    field: competitive_positioning
+    type: object
+    block: market
+
+  - id: brand_evolution
+    source: "brand/brandbook.yaml"
+    field: brand_evolution
+    type: object
+    block: market
+
+  # === BLOCK 6: OFFER (per product, if specified) ===
+
+  - id: products_count
+    source: "products/"
+    field: _dir_count
+    type: integer
+    block: offer
+
+  - id: offer_name
+    source: "products/{product}/offerbook.yaml"
+    field: positioning.offer_name
+    type: string
+    block: offer
+
+  - id: offer_price
+    source: "products/{product}/offerbook.yaml"
+    field: offer_architecture.grand_slam_offer.price
+    type: number
+    block: offer
+
+  - id: unique_mechanism
+    source: "products/{product}/offerbook.yaml"
+    field: positioning.unique_mechanism
+    type: string
+    block: offer
+
+  - id: financial_results
+    source: "products/{product}/proof.yaml"
+    field: financial_results
+    type: object
+    block: offer
+
+  - id: case_studies_count
+    source: "products/{product}/proof.yaml"
+    field: case_studies
+    type: array_length
+    block: offer
+
+  # === BLOCK 7: FOUNDER ===
+
+  - id: founder_name
+    source: "company/founder-dna.yaml"
+    field: founder_essence.name
+    type: string
+    block: founder
+
+  - id: founder_archetype
+    source: "company/founder-dna.yaml"
+    field: founder_essence.archetype
+    type: string
+    block: founder
+
+  - id: founder_professional_bg
+    source: "company/founder-dna.yaml"
+    field: professional_background
+    type: object
+    block: founder
+
+  - id: credential_summary
+    source: "company/credentials.yaml"
+    field: credential_summary
+    type: string
+    block: founder
+
+  # === BLOCK 8: TECHNOLOGY & AI ===
+
+  - id: architecture_principles
+    source: "tech/strategy.yaml"
+    field: architecture_principles
+    type: array
+    block: tech
+
+  - id: tech_roadmap
+    source: "tech/strategy.yaml"
+    field: tech_roadmap
+    type: object
+    block: tech
+
+  - id: ai_objectives
+    source: "ai/strategy.yaml"
+    field: ai_objectives
+    type: array
+    block: tech
+
+  - id: agent_topology
+    source: "ai/strategy.yaml"
+    field: agent_topology
+    type: object
+    block: tech
+
+  # === BLOCK 9: FUNNEL (general health view) ===
+
+  - id: funnel_health_score
+    source: "products/{product}/marketing/conversion-funnel.yaml"
+    field: funnel_health_score
+    type: score_block
+    block: funnel
+
+research_dimensions:
+  - id: industry_benchmarks
+    description: "Industry benchmarks for comparison"
+    resolved_from: "company/company-profile.yaml#company_essence.industry"
+    research_query_template: "{industry} benchmarks revenue growth {year}"
+
+  - id: business_model_benchmarks
+    description: "Business model benchmarks (cross-industry)"
+    resolved_from: "company/company-profile.yaml#company_essence.business_model"
+    research_query_template: "{business_model} business metrics benchmarks {year}"
+
+  - id: stage_playbooks
+    description: "Playbooks for the company's current stage"
+    resolved_from: "company/company-profile.yaml#stage.current_stage"
+    research_query_template: "{stage} startup scaling playbook"
+
+  - id: market_trends
+    description: "Market trends and outlook"
+    resolved_from: "company/company-profile.yaml#company_essence.industry"
+    research_query_template: "{industry} market trends outlook {year}"
+
+veto_conditions:
+  - condition: "trade_name == MISSING"
+    action: "VETO — No basic corporate identity"
+
+  - condition: "annual_revenue == MISSING AND customer_count == MISSING"
+    action: "VETO — Without basic metrics, strategic decisions are blind"
+
+  - condition: "company_stage == MISSING"
+    action: "VETO — Without defined stage, no reference framework"
+
+  - condition: "coverage < 30%"
+    action: "VETO — Insufficient strategic context. Run setup-business-profile first."

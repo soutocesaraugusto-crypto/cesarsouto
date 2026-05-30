@@ -1,0 +1,403 @@
+name: workspace-governance
+version: 1.0.0
+owner: workspace-chief
+squad: aiox-workspace
+description: |
+  Workflow de governança que o COO executa para manter a saúde do workspace.
+  Inclui auditorias periódicas, validações automáticas e auto-fix quando possível.
+id: workspace-governance
+type: legacy
+triggers:
+  scheduled:
+    - name: weekly_health_check
+      schedule: 0 9 * * 1
+      action: full_audit
+    - name: daily_quick_check
+      schedule: 0 8 * * 2-5
+      action: quick_validation
+  manual:
+    - command: "*health-check"
+      action: full_audit
+    - command: "*quick-check"
+      action: quick_validation
+    - command: "*fix-workspace"
+      action: auto_fix
+  event:
+    - "on": file.created
+      path: workspace/**
+      action: incremental_validation
+    - "on": file.modified
+      path: workspace/*.yaml
+      action: schema_validation
+actions:
+  quick_validation:
+    description: Validação rápida diária
+    steps:
+      - id: validate_c_level_essentials
+        description: Validar contrato workspace-first do squad AIOX Workspace
+        command: bash squads/aiox-workspace/scripts/validate-workspace-essentials.sh
+        on_failure: notify_coo
+      - id: run_structure_validation
+        description: Executar validate-structure.sh
+        command: bash squads/aiox-workspace/scripts/validate-structure.sh
+        on_failure: notify_coo
+      - id: validate_workflow_integrity_quick
+        description: Executar teste de integridade de workflows
+        command: npm test -- squads/aiox-workspace/scripts/workflow-integrity.test.js
+        on_failure: notify_coo
+      - id: check_yaml_syntax
+        description: Validar sintaxe YAML
+        command: |
+          find workspace -name "*.yaml" -exec yq e '.' {} \; > /dev/null 2>&1
+        on_failure: notify_coo
+      - id: report_quick
+        description: Relatório rápido
+        condition: all_passed
+        output: console
+        format: |
+          ✅ Quick Check PASSED ({timestamp})
+          - Structure: OK
+          - Workflow Integrity: OK
+          - YAML Syntax: OK
+  full_audit:
+    description: Auditoria completa semanal
+    steps:
+      - id: validate_c_level_essentials
+        description: Validar contrato workspace-first do squad AIOX Workspace
+        checklist: workspace-health-checklist.md#1
+        command: bash squads/aiox-workspace/scripts/validate-workspace-essentials.sh
+        gate: true
+      - id: validate_structure
+        description: Validar estrutura básica
+        checklist: workspace-health-checklist.md#1
+        command: bash squads/aiox-workspace/scripts/validate-structure.sh
+        gate: true
+      - id: validate_workflow_integrity
+        description: Executar testes de integridade dos workflows
+        checklist: workspace-health-checklist.md#11
+        command: npm test -- squads/aiox-workspace/scripts/workflow-integrity.test.js
+        gate: true
+      - id: validate_domains
+        description: Validar domínios vs workspace.yaml
+        checklist: workspace-health-checklist.md#2
+        logic: |
+          domains = load_yaml("workspace/config.yaml").domains
+          for domain in domains:
+            assert count("workspace/config/mappings/{domain}.*") >= 1
+      - id: validate_providers
+        description: Validar providers vs workspace.yaml
+        checklist: workspace-health-checklist.md#3
+        logic: |
+          providers = load_yaml("workspace/config.yaml").providers
+          for provider in providers:
+            assert exists("workspace/providers/{provider}/interface.yaml")
+            interface = load_yaml("workspace/providers/{provider}/interface.yaml")
+            assert interface.operations is not empty
+      - id: validate_mappings
+        description: Validar mappings
+        checklist: workspace-health-checklist.md#4
+        logic: |
+          mappings = glob("workspace/config/mappings/*.yaml")
+          for mapping in mappings:
+            m = load_yaml(mapping)
+            assert m.domain in domains
+            assert m.provider in providers
+      - id: validate_syntax
+        description: Validar sintaxe de todos os arquivos
+        checklist: workspace-health-checklist.md#6
+        command: |
+          find workspace -name "*.yaml" -exec yq e '.' {} \; > /dev/null 2>&1
+          find workspace -name "*.json" -exec jq '.' {} \; > /dev/null 2>&1
+      - id: validate_design_system
+        description: Validar Design System
+        condition: exists('workspace/design/') or exists('workspace/design/')
+        checklist: workspace-health-checklist.md#5
+        logic: |
+          if exists("workspace/design/foundations/"):
+            assert exists("workspace/design/foundations/grid.yaml")
+            assert exists("workspace/design/foundations/spacing.yaml")
+          if exists("workspace/design/tokens/"):
+            assert exists("workspace/design/tokens/primitive.tokens.json")
+          if exists("workspace/design/"):
+            themes = glob("workspace/design/theme-*/")
+            for theme in themes:
+              assert exists("{theme}/brand-tokens.yaml")
+              assert exists("{theme}/modes/light.yaml")
+      - id: validate_sagas
+        description: Validar compensatory actions
+        checklist: workspace-health-checklist.md#9
+        logic: |
+          for wf_file in workflows:
+            wf = load_yaml(wf_file)
+            for workflow in wf.workflows:
+              if has_mutations(workflow):
+                assert workflow.on_failure exists
+                for step in workflow.steps:
+                  if is_mutation(step):
+                    assert step.compensation exists
+      - id: check_forbidden_patterns
+        description: Verificar padrões proibidos
+        checklist: workspace-health-checklist.md#7
+        command: |
+          forbidden=$(find workspace -type f \
+            \( -name "*_backup" -o -name "*_old" -o -name "*_v2" \
+            -o -name "*_v3" -o -name "test_*" -o -name "temp_*" \
+            -o -name "TODO_*" -o -name "*~" \) 2>/dev/null | wc -l)
+          [ "$forbidden" -eq 0 ]
+      - id: generate_report
+        description: Gerar relatório de auditoria
+        output_path: docs/qa/workspace-health/{date}-health-report.md
+        template: |
+          # Workspace Health Report
+
+          **Data:** {date}
+          **Auditor:** COO (workspace-chief)
+          **Status:** {gate_decision}
+
+          ## Resumo Executivo
+
+          | Categoria | Status | Issues |
+          |-----------|--------|--------|
+          | Estrutura | {validate_structure.status} | {validate_structure.issues} |
+          | Workflow Integrity | {validate_workflow_integrity.status} | {validate_workflow_integrity.issues} |
+          | Domínios | {validate_domains.status} | {validate_domains.issues} |
+          | Providers | {validate_providers.status} | {validate_providers.issues} |
+          | Mappings | {validate_mappings.status} | {validate_mappings.issues} |
+          | Sintaxe | {validate_syntax.status} | {validate_syntax.issues} |
+          | Design System | {validate_design_system.status} | {validate_design_system.issues} |
+          | Sagas | {validate_sagas.status} | {validate_sagas.issues} |
+          | Padrões | {check_forbidden_patterns.status} | {check_forbidden_patterns.issues} |
+
+          ## Issues Encontrados
+
+          {issues_by_severity}
+
+          ## Recomendações
+
+          {recommendations}
+
+          ---
+          *Gerado automaticamente pelo COO - Squad AIOX Workspace*
+  auto_fix:
+    description: Corrigir issues conhecidos automaticamente
+    steps:
+      - id: fix_missing_structure
+        description: Criar STRUCTURE.md se não existir
+        condition: not exists('workspace/STRUCTURE.md')
+        action: create_structure_md
+      - id: fix_forbidden_patterns
+        description: Listar arquivos proibidos para remoção manual
+        action: list_forbidden_files
+        output: console
+      - id: fix_missing_domains
+        description: Criar scaffolds para domínios faltantes
+        action: scaffold_missing_domains
+      - id: report_fixes
+        description: Relatório de correções
+        output: console
+  incremental_validation:
+    description: Validação incremental após mudanças
+    steps:
+      - id: validate_changed_file
+        description: Validar arquivo modificado
+        logic: |
+          file = event.path
+          if file.endswith(".yaml"):
+            validate_yaml_syntax(file)
+            validate_domain_structure(file)
+          if file.startswith("workspace/providers/"):
+            validate_provider_interface(file)
+      - id: notify_if_invalid
+        description: Notificar se inválido
+        condition: validation_failed
+        action: notify_coo
+notifications:
+  notify_coo:
+    channel: system
+    template: |
+      ⚠️ Workspace Health Alert
+
+      **Issue:** {issue_description}
+      **File:** {file_path}
+      **Severity:** {severity}
+
+      Run `*health-check` for full audit.
+outputs:
+  health_report:
+    path: docs/qa/workspace-health/{date}-health-report.md
+    retention: 90 days
+  quick_check_log:
+    path: .logs/workspace-health/{date}-quick.log
+    retention: 7 days
+integration:
+  ci_cd:
+    github_actions:
+      workflow: .github/workflows/workspace-health.yml
+      trigger: schedule + workflow_dispatch
+    pre_commit:
+      hook: .claude/hooks/structure-validation.py
+      blocking: true
+workflow:
+  id: workspace-governance
+  name: workspace-governance
+  version: 1.0.0
+  description: |
+    Workflow de governança que o COO executa para manter a saúde do workspace.
+    Inclui auditorias periódicas, validações automáticas e auto-fix quando possível.
+  type: legacy
+  sequence:
+    - step: validate-workspace-essentials
+      id: validate-workspace-essentials
+      phase: 1
+      phase_name: Validar contrato workspace-first do squad AIOX Workspace
+      agent: workspace-chief
+      action: quick-validation
+      next: run-structure-validation
+    - step: run-structure-validation
+      id: run-structure-validation
+      phase: 2
+      phase_name: Executar validate-structure.sh
+      agent: workspace-chief
+      action: quick-validation
+      next: validate-workflow-integrity-quick
+    - step: validate-workflow-integrity-quick
+      id: validate-workflow-integrity-quick
+      phase: 3
+      phase_name: Executar teste de integridade de workflows
+      agent: workspace-chief
+      action: quick-validation
+      next: check-yaml-syntax
+    - step: check-yaml-syntax
+      id: check-yaml-syntax
+      phase: 4
+      phase_name: Validar sintaxe YAML
+      agent: workspace-chief
+      action: quick-validation
+      next: report-quick
+    - step: report-quick
+      id: report-quick
+      phase: 5
+      phase_name: Relatório rápido
+      agent: workspace-chief
+      action: quick-validation
+      outputs:
+        - console
+      next: validate-structure
+    - step: validate-structure
+      id: validate-structure
+      phase: 6
+      phase_name: Validar estrutura básica
+      agent: workspace-chief
+      action: full-audit
+      next: validate-workflow-integrity
+    - step: validate-workflow-integrity
+      id: validate-workflow-integrity
+      phase: 7
+      phase_name: Executar testes de integridade dos workflows
+      agent: workspace-chief
+      action: full-audit
+      next: validate-domains
+    - step: validate-domains
+      id: validate-domains
+      phase: 8
+      phase_name: Validar domínios vs workspace.yaml
+      agent: workspace-chief
+      action: full-audit
+      next: validate-providers
+    - step: validate-providers
+      id: validate-providers
+      phase: 9
+      phase_name: Validar providers vs workspace.yaml
+      agent: workspace-chief
+      action: full-audit
+      next: validate-mappings
+    - step: validate-mappings
+      id: validate-mappings
+      phase: 10
+      phase_name: Validar mappings
+      agent: workspace-chief
+      action: full-audit
+      next: validate-syntax
+    - step: validate-syntax
+      id: validate-syntax
+      phase: 11
+      phase_name: Validar sintaxe de todos os arquivos
+      agent: workspace-chief
+      action: full-audit
+      next: validate-design-system
+    - step: validate-design-system
+      id: validate-design-system
+      phase: 12
+      phase_name: Validar Design System
+      agent: workspace-chief
+      action: full-audit
+      next: validate-sagas
+    - step: validate-sagas
+      id: validate-sagas
+      phase: 13
+      phase_name: Validar compensatory actions
+      agent: workspace-chief
+      action: full-audit
+      next: check-forbidden-patterns
+    - step: check-forbidden-patterns
+      id: check-forbidden-patterns
+      phase: 14
+      phase_name: Verificar padrões proibidos
+      agent: workspace-chief
+      action: full-audit
+      next: generate-report
+    - step: generate-report
+      id: generate-report
+      phase: 15
+      phase_name: Gerar relatório de auditoria
+      agent: workspace-chief
+      action: full-audit
+      next: fix-missing-structure
+    - step: fix-missing-structure
+      id: fix-missing-structure
+      phase: 16
+      phase_name: Criar STRUCTURE.md se não existir
+      agent: workspace-chief
+      action: create-structure-md
+      next: fix-forbidden-patterns
+    - step: fix-forbidden-patterns
+      id: fix-forbidden-patterns
+      phase: 17
+      phase_name: Listar arquivos proibidos para remoção manual
+      agent: workspace-chief
+      action: list-forbidden-files
+      outputs:
+        - console
+      next: fix-missing-domains
+    - step: fix-missing-domains
+      id: fix-missing-domains
+      phase: 18
+      phase_name: Criar scaffolds para domínios faltantes
+      agent: workspace-chief
+      action: scaffold-missing-domains
+      next: report-fixes
+    - step: report-fixes
+      id: report-fixes
+      phase: 19
+      phase_name: Relatório de correções
+      agent: workspace-chief
+      action: auto-fix
+      outputs:
+        - console
+      next: validate-changed-file
+    - step: validate-changed-file
+      id: validate-changed-file
+      phase: 20
+      phase_name: Validar arquivo modificado
+      agent: workspace-chief
+      action: incremental-validation
+      next: notify-if-invalid
+    - step: notify-if-invalid
+      id: notify-if-invalid
+      phase: 21
+      phase_name: Notificar se inválido
+      agent: workspace-chief
+      action: notify-coo
+    - workflow_end:
+        id: complete
+        action: workflow_complete

@@ -1,0 +1,345 @@
+# Context Manifest: exec-content-production
+# Execution variables for content production (video, social, copy, captions)
+# Inspired by Pedro Valerio's tokenized briefing (46 variables via reverse engineering)
+#
+# DIFFERENCE FROM DIAGNOSTICS:
+#   diagnose-* asks "how healthy is this?"
+#   exec-* asks "what do I need to know to DO this?"
+#
+# Usage: render-context reads this manifest + workspace/{slug}/ → research-context.md
+# The content production task receives filtered context, not the entire workspace.
+
+manifest:
+  id: exec-content-production
+  version: "1.0.0"
+  description: >
+    Execution context for content production.
+    Pulls brand identity, voice, core ICP, product positioning,
+    compliance rules and creative format guidelines.
+    Does NOT pull financials, team structure, or irrelevant operational data.
+  total_variables: 42
+  agent: content-chief
+  category: execution
+
+params:
+  required:
+    - slug     # business slug
+    - product  # product slug
+  optional:
+    - campaign  # specific campaign-brief (if any)
+
+# ============================================================================
+# VARIABLES — Grouped by functional block (not by source file)
+# ============================================================================
+
+variables:
+
+  # === BLOCK 1: BRAND IDENTITY (who we are) ===
+
+  - id: brand_name
+    source: "brand/brandbook.yaml"
+    field: identity.brand_name
+    type: string
+    block: identity
+
+  - id: brand_essence
+    source: "brand/brandbook.yaml"
+    field: core.brand_essence
+    type: string
+    block: identity
+
+  - id: brand_purpose
+    source: "brand/brandbook.yaml"
+    field: core.purpose
+    type: string
+    block: identity
+
+  - id: origin_myth
+    source: "brand/brandbook.yaml"
+    field: core.origin_myth
+    type: string
+    block: identity
+
+  - id: positioning_statement
+    source: "brand/brandbook.yaml"
+    field: positioning.positioning_statement
+    type: string
+    block: identity
+
+  - id: message_hierarchy
+    source: "brand/brandbook.yaml"
+    field: positioning.message_hierarchy
+    type: object
+    block: identity
+
+  - id: onlyness
+    source: "brand/brandbook.yaml"
+    field: positioning.onlyness
+    type: string
+    block: identity
+
+  # === BLOCK 2: VOICE & TONE (how we speak) ===
+
+  - id: voice_always_use
+    source: "brand/brandbook.yaml"
+    field: voice.always_use
+    type: array
+    block: voice
+
+  - id: voice_avoid_use
+    source: "brand/brandbook.yaml"
+    field: voice.avoid_use
+    type: array
+    block: voice
+
+  - id: voice_tone
+    source: "brand/brandbook.yaml"
+    field: voice.tone
+    type: object
+    block: voice
+
+  - id: signature_phrases
+    source: "brand/brandbook.yaml"
+    field: voice.signature_phrases
+    type: array
+    block: voice
+
+  - id: brand_archetype_mix
+    source: "brand/brandbook.yaml"
+    field: archetype_mix
+    type: object
+    block: voice
+
+  - id: brand_values
+    source: "brand/brandbook.yaml"
+    field: brand_values
+    type: array
+    block: voice
+
+  - id: real_founder_quotes
+    source: "brand/brandbook.yaml"
+    field: real_founder_quotes
+    type: array
+    block: voice
+
+  # === BLOCK 3: AUDIENCE / ICP (who we're talking to) ===
+
+  - id: icp_name
+    source: "company/icp.yaml"
+    field: core_icp.icp_name
+    type: string
+    block: audience
+
+  - id: icp_one_sentence
+    source: "company/icp.yaml"
+    field: core_icp.one_sentence_definition
+    type: string
+    block: audience
+
+  - id: icp_demographics
+    source: "company/icp.yaml"
+    field: demographics
+    type: object
+    block: audience
+
+  - id: icp_central_pain
+    source: "company/icp.yaml"
+    field: psychographics.central_pain
+    type: object
+    block: audience
+
+  - id: icp_beliefs
+    source: "company/icp.yaml"
+    field: psychographics.beliefs
+    type: array
+    block: audience
+
+  - id: icp_mental_state
+    source: "company/icp.yaml"
+    field: psychographics.mental_state
+    type: object
+    block: audience
+
+  - id: icp_consumption
+    source: "company/icp.yaml"
+    field: psychographics.consumption
+    type: object
+    block: audience
+
+  - id: icp_motivations
+    source: "company/icp.yaml"
+    field: motivations_action_triggers
+    type: array
+    block: audience
+
+  - id: awareness_level
+    source: "company/diagnosis.yaml"
+    field: market_awareness_level.identified_level
+    type: string
+    block: audience
+
+  # === BLOCK 4: PRODUCT (what we're promoting) ===
+
+  - id: offer_name
+    source: "products/{product}/offerbook.yaml"
+    field: positioning.offer_name
+    type: string
+    block: product
+
+  - id: offer_promise
+    source: "products/{product}/offerbook.yaml"
+    field: positioning.promessa
+    type: string
+    block: product
+
+  - id: unique_mechanism
+    source: "products/{product}/offerbook.yaml"
+    field: positioning.unique_mechanism
+    type: string
+    block: product
+
+  - id: offer_usp
+    source: "products/{product}/offerbook.yaml"
+    field: positioning.unique_selling_proposition
+    type: string
+    block: product
+
+  - id: offer_narrative
+    source: "products/{product}/offerbook.yaml"
+    field: narrativa_oferta
+    type: object
+    block: product
+
+  # === BLOCK 5: SOCIAL PROOF (what we can back up) ===
+
+  - id: case_studies
+    source: "products/{product}/proof.yaml"
+    field: case_studies
+    type: array
+    block: proof
+
+  - id: statistics
+    source: "products/{product}/proof.yaml"
+    field: statistics
+    type: array
+    block: proof
+
+  - id: before_after
+    source: "products/{product}/proof.yaml"
+    field: before_after_comparisons
+    type: array
+    block: proof
+
+  - id: top_testimonials
+    source: "products/{product}/testimonials.yaml"
+    field: testimonials_database
+    type: array
+    block: proof
+
+  # === BLOCK 6: NARRATIVE (how to tell the story) ===
+
+  - id: brandscript
+    source: "products/{product}/narrative/brandscript.yaml"
+    field: _exists
+    type: boolean
+    block: narrative
+
+  - id: product_story
+    source: "products/{product}/narrative/product-story.yaml"
+    field: _exists
+    type: boolean
+    block: narrative
+
+  - id: founder_origin_story
+    source: "company/founder-dna.yaml"
+    field: origin_story
+    type: object
+    block: narrative
+
+  - id: founder_teaching_style
+    source: "company/founder-dna.yaml"
+    field: teaching_philosophy
+    type: object
+    block: narrative
+
+  # === BLOCK 7: ACTIVE CAMPAIGN (specific context if available) ===
+
+  - id: campaign_objective
+    source: "products/{product}/marketing/campaign-brief.yaml"
+    field: objective.primary_outcome
+    type: string
+    block: campaign
+
+  - id: campaign_awareness_stage
+    source: "products/{product}/marketing/campaign-brief.yaml"
+    field: audience.awareness_stage
+    type: string
+    block: campaign
+
+  - id: campaign_channels
+    source: "products/{product}/marketing/campaign-brief.yaml"
+    field: channels.in_scope
+    type: array
+    block: campaign
+
+  - id: hooks_existing
+    source: "products/{product}/marketing/hooks.yaml"
+    field: hooks
+    type: array
+    block: campaign
+
+  # === BLOCK 8: MOVEMENT (cultural context) ===
+
+  - id: central_cause
+    source: "movement/system/cosmology.yaml"
+    field: central_cause
+    type: string
+    block: movement
+
+  - id: doctrine_statements
+    source: "movement/system/mrd-bank/doctrines.yaml"
+    field: doctrine_statements
+    type: array
+    block: movement
+
+# ============================================================================
+# RESEARCH DIMENSIONS (external research complement)
+# ============================================================================
+# Variables NOT from workspace but from external research.
+# render-context marks as "EXTERNAL_RESEARCH_NEEDED" and the task decides
+# whether to search via EXA/web search or request from operator.
+
+research_dimensions:
+  - id: industry_trends
+    description: "Content trends in the business's industry"
+    resolved_from: "company/company-profile.yaml#company_essence.industry"
+    research_query_template: "{industry} content trends {year}"
+
+  - id: platform_best_practices
+    description: "Best practices for the distribution platform"
+    resolved_from: "campaign_channels (variable above)"
+    research_query_template: "best practices {channel} content {year}"
+
+  - id: competitor_content
+    description: "Competitor content analysis"
+    resolved_from: "products/{product}/competitor-analysis.yaml#competitive_landscape"
+    research_query_template: "content strategy {competitor_name}"
+
+# ============================================================================
+# VETO CONDITIONS
+# ============================================================================
+veto_conditions:
+  - condition: "brand_name == MISSING"
+    action: "VETO — Cannot produce content without defined brand identity"
+
+  - condition: "voice_always_use == MISSING AND voice_avoid_use == MISSING"
+    action: "VETO — Without voice guidelines, content will be inconsistent"
+
+  - condition: "icp_name == MISSING AND icp_central_pain == MISSING"
+    action: "VETO — Without defined ICP, content has no target"
+
+  - condition: "offer_name == MISSING"
+    action: "VETO — Without defined offer, nothing to promote"
+
+  - condition: "coverage < 40%"
+    action: "VETO — Insufficient context (< 40% variables present). Fill workspace first."

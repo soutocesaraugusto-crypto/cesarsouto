@@ -1,0 +1,79 @@
+# Platform Creative Specifications — Quick Reference
+# Source: squads/ads-audit/data/platform-specs.md (full details)
+# Updated: 2026-03
+
+meta:
+  image:
+    feed: { ratio: "1:1", size: "1080x1080", max_size: "30MB", format: "JPG/PNG" }
+    story: { ratio: "9:16", size: "1080x1920", max_size: "30MB", format: "JPG/PNG" }
+    carousel: { ratio: "1:1", size: "1080x1080", max_cards: 10 }
+  video:
+    feed: { ratio: "1:1 or 4:5", max_length: "240s", min_length: "1s", max_size: "4GB" }
+    story: { ratio: "9:16", max_length: "120s", max_size: "4GB" }
+    reels: { ratio: "9:16", max_length: "90s", max_size: "4GB" }
+  text:
+    primary: { max_chars: 125, recommended: true }
+    headline: { max_chars: 40 }
+    description: { max_chars: 30 }
+
+google:
+  rsa:
+    headlines: { min: 3, max: 15, chars: 30 }
+    descriptions: { min: 2, max: 4, chars: 90 }
+    display_paths: { max: 2, chars: 15 }
+  pmax:
+    images: { landscape: "1200x628", square: "1200x1200", portrait: "960x1200", max: 20 }
+    logos: { landscape: "1200x300", square: "1200x1200", max: 5 }
+    videos: { landscape: "16:9", square: "1:1", vertical: "9:16", max: 5 }
+    headlines: { max: 5, chars: 30 }
+    long_headlines: { max: 5, chars: 90 }
+    descriptions: { max: 5, chars: 90 }
+  display:
+    sizes: ["300x250", "336x280", "728x90", "160x600", "320x50", "300x600"]
+
+linkedin:
+  image:
+    single: { ratio: "1.91:1 or 1:1", size: "1200x627 or 1080x1080", max_size: "5MB" }
+    carousel: { ratio: "1:1", size: "1080x1080", max_cards: 10 }
+  video:
+    feed: { ratio: "16:9 or 1:1", max_length: "30min", max_size: "200MB" }
+  text:
+    intro: { max_chars: 150, recommended: true }
+    headline: { max_chars: 70 }
+
+tiktok:
+  video:
+    in_feed: { ratio: "9:16", min_length: "5s", max_length: "60s", max_size: "500MB" }
+    spark_ads: { ratio: "9:16", note: "Uses organic post" }
+  image:
+    single: { ratio: "9:16", size: "1080x1920", max_size: "20MB" }
+  text:
+    ad_text: { max_chars: 100 }
+  rules:
+    - "Sound ON required (sound-on platform)"
+    - "Vertical only (9:16)"
+    - "First 3 seconds critical"
+
+microsoft:
+  rsa:
+    headlines: { min: 3, max: 15, chars: 30 }
+    descriptions: { min: 2, max: 4, chars: 90 }
+  audience:
+    image: { size: "1200x628", max_size: "5MB" }
+  shopping:
+    product_image: { min_size: "220x220", recommended: "800x800" }
+
+youtube:
+  video:
+    skippable: { min_length: "12s", recommended: "15-30s" }
+    non_skippable: { length: "15s or 20s" }
+    bumper: { max_length: "6s" }
+    shorts: { ratio: "9:16", max_length: "60s" }
+  companion:
+    banner: { size: "300x60" }
+
+apple:
+  search_ads:
+    creative_sets: { note: "Uses App Store product page assets" }
+    custom_product_pages: { max: 35 }
+    screenshots: { note: "From App Store Connect" }

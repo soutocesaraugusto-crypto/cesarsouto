@@ -1,0 +1,210 @@
+# Context Manifest: diagnose-operations
+# Variáveis para diagnóstico vertical de maturidade operacional
+# Baseado nos templates: team-structure, pricing-strategy, kpi-scorecards, commission-design,
+# hiring (3 templates), sales-process (5 templates)
+
+manifest:
+  id: diagnose-operations
+  version: "1.0.0"
+  description: Contexto para diagnóstico de maturidade operacional
+  total_variables: 37
+  agent: workspace-chief
+
+params:
+  required:
+    - slug  # business slug
+  optional: []
+
+variables:
+
+  # === TEAM-STRUCTURE.YAML ===
+  - id: team_structure_exists
+    source: "operations/team-structure.yaml"
+    field: _exists
+    type: boolean
+
+  - id: team_headcount
+    source: "operations/team-structure.yaml"
+    field: current_team.total_headcount
+    type: integer
+
+  - id: team_roles_filled_count
+    source: "operations/team-structure.yaml"
+    field: current_team.roles_filled
+    type: array_length
+
+  - id: team_founder_wearing_hats
+    source: "operations/team-structure.yaml"
+    field: current_team.founder_wearing_hats
+    type: string
+
+  - id: team_ideal_departments_count
+    source: "operations/team-structure.yaml"
+    field: ideal_structure.departments
+    type: array_length
+
+  - id: team_hiring_priority
+    source: "operations/team-structure.yaml"
+    field: hiring_priority
+    type: completeness
+
+  - id: team_strength_score
+    source: "operations/team-structure.yaml"
+    field: team_strength_score
+    type: score_block  # 4 dimensões 1-10
+
+  # === PRICING-STRATEGY.YAML ===
+  - id: pricing_exists
+    source: "operations/pricing-strategy.yaml"
+    field: _exists
+    type: boolean
+
+  - id: pricing_model
+    source: "operations/pricing-strategy.yaml"
+    field: pricing_foundation.pricing_model
+    type: string
+
+  - id: pricing_current_price
+    source: "operations/pricing-strategy.yaml"
+    field: pricing_foundation.current_price
+    type: number
+
+  - id: pricing_value_ratio
+    source: "operations/pricing-strategy.yaml"
+    field: pricing_foundation.price_to_value_ratio
+    type: string
+
+  - id: pricing_competitive_position
+    source: "operations/pricing-strategy.yaml"
+    field: competitive_position.your_position
+    type: string
+
+  - id: pricing_experiments_count
+    source: "operations/pricing-strategy.yaml"
+    field: pricing_experiments
+    type: array_length
+
+  - id: pricing_strength_score
+    source: "operations/pricing-strategy.yaml"
+    field: pricing_strength_score
+    type: score_block
+
+  # === KPI-SCORECARDS.YAML ===
+  - id: kpi_exists
+    source: "operations/kpi-scorecards.yaml"
+    field: _exists
+    type: boolean
+
+  - id: kpi_north_star
+    source: "operations/kpi-scorecards.yaml"
+    field: north_star.metric_name
+    type: string
+
+  - id: kpi_revenue_metrics_filled
+    source: "operations/kpi-scorecards.yaml"
+    field: revenue_metrics
+    type: completeness
+
+  - id: kpi_acquisition_metrics_filled
+    source: "operations/kpi-scorecards.yaml"
+    field: acquisition_metrics
+    type: completeness
+
+  - id: kpi_retention_metrics_filled
+    source: "operations/kpi-scorecards.yaml"
+    field: retention_metrics
+    type: completeness
+
+  - id: kpi_review_cadence
+    source: "operations/kpi-scorecards.yaml"
+    field: review_cadence
+    type: completeness
+
+  - id: kpi_strength_score
+    source: "operations/kpi-scorecards.yaml"
+    field: kpi_strength_score
+    type: score_block
+
+  # === COMMISSION-DESIGN.YAML ===
+  - id: commission_exists
+    source: "operations/commission-design.yaml"
+    field: _exists
+    type: boolean
+
+  - id: commission_philosophy
+    source: "operations/commission-design.yaml"
+    field: compensation_philosophy.approach
+    type: string
+
+  - id: commission_roles_count
+    source: "operations/commission-design.yaml"
+    field: commission_structure
+    type: array_length
+
+  - id: commission_strength_score
+    source: "operations/commission-design.yaml"
+    field: commission_strength_score
+    type: score_block
+
+  # === SALES-PROCESS ===
+  - id: call_script_exists
+    source: "operations/sales-process/call-script.yaml"
+    field: _exists
+    type: boolean
+
+  - id: discovery_framework_exists
+    source: "operations/sales-process/discovery-framework.yaml"
+    field: _exists
+    type: boolean
+
+  - id: follow_up_system_exists
+    source: "operations/sales-process/follow-up-system.yaml"
+    field: _exists
+    type: boolean
+
+  - id: prospecting_playbook_exists
+    source: "operations/sales-process/prospecting-playbook.yaml"
+    field: _exists
+    type: boolean
+
+  - id: show_rate_exists
+    source: "operations/sales-process/show-rate-optimization.yaml"
+    field: _exists
+    type: boolean
+
+  # === HIRING ===
+  - id: hiring_playbook_exists
+    source: "operations/hiring/hiring-playbook.yaml"
+    field: _exists
+    type: boolean
+
+  - id: interview_framework_exists
+    source: "operations/hiring/interview-framework.yaml"
+    field: _exists
+    type: boolean
+
+  - id: ramp_plan_exists
+    source: "operations/hiring/ramp-plan.yaml"
+    field: _exists
+    type: boolean
+
+  # === COMPANY PROFILE (revenue context) ===
+  - id: annual_revenue
+    source: "company/company-profile.yaml"
+    field: key_metrics.annual_revenue
+    type: string
+
+  - id: yoy_growth
+    source: "company/company-profile.yaml"
+    field: key_metrics.yoy_growth
+    type: string
+
+  - id: customer_count
+    source: "company/company-profile.yaml"
+    field: key_metrics.customer_count
+    type: integer
+
+  - id: current_stage
+    source: "company/company-profile.yaml"
+    field: stage.current_stage
+    type: string

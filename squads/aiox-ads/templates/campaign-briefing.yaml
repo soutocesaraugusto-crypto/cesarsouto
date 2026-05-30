@@ -1,0 +1,152 @@
+# Campaign Briefing Template — AIOX Ads Squad
+# Campaign briefing with "agent decides" model for automatable fields.
+# Salvo em: workspace/businesses/{slug}/ads/{platform}/briefing/{campaign_slug}.yaml
+#
+# Story: SAIOX-ADS-V5-2.4 (AC4)
+# Created: 2026-03-17
+# Sources:
+#   - Roundtable P0 #4: Concierge model (@ad-midas = single interface)
+#   - Roundtable Consensus #9: 3 autonomy tiers (Auto/HITL/Human)
+#   - autonomy-tiers.yaml: tier-tagged actions
+#   - safety-rules.yaml: WAL pattern, paused_by_default
+#   - progressive-disclosure.yaml: skills per level
+
+version: "1.0.0"
+template: campaign-briefing
+filled_by: "@ad-midas"  # Phase 1 human, Phase 2 agents decide
+used_by: ["@ad-midas", "@campaign-manager", "@performance-analyst", "@creative-analyst", "@fiscal"]
+
+# ═══════════════════════════════════════════════════════════════
+# PHASE 1 — HUMAN FILLS (mandatory user input)
+# ═══════════════════════════════════════════════════════════════
+# @ad-midas collects this data via conversation (elicit: true).
+# These are references to already-filled templates.
+
+phase_1:
+  business_slug: ""           # required — ref: business-profile.yaml
+  product_slug: ""            # required — ref: product-card.yaml
+  icp_slug: ""                # required — ref: icp-profile.yaml
+  campaign_name: ""           # required — descriptive name (e.g.: "Launch Curso Meta Ads - Cold")
+  campaign_slug: ""           # required — unique key (e.g.: "launch-meta-ads-cold-2026-03")
+
+# ═══════════════════════════════════════════════════════════════
+# PHASE 2 — AGENT DECIDES (agent fills with justification)
+# ═══════════════════════════════════════════════════════════════
+# For each field, `auto_decide` indicates which agent decides and with which skill/framework.
+# Human can OVERRIDE any decision (HITL override).
+# If human filled in Phase 1, agent respects it.
+
+phase_2:
+  meta_objective:
+    value: ""                 # e.g.: "CONVERSIONS", "LEADS", "TRAFFIC", "AWARENESS"
+    auto_decide:
+      agent: "@ad-midas"
+      skill: "funnel-selection"
+      framework: "Funnel selection based on product.price + icp.market_average_ticket + ad_history"
+    human_override: null      # human can fill to force
+
+  funnel_type:
+    value: ""                 # e.g.: "Direct-to-Offer", "Lead Magnet", "VSL", "Webinar"
+    auto_decide:
+      agent: "@ad-midas"
+      skill: "funnel-selection"
+      framework: "Product x awareness level matrix: Cold→Lead Magnet, Warm→Direct, Hot→Retarget"
+
+  bidding_strategy:
+    value: ""                 # e.g.: "Lowest Cost", "Cost Cap", "Bid Cap", "ROAS Target"
+    auto_decide:
+      agent: "@performance-analyst"
+      skill: "metric-diagnosis"
+      framework: "Lowest Cost for learning phase, Cost Cap after data, Bid Cap for scale"
+
+  target_cpa:
+    value: ""                 # e.g.: "R$30"
+    auto_decide:
+      agent: "@performance-analyst"
+      skill: "unit-economics"
+      framework: "CPA target = product.gross_margin * 0.30 (30% of margin as ceiling)"
+
+  target_roas:
+    value: ""                 # e.g.: "3.0x"
+    auto_decide:
+      agent: "@performance-analyst"
+      skill: "unit-economics"
+      framework: "ROAS target = product.price / target_cpa (minimum viable)"
+
+  daily_budget:
+    value: ""                 # e.g.: "R$100"
+    auto_decide:
+      agent: "@performance-analyst"
+      skill: "budget-allocation"
+      framework: "Budget = target_cpa * 3 (minimum for 3 conversions/day learning phase)"
+    safety_check: "safety-rules.yaml: budget_thresholds + rampagem"
+
+  structure:
+    value: ""                 # "CBO" or "ABO"
+    auto_decide:
+      agent: "@ad-midas"
+      skill: "campaign-structure"
+      framework: "CBO for mature account (>90d) with 3+ adsets. ABO for new account or isolated test."
+
+  audiences:
+    value: []                 # list of audiences per adset
+    # Example:
+    # - type: "interest"
+    #   description: "Interest in Digital Marketing + Entrepreneurship"
+    #   estimated_size: "2-5M"
+    # - type: "lookalike"
+    #   description: "LAL 1% buyers last 180d"
+    #   estimated_size: "1-2M"
+    auto_decide:
+      agent: "@performance-analyst"
+      skill: "audience-expansion"
+      framework: "ICP.interests → interests, ICP.digital_behavior → behaviors, social_proof.total_sales → LAL seed"
+
+  creative_formats:
+    value: []                 # e.g.: ["video_feed_1x1", "image_stories_9x16", "carousel"]
+    auto_decide:
+      agent: "@creative-analyst"
+      skill: "creative-brief"
+      framework: "Format by objective: Conversions→video+carousel, Leads→image+video, Traffic→image"
+
+  communication_tone:
+    value: ""                 # e.g.: "Direct and urgent", "Educational and empathetic"
+    auto_decide:
+      agent: "@creative-analyst"
+      skill: "copy-generator"
+      framework: "Inherits identity.tone_of_voice from business-profile, adapts by funnel stage"
+
+  hooks:
+    value: []                 # top 5 hooks to test
+    auto_decide:
+      agent: "@creative-analyst"
+      skill: "hook-generator"
+      framework: "DSL Revolution: 5 tipos (Problema, Resultado, Curiosidade, Controverso, Social Proof)"
+
+# ═══════════════════════════════════════════════════════════════
+# RESEARCH PHASE — Reference to 5-Phase Research Protocol
+# ═══════════════════════════════════════════════════════════════
+# Before filling Phase 2, agents MUST consult the research-brief.
+# If research-brief does not exist, @ad-midas must execute first.
+
+research_phase:
+  research_brief_path: ""     # required — path to filled research-brief.md
+  # Example: "workspace/businesses/aiox/ads/research/research-brief-launch-meta-2026-03.md"
+  status: "pending"           # pending | complete
+  # Agents only fill Phase 2 AFTER status: complete
+
+# ═══════════════════════════════════════════════════════════════
+# COMPLIANCE — Always automatic via @fiscal
+# ═══════════════════════════════════════════════════════════════
+
+compliance:
+  status: "pending"           # pending | approved | rejected
+  auto_decide:
+    agent: "@fiscal"
+    skill: "ad-compliance-gate"
+    framework: "Ban prevention checklist + Meta policies + account age tier restrictions"
+  # @fiscal ALWAYS runs compliance automatically (tier: Auto in autonomy-tiers.yaml).
+  # No campaign advances without compliance.status = "approved".
+  checks_passed: []           # filled by @fiscal: list of checks that passed
+  checks_failed: []           # filled by @fiscal: list of checks that failed
+  notes: ""                   # @fiscal observations

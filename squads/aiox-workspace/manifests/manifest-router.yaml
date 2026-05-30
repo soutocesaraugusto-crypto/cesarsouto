@@ -1,0 +1,199 @@
+# ============================================================================
+# MANIFEST-ROUTER.YAML — Manifest Router by Task Type
+# ============================================================================
+# Version: 1.0.0
+# Date: 2026-03-24
+#
+# WHAT THIS FILE IS:
+#   Maps task types → correct manifest for context extraction.
+#   When a task needs workspace context, render-context consults this
+#   router to determine which manifest to use.
+#
+# CONCEPT:
+#   "Don't dump everything — filter by function." (Pedro Valerio)
+#   A marketing task doesn't need HR data.
+#   A CEO task needs the full 360 view.
+#   The router decides.
+#
+# HOW IT WORKS:
+#   1. Task declares its `context_type` (e.g., "content_production")
+#   2. Router resolves to manifest_id (e.g., "exec-content-production")
+#   3. render-context loads the manifest and extracts only listed variables
+#   4. Task receives filtered context and executes
+#
+# RULES:
+#   1. Every task needing context MUST declare context_type
+#   2. If context_type doesn't exist in router → VETO (don't execute without context)
+#   3. A context_type can map to N manifests (composition)
+#   4. Diagnostic and execution manifests can coexist in the same flow
+# ============================================================================
+
+schema_version: "1.0.0"
+last_updated: "2026-03-24"
+
+# ============================================================================
+# MANIFEST CATEGORIES
+# ============================================================================
+categories:
+  diagnostic:
+    description: "Measure health and completeness. Output: scores and gaps."
+    prefix: "diagnose-"
+    use_case: "Audits, health checks, maturity scoring"
+
+  execution:
+    description: "Provide data to execute. Output: filtered context for action."
+    prefix: "exec-"
+    use_case: "Content production, strategic decisions, campaigns"
+
+# ============================================================================
+# ROUTES — context_type → manifest(s)
+# ============================================================================
+routes:
+
+  # ── EXECUTION ──────────────────────────────────────────────────
+
+  content_production:
+    description: "Content production: video, social, copy, captions"
+    manifests: ["exec-content-production"]
+    scope: business+product
+    params_required: [slug, product]
+    typical_agents: [content-chief, copy-chief, carousel-creator, reels-creator]
+    examples:
+      - "Create video script for campaign"
+      - "Write captions for TikTok"
+      - "Create carousels for Instagram"
+      - "Produce email marketing copy"
+
+  marketing_strategy:
+    description: "Marketing strategy: campaign, funnel, traffic"
+    manifests: ["exec-marketing"]
+    scope: business+product
+    params_required: [slug, product]
+    typical_agents: [cmo-architect, traffic-masters-chief, ad-midas]
+    examples:
+      - "Create campaign strategy"
+      - "Define acquisition channels"
+      - "Optimize conversion funnel"
+      - "Plan traffic strategy"
+
+  ceo_strategy:
+    description: "C-level strategic decision: OKRs, roadmap, pivots"
+    manifests: ["exec-ceo-strategy"]
+    scope: business
+    params_required: [slug]
+    params_optional: [product]
+    typical_agents: [vision-strategist, board-chair, coo-orchestrator]
+    examples:
+      - "Define quarterly OKRs"
+      - "Evaluate new product viability"
+      - "Pivoting decision"
+      - "Annual strategic planning"
+
+  sales_execution:
+    description: "Sales execution: script, objections, follow-up"
+    manifests: ["exec-marketing"]  # reuses marketing (ICP + offer + proof)
+    scope: business+product
+    params_required: [slug, product]
+    typical_agents: [hormozi-closer, hormozi-offers]
+    note: "Dedicated sales manifest planned for v2. Currently uses exec-marketing which covers ICP+offer+proof."
+    examples:
+      - "Create sales script"
+      - "Prepare objection responses"
+      - "Build follow-up sequence"
+
+  # ── DIAGNOSTIC ───────────────────────────────────────────────
+
+  business_diagnostic:
+    description: "General business diagnostic (10 dimensions)"
+    manifests: ["diagnose-business"]
+    scope: business
+    params_required: [slug]
+    typical_agents: [workspace-chief]
+
+  operations_diagnostic:
+    description: "Operational maturity diagnostic"
+    manifests: ["diagnose-operations"]
+    scope: business
+    params_required: [slug]
+    typical_agents: [workspace-chief, coo-orchestrator]
+
+  funnel_diagnostic:
+    description: "Funnel health diagnostic"
+    manifests: ["diagnose-funnel"]
+    scope: product
+    params_required: [slug, product]
+    typical_agents: [cmo-architect]
+
+  offer_diagnostic:
+    description: "Offer strength diagnostic"
+    manifests: ["diagnose-offer"]
+    scope: product
+    params_required: [slug, product]
+    typical_agents: [cmo-architect, hormozi-offers]
+
+  authority_diagnostic:
+    description: "Founder authority diagnostic"
+    manifests: ["diagnose-authority"]
+    scope: business
+    params_required: [slug]
+    typical_agents: [workspace-chief]
+
+  movement_diagnostic:
+    description: "Movement maturity diagnostic"
+    manifests: ["diagnose-movement"]
+    scope: business
+    params_required: [slug]
+    typical_agents: [movement-chief]
+
+  retention_diagnostic:
+    description: "Retention diagnostic"
+    manifests: ["diagnose-retention"]
+    scope: product
+    params_required: [slug, product]
+    typical_agents: [workspace-chief]
+
+  # ── COMPOSITE (multiple manifests) ────────────────────────────
+
+  full_diagnostic:
+    description: "Full diagnostic (all dimensions)"
+    manifests:
+      - "diagnose-business"
+      - "diagnose-operations"
+      - "diagnose-funnel"
+      - "diagnose-offer"
+      - "diagnose-authority"
+      - "diagnose-movement"
+      - "diagnose-retention"
+    scope: business+product
+    params_required: [slug, product]
+    note: "Token-expensive. Use only when complete diagnostic is required."
+
+  launch_campaign:
+    description: "Campaign launch (strategy + production)"
+    manifests:
+      - "exec-marketing"
+      - "exec-content-production"
+    scope: business+product
+    params_required: [slug, product]
+    note: "Composite — pulls marketing AND production context for a full launch."
+
+# ============================================================================
+# CONFLICT RESOLUTION
+# ============================================================================
+# When composite manifests pull the same variable from different sources:
+conflict_resolution:
+  rule: "First occurrence wins (manifest array order)"
+  dedup: true  # render-context removes duplicates automatically
+  merge_strategy: "first_wins"
+
+# ============================================================================
+# FALLBACK
+# ============================================================================
+fallback:
+  unknown_context_type:
+    action: "VETO — context_type '{type}' does not exist in router"
+    message: "Declare a valid context_type in the task or update manifest-router."
+
+  no_context_type:
+    action: "VETO — Task without context_type cannot access workspace"
+    message: "Every task that needs workspace data MUST declare context_type."

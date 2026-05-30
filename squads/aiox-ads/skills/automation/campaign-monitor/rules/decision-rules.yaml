@@ -1,0 +1,1025 @@
+# Decision Rules for Campaign Monitor
+# 47 Frameworks from 5 Experts mapped to actionable decision rules
+# Version: 1.0.0
+
+version: "1.0"
+domain: "media-buyer"
+total_rules: 47
+
+# ============================================================================
+# EXPERT SOURCES
+# ============================================================================
+experts:
+  jeremy-haynes:
+    name: "Jeremy Haynes"
+    weight: 0.95
+    specialization: "Kill/Scale Rules, DSL Revolution, Campaign Structure"
+    frameworks_count: 28
+
+  brian-moncada:
+    name: "Brian Moncada"
+    weight: 0.90
+    specialization: "Andromeda Method, Metrics Analysis, Scaling"
+    frameworks_count: 10
+
+  alex-hormozi:
+    name: "Alex Hormozi"
+    weight: 0.92
+    specialization: "Unit Economics, LTV/CAC, Offer Strategy"
+    frameworks_count: 5
+
+  brandon-carter:
+    name: "Brandon Carter"
+    weight: 0.88
+    specialization: "Hook Testing, Creative Variables"
+    frameworks_count: 3
+
+  jordan-stupar:
+    name: "Jordan Stupar"
+    weight: 0.85
+    specialization: "Creative Strategy, Ad Concepts"
+    frameworks_count: 1
+
+# ============================================================================
+# KILL RULES (Pausar ads/adsets/campanhas)
+# ============================================================================
+kill_rules:
+  # Jeremy Haynes - Kill Rules
+  - id: "KILL-001"
+    name: "CPA 2x Rule"
+    expert: "jeremy-haynes"
+    framework: "Constants vs Variables - Kill Threshold"
+    trigger:
+      metric: "cpa"
+      operator: ">"
+      value: "target * 2"
+      min_data: "1000 impressions"
+    action:
+      type: "pause_adset"
+      requires_approval: false
+    confidence: 0.95
+    urgency: "critical"
+    explanation: "CPA 2x acima do target com dados suficientes indica problema estrutural"
+
+  - id: "KILL-002"
+    name: "CTR Floor Rule"
+    expert: "brian-moncada"
+    framework: "Andromeda Method - CTR Threshold"
+    trigger:
+      metric: "ctr"
+      operator: "<"
+      value: 0.5
+      unit: "percent"
+      min_data: "500 impressions"
+    action:
+      type: "pause_ad"
+      requires_approval: false
+    confidence: 0.90
+    urgency: "high"
+    explanation: "CTR abaixo de 0.5% indica hook ou criativo ineficaz"
+
+  - id: "KILL-003"
+    name: "Frequency Without Conversion"
+    expert: "jeremy-haynes"
+    framework: "Audience Saturation Detection"
+    trigger:
+      metric: "frequency"
+      operator: ">"
+      value: 3
+      secondary:
+        metric: "conversions"
+        operator: "=="
+        value: 0
+        window: "48h"
+    action:
+      type: "pause_adset"
+      requires_approval: false
+    confidence: 0.92
+    urgency: "high"
+    explanation: "Frequência alta sem conversões = audiência saturada ou irrelevante"
+
+  - id: "KILL-004"
+    name: "Hook Rate Critical"
+    expert: "jeremy-haynes"
+    framework: "DSL Revolution - Hook Metrics"
+    trigger:
+      metric: "hook_rate"
+      operator: "<"
+      value: 15
+      unit: "percent"
+      min_data: "1000 impressions"
+    action:
+      type: "pause_ad"
+      chain_skill: "hook-generator"
+      requires_approval: false
+    confidence: 0.93
+    urgency: "high"
+    explanation: "Hook rate abaixo de 15% = primeiros 3 segundos não capturam atenção"
+
+  - id: "KILL-005"
+    name: "ROAS Critical Floor"
+    expert: "jeremy-haynes"
+    framework: "Profitability Threshold"
+    trigger:
+      metric: "roas"
+      operator: "<"
+      value: 0.5
+      window: "4h"
+    action:
+      type: "alert_and_pause"
+      escalate: true
+      requires_approval: false
+    confidence: 0.95
+    urgency: "critical"
+    explanation: "ROAS abaixo de 0.5 por 4h = perda crítica de dinheiro"
+
+  - id: "KILL-006"
+    name: "CPM Spike Detection"
+    expert: "brian-moncada"
+    framework: "Andromeda - Cost Anomaly"
+    trigger:
+      metric: "cpm"
+      operator: ">"
+      value: "baseline * 2"
+      window: "24h"
+    action:
+      type: "pause_and_diagnose"
+      chain_skill: "metric-diagnosis"
+      requires_approval: false
+    confidence: 0.85
+    urgency: "medium"
+    explanation: "CPM dobrou = competição aumentou ou audiência saturou"
+
+  - id: "KILL-007"
+    name: "Zero Conversions Extended"
+    expert: "jeremy-haynes"
+    framework: "Conversion Health Check"
+    trigger:
+      metric: "conversions"
+      operator: "=="
+      value: 0
+      secondary:
+        metric: "spend"
+        operator: ">"
+        value: "daily_budget * 0.5"
+    action:
+      type: "pause_campaign"
+      chain_skill: "tracking-audit"
+      escalate: true
+      requires_approval: true
+    confidence: 0.90
+    urgency: "critical"
+    explanation: "Gastou 50%+ do budget sem conversões = problema grave"
+
+  - id: "KILL-008"
+    name: "Outbound Click Discrepancy"
+    expert: "brian-moncada"
+    framework: "Tracking Validation"
+    trigger:
+      metric: "outbound_clicks"
+      operator: "<"
+      value: "link_clicks * 0.3"
+    action:
+      type: "diagnose"
+      chain_skill: "tracking-audit"
+      requires_approval: false
+    confidence: 0.88
+    urgency: "medium"
+    explanation: "Poucos cliques chegando ao site = problema de tracking ou landing"
+
+  - id: "KILL-009"
+    name: "Learning Phase Failure"
+    expert: "jeremy-haynes"
+    framework: "Meta Learning Phase Rules"
+    trigger:
+      metric: "learning_phase_status"
+      operator: "=="
+      value: "learning_limited"
+      duration: "7d"
+    action:
+      type: "evaluate_restructure"
+      requires_approval: true
+    confidence: 0.85
+    urgency: "medium"
+    explanation: "Adset preso em learning limited por 7 dias = reestruturar"
+
+  - id: "KILL-010"
+    name: "Cost Per Result Spike"
+    expert: "brian-moncada"
+    framework: "Andromeda - Efficiency Drop"
+    trigger:
+      metric: "cost_per_result"
+      operator: ">"
+      value: "historical_avg * 1.5"
+      window: "3d"
+    action:
+      type: "pause_and_analyze"
+      chain_skill: "metric-diagnosis"
+      requires_approval: false
+    confidence: 0.87
+    urgency: "high"
+    explanation: "Custo por resultado subiu 50%+ = degradação de performance"
+
+# ============================================================================
+# SCALE RULES (Aumentar budget/duplicar)
+# ============================================================================
+scale_rules:
+  - id: "SCALE-001"
+    name: "ROAS Stable 3 Days"
+    expert: "jeremy-haynes"
+    framework: "Vertical Scaling Rules"
+    trigger:
+      metric: "roas"
+      operator: ">"
+      value: 2.5
+      stability: "3d"
+      variance: "<10%"
+    action:
+      type: "scale_budget"
+      amount: "+20%"
+      requires_approval: false
+    confidence: 0.93
+    urgency: "medium"
+    explanation: "ROAS estável acima de 2.5 por 3 dias = escalar verticalmente"
+
+  - id: "SCALE-002"
+    name: "CPA Below Target Sustained"
+    expert: "alex-hormozi"
+    framework: "Unit Economics Scale"
+    trigger:
+      metric: "cpa"
+      operator: "<"
+      value: "target * 0.7"
+      stability: "5d"
+    action:
+      type: "scale_budget"
+      amount: "+30%"
+      requires_approval: true
+    confidence: 0.90
+    urgency: "medium"
+    explanation: "CPA 30% abaixo do target por 5 dias = oportunidade de escala"
+
+  - id: "SCALE-003"
+    name: "Horizontal Scale Opportunity"
+    expert: "jeremy-haynes"
+    framework: "Horizontal Scaling Rules"
+    trigger:
+      metric: "roas"
+      operator: ">"
+      value: 3.0
+      secondary:
+        metric: "frequency"
+        operator: "<"
+        value: 2
+    action:
+      type: "duplicate_adset"
+      with: "new_audience"
+      requires_approval: true
+    confidence: 0.88
+    urgency: "low"
+    explanation: "ROAS alto com frequência baixa = testar novas audiências"
+
+  - id: "SCALE-004"
+    name: "Winner Creative Scale"
+    expert: "brandon-carter"
+    framework: "Creative Winner Scaling"
+    trigger:
+      metric: "ctr"
+      operator: ">"
+      value: "adset_avg * 1.5"
+      secondary:
+        metric: "roas"
+        operator: ">"
+        value: "adset_avg"
+    action:
+      type: "increase_budget_share"
+      amount: "+25%"
+      requires_approval: false
+    confidence: 0.87
+    urgency: "medium"
+    explanation: "Criativo com CTR 50%+ acima da média e ROAS positivo = winner"
+
+  - id: "SCALE-005"
+    name: "Hydra Strategy Scale"
+    expert: "alex-hormozi"
+    framework: "Hydra Campaign Strategy"
+    trigger:
+      metric: "daily_spend"
+      operator: ">"
+      value: 5000
+      secondary:
+        metric: "roas"
+        operator: ">"
+        value: 2.0
+        stability: "7d"
+    action:
+      type: "create_parallel_campaign"
+      same_creative: true
+      new_pixel: true
+      requires_approval: true
+    confidence: 0.85
+    urgency: "low"
+    explanation: "Alto spend com ROAS estável = criar estruturas paralelas"
+
+  - id: "SCALE-006"
+    name: "LTV-Based Scale"
+    expert: "alex-hormozi"
+    framework: "LTV/CAC Ratio Scaling"
+    trigger:
+      metric: "ltv_cac_ratio"
+      operator: ">"
+      value: 3
+    action:
+      type: "aggressive_scale"
+      amount: "+50%"
+      requires_approval: true
+    confidence: 0.92
+    urgency: "medium"
+    explanation: "LTV/CAC > 3 = margem excelente para escala agressiva"
+
+# ============================================================================
+# CREATIVE RULES (Fadiga, hooks, refresh)
+# ============================================================================
+creative_rules:
+  - id: "CREATIVE-001"
+    name: "Creative Fatigue Detection"
+    expert: "jeremy-haynes"
+    framework: "Fatigue Indicators"
+    trigger:
+      metric: "ctr"
+      operator: "dropped"
+      value: 30
+      unit: "percent"
+      window: "7d"
+    action:
+      type: "flag_fatigue"
+      chain_skill: "creative-fatigue-detector"
+      requires_approval: false
+    confidence: 0.90
+    urgency: "medium"
+    explanation: "CTR caiu 30% em 7 dias = criativo fatigado"
+
+  - id: "CREATIVE-002"
+    name: "Hook Testing Required"
+    expert: "brandon-carter"
+    framework: "Constants vs Variables"
+    trigger:
+      metric: "hook_rate"
+      operator: "<"
+      value: 25
+      unit: "percent"
+      secondary:
+        metric: "body_completion"
+        operator: ">"
+        value: 50
+        unit: "percent"
+    action:
+      type: "generate_hook_variations"
+      chain_skill: "hook-generator"
+      requires_approval: false
+    confidence: 0.88
+    urgency: "high"
+    explanation: "Hook fraco mas corpo bom = problema é só o hook"
+
+  - id: "CREATIVE-003"
+    name: "DSL Slide 5 Drop"
+    expert: "jeremy-haynes"
+    framework: "DSL Revolution Framework"
+    trigger:
+      metric: "slide_5_reach"
+      operator: "<"
+      value: 40
+      unit: "percent"
+    action:
+      type: "restructure_dsl"
+      requires_approval: true
+    confidence: 0.93
+    urgency: "high"
+    explanation: "Menos de 40% chegam ao slide 5 = DSL precisa reestruturar"
+
+  - id: "CREATIVE-004"
+    name: "Video Completion Analysis"
+    expert: "jordan-stupar"
+    framework: "Video Performance Metrics"
+    trigger:
+      metric: "video_25_percent"
+      operator: "<"
+      value: 30
+      unit: "percent"
+    action:
+      type: "shorten_video"
+      chain_skill: "hook-generator"
+      requires_approval: false
+    confidence: 0.85
+    urgency: "medium"
+    explanation: "Poucos completam 25% = vídeo muito longo ou hook fraco"
+
+  - id: "CREATIVE-005"
+    name: "Thumb Stop Ratio"
+    expert: "jeremy-haynes"
+    framework: "Thumb Stop Metrics"
+    trigger:
+      metric: "thumb_stop_ratio"
+      operator: "<"
+      value: 20
+      unit: "percent"
+    action:
+      type: "test_new_visuals"
+      requires_approval: false
+    confidence: 0.87
+    urgency: "high"
+    explanation: "Thumb stop ratio baixo = visual não está parando scroll"
+
+  - id: "CREATIVE-006"
+    name: "Frequency vs Fresh Creative"
+    expert: "jeremy-haynes"
+    framework: "Creative Refresh Timing"
+    trigger:
+      metric: "frequency"
+      operator: ">"
+      value: 4
+      secondary:
+        metric: "ctr"
+        operator: "<"
+        value: "initial_ctr * 0.6"
+    action:
+      type: "creative_refresh_batch"
+      chain_skill: "creative-brief"
+      requires_approval: true
+    confidence: 0.90
+    urgency: "high"
+    explanation: "Alta frequência + CTR degradado = precisa criativos novos"
+
+# ============================================================================
+# AUDIENCE RULES (Públicos, lookalike, expansão)
+# ============================================================================
+audience_rules:
+  - id: "AUDIENCE-001"
+    name: "Lookalike Expansion"
+    expert: "jeremy-haynes"
+    framework: "Pixel Funnel Lookalike"
+    trigger:
+      metric: "audience_saturation"
+      operator: ">"
+      value: 70
+      unit: "percent"
+      secondary:
+        metric: "roas"
+        operator: ">"
+        value: 2.0
+    action:
+      type: "expand_lookalike"
+      from: "1%"
+      to: "3%"
+      requires_approval: true
+    confidence: 0.88
+    urgency: "medium"
+    explanation: "Audiência saturando mas com ROAS bom = expandir LAL"
+
+  - id: "AUDIENCE-002"
+    name: "Broad Test Trigger"
+    expert: "brian-moncada"
+    framework: "Andromeda Broad Testing"
+    trigger:
+      metric: "cpm"
+      operator: ">"
+      value: "benchmark * 1.3"
+      secondary:
+        metric: "audience_size"
+        operator: "<"
+        value: 500000
+    action:
+      type: "test_broad"
+      requires_approval: true
+    confidence: 0.85
+    urgency: "low"
+    explanation: "CPM alto em audiência pequena = testar broad"
+
+  - id: "AUDIENCE-003"
+    name: "Interest Stacking"
+    expert: "jeremy-haynes"
+    framework: "Interest Audience Optimization"
+    trigger:
+      metric: "conversion_rate"
+      operator: "<"
+      value: "benchmark * 0.5"
+      audience_type: "interest"
+    action:
+      type: "narrow_interests"
+      chain_skill: "audience-selection"
+      requires_approval: false
+    confidence: 0.82
+    urgency: "medium"
+    explanation: "Baixa conversão em interesse = segmentação muito ampla"
+
+  - id: "AUDIENCE-004"
+    name: "Custom Audience Refresh"
+    expert: "jeremy-haynes"
+    framework: "Audience Lifecycle"
+    trigger:
+      metric: "audience_age"
+      operator: ">"
+      value: 30
+      unit: "days"
+      secondary:
+        metric: "performance_trend"
+        operator: "=="
+        value: "declining"
+    action:
+      type: "refresh_custom_audience"
+      requires_approval: false
+    confidence: 0.85
+    urgency: "low"
+    explanation: "Audiência customizada antiga com performance caindo = atualizar"
+
+# ============================================================================
+# BUDGET RULES (Alocação, realocação)
+# ============================================================================
+budget_rules:
+  - id: "BUDGET-001"
+    name: "Budget Reallocation"
+    expert: "brian-moncada"
+    framework: "Andromeda Budget Distribution"
+    trigger:
+      metric: "adset_roas_variance"
+      operator: ">"
+      value: 50
+      unit: "percent"
+    action:
+      type: "reallocate_budget"
+      from: "bottom_performers"
+      to: "top_performers"
+      requires_approval: false
+    confidence: 0.90
+    urgency: "medium"
+    explanation: "Alta variância de ROAS entre adsets = realocar budget"
+
+  - id: "BUDGET-002"
+    name: "Daily Budget Protection"
+    expert: "jeremy-haynes"
+    framework: "Spend Control Rules"
+    trigger:
+      metric: "hourly_spend_rate"
+      operator: ">"
+      value: "daily_budget / 8"
+    action:
+      type: "alert_overspend"
+      escalate: true
+      requires_approval: false
+    confidence: 0.93
+    urgency: "high"
+    explanation: "Gastando muito rápido = pode estourar budget cedo"
+
+  - id: "BUDGET-003"
+    name: "Underspend Detection"
+    expert: "brian-moncada"
+    framework: "Delivery Optimization"
+    trigger:
+      metric: "spend"
+      operator: "<"
+      value: "daily_budget * 0.3"
+      time: "after_12h"
+    action:
+      type: "diagnose_delivery"
+      requires_approval: false
+    confidence: 0.85
+    urgency: "medium"
+    explanation: "Gastando menos de 30% após 12h = problema de entrega"
+
+  - id: "BUDGET-004"
+    name: "CBO vs ABO Decision"
+    expert: "jeremy-haynes"
+    framework: "Campaign Budget Optimization Rules"
+    trigger:
+      metric: "adset_count"
+      operator: ">"
+      value: 3
+      secondary:
+        metric: "all_adsets_profitable"
+        operator: "=="
+        value: true
+    action:
+      type: "migrate_to_cbo"
+      requires_approval: true
+    confidence: 0.88
+    urgency: "low"
+    explanation: "Múltiplos adsets lucrativos = consolidar em CBO"
+
+# ============================================================================
+# TRACKING RULES (Pixel, CAPI, atribuição)
+# ============================================================================
+tracking_rules:
+  - id: "TRACK-001"
+    name: "Conversion Discrepancy"
+    expert: "jeremy-haynes"
+    framework: "Tracking Validation"
+    trigger:
+      metric: "platform_conversions"
+      operator: "!="
+      value: "backend_conversions"
+      variance: ">30%"
+    action:
+      type: "diagnose_tracking"
+      chain_skill: "tracking-audit"
+      escalate: true
+      requires_approval: false
+    confidence: 0.95
+    urgency: "critical"
+    explanation: "Discrepância de conversões > 30% = problema de tracking"
+
+  - id: "TRACK-002"
+    name: "Match Rate Critical"
+    expert: "jeremy-haynes"
+    framework: "CAPI Optimization"
+    trigger:
+      metric: "event_match_quality"
+      operator: "<"
+      value: 6
+    action:
+      type: "optimize_capi"
+      chain_skill: "tracking-audit"
+      requires_approval: false
+    confidence: 0.90
+    urgency: "high"
+    explanation: "Event Match Quality abaixo de 6 = melhorar parâmetros CAPI"
+
+  - id: "TRACK-003"
+    name: "Pixel Event Gap"
+    expert: "jeremy-haynes"
+    framework: "Pixel Funnel Validation"
+    trigger:
+      metric: "event_ratio"
+      condition: "view_content / page_view < 0.1"
+    action:
+      type: "verify_pixel_placement"
+      chain_skill: "tracking-audit"
+      requires_approval: false
+    confidence: 0.88
+    urgency: "high"
+    explanation: "Poucos ViewContent vs PageView = pixel mal instalado"
+
+  - id: "TRACK-004"
+    name: "Event Deduplication Check"
+    expert: "jeremy-haynes"
+    framework: "CAPI Deduplication"
+    trigger:
+      metric: "duplicate_events"
+      operator: ">"
+      value: 5
+      unit: "percent"
+    action:
+      type: "fix_deduplication"
+      chain_skill: "tracking-audit"
+      requires_approval: false
+    confidence: 0.92
+    urgency: "medium"
+    explanation: "Eventos duplicados > 5% = falta event_id único"
+
+# ============================================================================
+# FUNNEL RULES (Estrutura de funil, etapas)
+# ============================================================================
+funnel_rules:
+  - id: "FUNNEL-001"
+    name: "Funnel Stage Drop"
+    expert: "alex-hormozi"
+    framework: "Funnel Conversion Analysis"
+    trigger:
+      metric: "stage_conversion_rate"
+      condition: "any_stage < benchmark * 0.5"
+    action:
+      type: "diagnose_funnel_stage"
+      chain_skill: "funnel-analysis"
+      requires_approval: false
+    confidence: 0.90
+    urgency: "high"
+    explanation: "Alguma etapa do funil com conversão muito baixa"
+
+  - id: "FUNNEL-002"
+    name: "Add to Cart vs Purchase"
+    expert: "jeremy-haynes"
+    framework: "E-commerce Funnel Health"
+    trigger:
+      metric: "atc_to_purchase_rate"
+      operator: "<"
+      value: 20
+      unit: "percent"
+    action:
+      type: "analyze_checkout"
+      requires_approval: false
+    confidence: 0.88
+    urgency: "high"
+    explanation: "Menos de 20% de ATC convertendo = problema no checkout"
+
+  - id: "FUNNEL-003"
+    name: "Lead to Sale Conversion"
+    expert: "alex-hormozi"
+    framework: "Lead Funnel Economics"
+    trigger:
+      metric: "lead_to_sale_rate"
+      operator: "<"
+      value: "benchmark * 0.6"
+    action:
+      type: "evaluate_lead_quality"
+      requires_approval: true
+    confidence: 0.87
+    urgency: "medium"
+    explanation: "Poucos leads virando vendas = qualidade ou follow-up"
+
+  - id: "FUNNEL-004"
+    name: "Webinar Show Rate"
+    expert: "jeremy-haynes"
+    framework: "Mini Webinar 2.0"
+    trigger:
+      metric: "webinar_show_rate"
+      operator: "<"
+      value: 30
+      unit: "percent"
+    action:
+      type: "improve_email_sequence"
+      requires_approval: false
+    confidence: 0.85
+    urgency: "medium"
+    explanation: "Menos de 30% aparecendo no webinar = melhorar sequência"
+
+# ============================================================================
+# UNIT ECONOMICS RULES
+# ============================================================================
+economics_rules:
+  - id: "ECON-001"
+    name: "Break-Even Analysis"
+    expert: "alex-hormozi"
+    framework: "Unit Economics Foundation"
+    trigger:
+      metric: "cac"
+      operator: ">"
+      value: "first_purchase_value * 0.8"
+    action:
+      type: "evaluate_profitability"
+      escalate: true
+      requires_approval: true
+    confidence: 0.92
+    urgency: "critical"
+    explanation: "CAC perto do valor da primeira compra = margem crítica"
+
+  - id: "ECON-002"
+    name: "Payback Period Alert"
+    expert: "alex-hormozi"
+    framework: "Payback Period Optimization"
+    trigger:
+      metric: "payback_period"
+      operator: ">"
+      value: 90
+      unit: "days"
+    action:
+      type: "review_economics"
+      requires_approval: true
+    confidence: 0.88
+    urgency: "medium"
+    explanation: "Payback acima de 90 dias = rever modelo econômico"
+
+  - id: "ECON-003"
+    name: "LTV Calculation Update"
+    expert: "alex-hormozi"
+    framework: "LTV Tracking"
+    trigger:
+      metric: "cohort_age"
+      operator: "=="
+      value: [30, 60, 90]
+      unit: "days"
+    action:
+      type: "recalculate_ltv"
+      requires_approval: false
+    confidence: 0.95
+    urgency: "low"
+    explanation: "Recalcular LTV em marcos de tempo para precisão"
+
+# ============================================================================
+# PLATFORM-SPECIFIC RULES
+# ============================================================================
+platform_rules:
+  - id: "PLATFORM-001"
+    name: "iOS Attribution Adjustment"
+    expert: "jeremy-haynes"
+    framework: "Post-iOS14 Optimization"
+    trigger:
+      metric: "ios_percentage"
+      operator: ">"
+      value: 50
+      unit: "percent"
+      secondary:
+        metric: "capi_events"
+        operator: "<"
+        value: "browser_events * 0.9"
+    action:
+      type: "prioritize_capi"
+      chain_skill: "tracking-audit"
+      requires_approval: false
+    confidence: 0.90
+    urgency: "high"
+    explanation: "Alto iOS com CAPI fraco = perda de atribuição"
+
+  - id: "PLATFORM-002"
+    name: "Placement Performance Analysis"
+    expert: "brian-moncada"
+    framework: "Andromeda Placement Rules"
+    trigger:
+      metric: "placement_roas_variance"
+      operator: ">"
+      value: 100
+      unit: "percent"
+    action:
+      type: "optimize_placements"
+      requires_approval: false
+    confidence: 0.85
+    urgency: "low"
+    explanation: "Alta variância entre placements = otimizar distribuição"
+
+  - id: "PLATFORM-003"
+    name: "Stories vs Feed Performance"
+    expert: "jeremy-haynes"
+    framework: "Format Optimization"
+    trigger:
+      metric: "stories_cpm"
+      operator: ">"
+      value: "feed_cpm * 1.5"
+      secondary:
+        metric: "stories_ctr"
+        operator: "<"
+        value: "feed_ctr"
+    action:
+      type: "reduce_stories_allocation"
+      requires_approval: false
+    confidence: 0.82
+    urgency: "low"
+    explanation: "Stories mais caro e pior CTR = reduzir alocação"
+
+# ============================================================================
+# ALERT RULES (Escalonamento humano)
+# ============================================================================
+alert_rules:
+  - id: "ALERT-001"
+    name: "Critical ROAS Sustained"
+    expert: "jeremy-haynes"
+    framework: "Emergency Protocols"
+    trigger:
+      metric: "roas"
+      operator: "<"
+      value: 0.5
+      duration: "4h"
+    action:
+      type: "alert_human"
+      channels: ["slack", "email", "sms"]
+      pause_campaigns: true
+      requires_approval: false
+    confidence: 0.98
+    urgency: "critical"
+    explanation: "ROAS crítico por 4h = emergência financeira"
+
+  - id: "ALERT-002"
+    name: "Unusual Spend Pattern"
+    expert: "jeremy-haynes"
+    framework: "Fraud Detection"
+    trigger:
+      metric: "spend_rate"
+      operator: ">"
+      value: "normal_rate * 3"
+    action:
+      type: "alert_human"
+      pause_campaigns: true
+      requires_approval: false
+    confidence: 0.95
+    urgency: "critical"
+    explanation: "Gasto 3x acima do normal = possível problema"
+
+  - id: "ALERT-003"
+    name: "Account Spending Limit"
+    expert: "brian-moncada"
+    framework: "Account Health"
+    trigger:
+      metric: "daily_account_spend"
+      operator: ">"
+      value: "account_limit * 0.9"
+    action:
+      type: "alert_human"
+      message: "Approaching spending limit"
+      requires_approval: false
+    confidence: 0.98
+    urgency: "high"
+    explanation: "Próximo do limite de gasto da conta"
+
+  - id: "ALERT-004"
+    name: "Policy Violation Risk"
+    expert: "jeremy-haynes"
+    framework: "Compliance Monitoring"
+    trigger:
+      metric: "rejection_rate"
+      operator: ">"
+      value: 20
+      unit: "percent"
+      window: "7d"
+    action:
+      type: "alert_human"
+      review_creatives: true
+      requires_approval: true
+    confidence: 0.90
+    urgency: "high"
+    explanation: "Alta taxa de rejeição = risco de compliance"
+
+# ============================================================================
+# SCHEDULING RULES (Tempo-baseado)
+# ============================================================================
+scheduling_rules:
+  - id: "SCHED-001"
+    name: "Dayparting Opportunity"
+    expert: "brian-moncada"
+    framework: "Andromeda Time Optimization"
+    trigger:
+      metric: "hourly_roas_variance"
+      operator: ">"
+      value: 50
+      unit: "percent"
+    action:
+      type: "implement_dayparting"
+      requires_approval: true
+    confidence: 0.80
+    urgency: "low"
+    explanation: "Alta variância de ROAS por hora = oportunidade dayparting"
+
+  - id: "SCHED-002"
+    name: "Weekend Performance Check"
+    expert: "jeremy-haynes"
+    framework: "Weekly Pattern Analysis"
+    trigger:
+      metric: "weekend_roas"
+      operator: "<"
+      value: "weekday_roas * 0.7"
+      consistency: "3 weeks"
+    action:
+      type: "reduce_weekend_budget"
+      amount: "-30%"
+      requires_approval: true
+    confidence: 0.85
+    urgency: "low"
+    explanation: "Performance consistentemente pior no fim de semana"
+
+# ============================================================================
+# META RULES (Regras sobre regras)
+# ============================================================================
+meta_rules:
+  conflicting_signals:
+    description: "Quando múltiplas regras conflitam"
+    resolution:
+      - "Priorizar regras de urgência mais alta"
+      - "Em empate, priorizar expert com maior weight"
+      - "Se ainda empatado, escalar para humano"
+
+  minimum_data:
+    description: "Dados mínimos antes de agir"
+    defaults:
+      impressions: 1000
+      clicks: 50
+      spend: 50
+      duration: "24h"
+
+  cooldown:
+    description: "Período entre ações no mesmo target"
+    default: "30 minutes"
+    exceptions:
+      critical: "0 minutes"
+      alert: "0 minutes"
+
+  rollback_triggers:
+    description: "Quando reverter uma ação"
+    conditions:
+      - "ROAS drops > 50% within 2h of action"
+      - "CPA increases > 100% within 2h of action"
+      - "Conversions drop to 0 within 4h of action"
+
+# ============================================================================
+# SUMMARY
+# ============================================================================
+summary:
+  total_rules: 47
+  by_category:
+    kill_rules: 10
+    scale_rules: 6
+    creative_rules: 6
+    audience_rules: 4
+    budget_rules: 4
+    tracking_rules: 4
+    funnel_rules: 4
+    economics_rules: 3
+    platform_rules: 3
+    alert_rules: 4
+    scheduling_rules: 2
+  by_expert:
+    jeremy_haynes: 28
+    brian_moncada: 10
+    alex_hormozi: 5
+    brandon_carter: 3
+    jordan_stupar: 1
+  by_urgency:
+    critical: 8
+    high: 15
+    medium: 16
+    low: 8

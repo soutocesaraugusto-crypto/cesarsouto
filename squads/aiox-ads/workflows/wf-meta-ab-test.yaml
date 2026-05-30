@@ -1,0 +1,693 @@
+# Workflow: Meta A/B Test Cycle
+# Squad: aiox-ads
+# Version: 1.0.0
+# Created: 2026-03-18
+# Story: SAIOX-ADS-V5-5.3
+# Adapted from: squads/media-buyer-squad/workflows/wf-ab-test-cycle.yaml
+# Framework: Constants vs Variables (Brandon Carter)
+#
+# Purpose:
+#   Ciclo completo de teste A/B para Meta Ads. Isola UMA variavel,
+#   cria variantes, executa com budget 50/50, analisa com significancia
+#   estatistica, e toma acao sobre o resultado.
+#
+# Orchestrator: @ad-midas (concierge model — entry point for user)
+#
+# References:
+#   - config/autonomy-tiers.yaml (tier definitions)
+#   - config/safety-rules.yaml (WAL, learning phase, rampagem)
+#   - data/knowledge/meta/learning_phase.md (50 conversions threshold)
+#   - checklists/ban-prevention.md (pre-automation checks)
+#   - templates/strategy.md (decision log)
+
+workflow:
+  id: wf-meta-ab-test
+  name: "Meta A/B Test Cycle"
+  version: "1.0.1"
+  description: >-
+    Ciclo completo de teste A/B para Meta Ads usando o framework Constants vs
+    Variables (Brandon Carter). Isola UMA variavel, cria variantes, executa com
+    budget 50/50, analisa com significancia estatistica, e toma acao sobre o resultado.
+  purpose: |
+    Executar ciclo completo de teste A/B em Meta Ads usando o framework
+    Constants vs Variables (Brandon Carter). O principio fundamental e
+    testar UMA variavel por vez, mantendo todo o resto constante.
+  orchestrator: ad-midas
+  type: operational
+
+  best_for:
+    - "Testar variacoes de criativo (imagem, video, carrossel)"
+    - "Testar copy (headline, primary text, CTA)"
+    - "Testar audiences (interesse, lookalike, broad)"
+    - "Testar placements (feed, stories, reels)"
+    - "Otimizacao iterativa de campanha ativa"
+
+  decision_matrix:
+    when_to_use:
+      - "Campanha ativa com performance estavel (fora da learning phase)"
+      - "Suspeita de creative fatigue (frequency > 3, CTR drop > 30%)"
+      - "Novo angulo ou hook para validar"
+      - "Otimizar CPA/ROAS com dados existentes"
+    when_not_to_use:
+      - "Campanha em learning phase (< 50 conversoes no adset)"
+      - "Budget < R$50/dia por variante (R$100/dia total minimo)"
+      - "Menos de 7 dias de dados historicos na campanha"
+      - "Conta nova (< 30 dias) sem campanha estavel"
+
+  # ═══════════════════════════════════════════════════════════════
+  # NON-NEGOTIABLE: CONSTANTS VS VARIABLES PRINCIPLE
+  # ═══════════════════════════════════════════════════════════════
+  # Framework: Brandon Carter — Constants vs Variables
+  #
+  # "Test ONE variable at a time. Everything else must be constant."
+  #
+  # Se mais de uma variavel muda entre variantes, o teste e INVALIDO.
+  # Nao e possivel atribuir causalidade quando multiplas variaveis
+  # mudam simultaneamente.
+  #
+  # Variaveis testaveis (uma por vez):
+  #   - Creative (imagem/video diferente, mesmo copy e audience)
+  #   - Copy (headline/primary text diferente, mesmo creative e audience)
+  #   - Audience (targeting diferente, mesmo creative e copy)
+  #   - Placement (feed vs stories vs reels, mesmo creative/copy/audience)
+  #   - CTA (botao diferente, mesmo creative/copy/audience)
+  #
+  # Constantes obrigatorias em todo teste:
+  #   - Budget (50/50 split exato)
+  #   - Schedule (mesmo periodo de veiculacao)
+  #   - Optimization event (mesmo objetivo de conversao)
+  #   - Bid strategy (mesma estrategia de lance)
+  #   - Landing page (mesma LP, exceto se LP e a variavel)
+
+  constants_vs_variables:
+    principle: "Test ONE variable at a time. Everything else must be constant."
+    enforcement: strict
+    enforced_by: ad-midas  # Valida na Phase 1 antes de aprovar hipotese
+    validation_rule: |
+      Antes de aprovar hipotese, @ad-midas DEVE verificar:
+      1. Exatamente UMA variavel identificada
+      2. Lista explicita de constantes (tudo que NAO muda)
+      3. Se mais de uma variavel muda → REJEITAR hipotese
+    testable_variables:
+      - creative
+      - copy
+      - audience
+      - placement
+      - cta
+      - landing_page
+    mandatory_constants:
+      - budget_split  # Sempre 50/50
+      - schedule  # Mesmo periodo
+      - optimization_event  # Mesmo objetivo
+      - bid_strategy  # Mesma estrategia
+      - attribution_window  # Mesma janela
+
+  # ═══════════════════════════════════════════════════════════════
+  # STATISTICAL SIGNIFICANCE THRESHOLDS
+  # ═══════════════════════════════════════════════════════════════
+
+  statistical_thresholds:
+    confidence_level: 0.95  # 95% confidence required for clear winner
+    min_conversions_per_variant: 50  # Minimum 50 conversions per variant
+    min_test_duration_days: 7  # Minimum 7 days regardless of conversions
+    ideal_conversions_per_variant: 100  # Ideal for robust results
+    methodology: "Two-proportion z-test (conversion rate comparison)"
+    marginal_confidence: 0.90  # 90-95% = marginal result
+    result_categories:
+      winner_clear: "Confidence >= 95% AND 50+ conversions per variant"
+      marginal: "Confidence 90-95% OR one variant < 50 conversions"
+      inconclusive: "Confidence < 90% after minimum duration"
+      both_bad: "Both variants CPA > 2x target regardless of confidence"
+
+  # ═══════════════════════════════════════════════════════════════
+  # EARLY STOP RULE
+  # ═══════════════════════════════════════════════════════════════
+  # AC3: If CPA difference > 3x between variants after 3 days,
+  # kill losing variant early.
+
+  early_stop:
+    enabled: true
+    rule: |
+      If CPA difference > 3x between variants after 3 days of test runtime:
+      1. @performance-analyst flags losing variant
+      2. @campaign-manager pauses losing variant (HITL approval required)
+      3. Remaining budget allocated to winning variant
+      4. Test result logged as "early_stop_winner"
+    conditions:
+      - id: cpa_3x_divergence
+        description: "CPA de uma variante > 3x a outra apos 3 dias"
+        threshold: "cpa_ratio > 3.0"
+        min_days: 3
+        min_impressions_per_variant: 500
+        action: "KILL losing variant → HITL approval → pause via campaign-manager"
+      - id: both_failing
+        description: "Ambas variantes com CPA > 2x target apos 3 dias"
+        threshold: "both_cpa > 2x_target"
+        min_days: 3
+        action: "KILL entire test → escalate to @ad-midas for strategy review"
+      - id: delivery_imbalance
+        description: "Delivery desbalanceado (> 70/30 split)"
+        threshold: "delivery_ratio > 0.7"
+        min_days: 2
+        action: "FLAG for review → may indicate audience overlap or bid competition"
+
+  # ═══════════════════════════════════════════════════════════════
+  # PHASE SEQUENCE (6 phases)
+  # ═══════════════════════════════════════════════════════════════
+
+  sequence:
+
+    # ─────────────────────────────────────────────────────────────
+    # PHASE 1: HYPOTHESIS
+    # ─────────────────────────────────────────────────────────────
+    - phase: hypothesis
+      id: PH_HYPOTHESIS
+      name: "Definicao de Hipotese"
+      agent: ad-midas
+      tier: auto
+      estimated_days: 1
+
+      description: |
+        @ad-midas define a hipotese do teste usando o framework Constants vs
+        Variables (Brandon Carter). Identifica o gargalo, isola UMA variavel,
+        e formula a hipotese testavel.
+
+      skills:
+        - id: metric-diagnosis
+          path: skills/diagnostic/metric-diagnosis/SKILL.md
+          purpose: "Identificar gargalo atual (CTR, CPA, ROAS, hook rate)"
+        - id: kill-scale-rules
+          path: skills/optimization/kill-scale-rules/SKILL.md
+          purpose: "Avaliar se campanha atual justifica teste vs kill/scale"
+        - id: creative-evaluator
+          path: skills/diagnostic/creative-evaluator/SKILL.md
+          purpose: "Se variavel = creative, avaliar performance atual"
+
+      input:
+        required:
+          - campaign_state: "campaign-state.yaml da campanha alvo"
+          - strategy_md: "STRATEGY.md com decisoes e prioridades atuais"
+        optional:
+          - pulse_report: "Ultimo pulse-report.md (contexto de performance)"
+          - digest_report: "Ultimo digest-report.md (trends semanais)"
+
+      output:
+        - file: "ab-test-hypothesis.yaml"
+          location: "workspace/businesses/{business}/ads/meta/reports/ab-tests/"
+          schema:
+            test_id: "AB-{YYYYMMDD}-{NNN}"
+            hypothesis: "Se mudar [X], entao [metrica] melhora porque [razao]"
+            variable: "creative|copy|audience|placement|cta|landing_page"
+            constants: ["lista de tudo que NAO muda"]
+            primary_metric: "CPA|CTR|ROAS|CVR"
+            secondary_metrics: ["metricas de suporte"]
+            success_criteria: "Variante B supera A em [metrica] com 95% confidence"
+            min_budget_per_variant: "R$50/dia"
+            estimated_duration: "7-14 dias"
+            status: "hypothesis_defined"
+
+      error_handling:
+        - condition: "Campanha em learning phase"
+          action: "BLOCK — Campanha deve completar learning (50+ conversoes) antes de testar"
+          reference: "data/knowledge/meta/learning_phase.md"
+        - condition: "Budget insuficiente (< R$100/dia total)"
+          action: "BLOCK — Minimo R$50/dia por variante necessario"
+        - condition: "Mais de uma variavel identificada"
+          action: "REJECT — Constants vs Variables: testar UMA variavel por vez"
+        - condition: "Dados insuficientes (< 7 dias historico)"
+          action: "BLOCK — Sem baseline confiavel para comparacao"
+
+      checkpoint:
+        id: CP_HYPOTHESIS
+        decision: APPROVE_HYPOTHESIS
+        human_review: false  # Auto tier — @ad-midas valida autonomamente
+        criteria:
+          - "Hipotese clara e testavel"
+          - "Exatamente UMA variavel isolada"
+          - "Lista de constantes explicita"
+          - "Metrica primaria definida"
+          - "Budget suficiente (min R$50/dia por variante)"
+          - "Campanha fora da learning phase"
+
+    # ─────────────────────────────────────────────────────────────
+    # PHASE 2: VARIANT CREATION
+    # ─────────────────────────────────────────────────────────────
+    - phase: variant_creation
+      id: PH_VARIANT_CREATION
+      name: "Criacao de Variantes"
+      agent: creative-analyst
+      tier: auto_create_hitl_approve
+      estimated_days: 1
+
+      description: |
+        @creative-analyst cria a variante B mantendo tudo constante exceto a
+        variavel de teste. Criacao e Auto (agente gera), aprovacao e HITL
+        (humano valida que apenas a variavel mudou).
+
+        Importante: O criativo e criado em estado PAUSED. Nao e publicado ate
+        aprovacao humana na Phase 3.
+
+      skills:
+        - id: hook-generator
+          path: skills/generative/hook-generator/SKILL.md
+          purpose: "Se variavel = copy hook, gerar variacoes"
+        - id: copy-generator
+          path: skills/generative/copy-generator/SKILL.md
+          purpose: "Se variavel = copy, gerar variacao com framework"
+        - id: creative-brief
+          path: skills/generative/creative-brief/SKILL.md
+          purpose: "Se variavel = creative, gerar brief para designer"
+        - id: angle-generator
+          path: skills/generative/angle-generator/SKILL.md
+          purpose: "Se variavel = angulo/hook, gerar angulos alternativos"
+
+      input:
+        required:
+          - hypothesis: "ab-test-hypothesis.yaml (output da Phase 1)"
+          - current_creative: "Creative/copy atual da campanha (variante A = controle)"
+        optional:
+          - brand_profile: "business-profile.yaml (para manter tom de voz)"
+          - icp_profile: "icp-profile.yaml (para manter relevancia)"
+
+      output:
+        - file: "ab-test-variants.yaml"
+          location: "workspace/businesses/{business}/ads/meta/reports/ab-tests/"
+          schema:
+            test_id: "AB-{YYYYMMDD}-{NNN} (mesmo da hipotese)"
+            variant_a:
+              label: "Control"
+              description: "Versao atual (nenhuma mudanca)"
+            variant_b:
+              label: "Challenger"
+              description: "Variacao da variavel de teste"
+              variable_changed: "descricao exata do que mudou"
+              constants_preserved: ["confirmacao de cada constante mantida"]
+            approval_status: "pending_human_review"
+            status: "variants_created"
+
+      error_handling:
+        - condition: "Variante B altera mais de uma variavel"
+          action: "REJECT — Volta para @creative-analyst com instrucao de manter constantes"
+        - condition: "Variante B identica a variante A"
+          action: "REJECT — Sem diferenca mensuravel"
+        - condition: "Creative viola compliance"
+          action: "BLOCK — Passa por @fiscal ad-compliance-gate antes de prosseguir"
+          reference: "skills/operational/ad-compliance-gate/SKILL.md"
+
+      checkpoint:
+        id: CP_VARIANTS
+        decision: APPROVE_VARIANTS
+        human_review: true  # HITL — humano valida variantes
+        criteria:
+          - "Variante B criada com apenas UMA diferenca"
+          - "Todas as constantes mantidas e listadas"
+          - "Assets prontos para upload"
+          - "Compliance verificada (se aplicavel)"
+
+    # ─────────────────────────────────────────────────────────────
+    # PHASE 3: EXECUTION
+    # ─────────────────────────────────────────────────────────────
+    - phase: execution
+      id: PH_EXECUTION
+      name: "Execucao do Teste"
+      agent: campaign-manager
+      tier: hitl
+      estimated_days: "7-14"
+
+      description: |
+        @campaign-manager publica ambas variantes via MCP com budget split
+        50/50 exato. Toda operacao segue o protocolo WAL + PAUSED + read-back
+        do campaign-manager. Campanhas sao criadas PAUSED e ativadas via HITL.
+
+        Budget split: 50/50 exato. Nenhuma variante recebe mais que a outra.
+        Monitoramento: @performance-analyst acompanha a cada 12h via campaign-monitor.
+
+      skills:
+        - id: campaign-monitor
+          path: skills/automation/campaign-monitor/SKILL.md
+          purpose: "Monitoramento a cada 12h durante o teste"
+        - id: learning-phase-detector
+          path: skills/diagnostic/learning-phase-detector/SKILL.md
+          purpose: "Detectar se alguma variante entrou em learning phase"
+        - id: api-resilience
+          path: skills/operational/api-resilience/SKILL.md
+          purpose: "Resilience para chamadas MCP (rate limit, retry, circuit breaker)"
+
+      input:
+        required:
+          - variants_approved: "ab-test-variants.yaml com approval_status: approved"
+          - hypothesis: "ab-test-hypothesis.yaml"
+          - campaign_id: "ID da campanha onde o teste sera executado"
+        optional:
+          - action_ledger: "action-ledger.yaml (para registrar acoes)"
+
+      output:
+        - file: "ab-test-execution.yaml"
+          location: "workspace/businesses/{business}/ads/meta/reports/ab-tests/"
+          schema:
+            test_id: "AB-{YYYYMMDD}-{NNN}"
+            variant_a_ad_id: "Meta ad ID da variante A"
+            variant_b_ad_id: "Meta ad ID da variante B"
+            budget_per_variant: "R$X/dia"
+            start_date: "YYYY-MM-DD"
+            expected_end_date: "YYYY-MM-DD (min 7 dias)"
+            early_stop_checks: []
+            monitoring_schedule: "every_12h"
+            status: "running"
+
+      error_handling:
+        - condition: "MCP falha ao criar variante"
+          action: "Retry com backoff (api-resilience). Apos 3 falhas → HALT e escalar"
+          reference: "skills/operational/api-resilience/SKILL.md"
+        - condition: "Budget split desigual apos criacao"
+          action: "Corrigir imediatamente — budget DEVE ser 50/50 exato"
+        - condition: "Uma variante nao entrega (0 impressoes apos 24h)"
+          action: "FLAG — Verificar targeting, compliance, ou rejection da plataforma"
+        - condition: "Early stop condition atingida (CPA > 3x apos 3 dias)"
+          action: "Pausar variante perdedora (HITL) — ver secao early_stop"
+        - condition: "Ambas variantes em learning phase apos 3 dias"
+          action: "Continuar — learning phase e normal no inicio de testes"
+
+      checkpoint:
+        id: CP_EXECUTION
+        decision: CONTINUE_OR_EARLY_STOP
+        human_review: true  # HITL — publicacao e ativacao requerem aprovacao
+        criteria:
+          - "Ambas variantes publicadas e entregando"
+          - "Budget split 50/50 confirmado"
+          - "Nenhuma early stop condition atingida"
+          - "WAL entries registradas para todas as operacoes"
+
+    # ─────────────────────────────────────────────────────────────
+    # PHASE 4: ANALYSIS
+    # ─────────────────────────────────────────────────────────────
+    - phase: analysis
+      id: PH_ANALYSIS
+      name: "Analise de Resultados"
+      agent: performance-analyst
+      tier: auto
+      estimated_days: 1
+
+      description: |
+        @performance-analyst aguarda significancia estatistica (50+ conversoes
+        por variante OU 7 dias minimo) e executa analise completa. Calcula
+        z-test para comparacao de taxas de conversao, classifica resultado.
+
+        Criterios de conclusao:
+        - 50+ conversoes por variante (minimo), 100+ ideal
+        - 7 dias de teste minimo (mesmo com 50+ conversoes antes)
+        - 95% confidence para resultado claro
+
+      skills:
+        - id: metric-diagnosis
+          path: skills/diagnostic/metric-diagnosis/SKILL.md
+          purpose: "Analise detalhada de metricas por variante"
+        - id: creative-evaluator
+          path: skills/diagnostic/creative-evaluator/SKILL.md
+          purpose: "Se teste de creative, avaliar performance comparativa"
+        - id: kill-scale-rules
+          path: skills/optimization/kill-scale-rules/SKILL.md
+          purpose: "Aplicar kill/scale rules ao resultado"
+
+      input:
+        required:
+          - execution_data: "ab-test-execution.yaml com metricas finais"
+          - hypothesis: "ab-test-hypothesis.yaml (para comparar com resultado)"
+          - campaign_state: "campaign-state.yaml atualizada com dados do teste"
+        optional:
+          - early_stop_log: "Se houve early stop, log da decisao"
+
+      output:
+        - file: "ab-test-analysis.yaml"
+          location: "workspace/businesses/{business}/ads/meta/reports/ab-tests/"
+          schema:
+            test_id: "AB-{YYYYMMDD}-{NNN}"
+            duration_days: "N dias de teste"
+            variant_a_metrics:
+              impressions: N
+              clicks: N
+              conversions: N
+              ctr: "X%"
+              cpa: "R$X"
+              roas: "X.Xx"
+            variant_b_metrics:
+              impressions: N
+              clicks: N
+              conversions: N
+              ctr: "X%"
+              cpa: "R$X"
+              roas: "X.Xx"
+            statistical_analysis:
+              test_method: "two-proportion z-test"
+              z_score: "X.XX"
+              p_value: "0.XXX"
+              confidence_level: "XX%"
+              effect_size: "X.X% improvement"
+            result: "winner_clear|marginal|inconclusive|both_bad"
+            winner: "variant_a|variant_b|none|tie"
+            recommendation: "scale|extend|redesign|kill_both"
+            status: "analysis_complete"
+
+      error_handling:
+        - condition: "Menos de 50 conversoes por variante apos 7 dias"
+          action: "Classificar como inconclusive. Recomendar: aumentar budget ou estender"
+        - condition: "Delivery desbalanceado (> 70/30)"
+          action: "Flag no report. Resultado pode estar enviesado. Recomendar: redesenhar teste"
+        - condition: "Breakdown Effect detectado"
+          action: "Usar APENAS metricas agregadas (campaign level), NAO breakdown por segmento"
+          reference: "data/knowledge/meta/breakdown_effect.md"
+
+      checkpoint:
+        id: CP_ANALYSIS
+        decision: DECLARE_RESULT
+        human_review: false  # Auto — analise estatistica e objetiva
+        criteria:
+          - "Metricas finais coletadas de ambas variantes"
+          - "Z-test calculado com p-value"
+          - "Resultado classificado (winner_clear/marginal/inconclusive/both_bad)"
+          - "Recomendacao formulada"
+
+    # ─────────────────────────────────────────────────────────────
+    # PHASE 5: DECISION
+    # ─────────────────────────────────────────────────────────────
+    - phase: decision
+      id: PH_DECISION
+      name: "Decisao Winner/Loser"
+      agent: performance-analyst
+      agent_secondary: ad-midas
+      tier: hitl
+      estimated_days: 1
+
+      description: |
+        @performance-analyst apresenta resultado e recomendacao.
+        @ad-midas consolida a decisao estrategica.
+
+        Decision tree:
+        - winner_clear → Recomendar escalar vencedor
+        - marginal → Recomendar estender teste 72h ou aceitar empate
+        - inconclusive → Recomendar estender com mais budget ou redesenhar
+        - both_bad → Recomendar matar ambas e repensar estrategia
+
+        Humano toma decisao final (HITL).
+
+      skills:
+        - id: kill-scale-rules
+          path: skills/optimization/kill-scale-rules/SKILL.md
+          purpose: "Aplicar regras de kill/scale ao resultado"
+        - id: scale-readiness-check
+          path: skills/strategic/scale-readiness-check/SKILL.md
+          purpose: "Se winner_clear, verificar readiness para escalar"
+        - id: budget-allocation
+          path: skills/optimization/budget-allocation/SKILL.md
+          purpose: "Se winner_clear, calcular nova alocacao de budget"
+
+      input:
+        required:
+          - analysis: "ab-test-analysis.yaml (output da Phase 4)"
+          - strategy_md: "STRATEGY.md para atualizar decision log"
+        optional:
+          - scale_readiness: "Se vencedor claro, verificar prontidao para escala"
+
+      output:
+        - file: "ab-test-decision.yaml"
+          location: "workspace/businesses/{business}/ads/meta/reports/ab-tests/"
+          schema:
+            test_id: "AB-{YYYYMMDD}-{NNN}"
+            result: "winner_clear|marginal|inconclusive|both_bad"
+            decision: "scale_winner|extend_test|redesign_test|kill_both"
+            winner_variant: "A|B|none"
+            actions_planned:
+              - action: "descricao da acao"
+                agent: "campaign-manager"
+                tier: "hitl"
+            learning: "O que foi aprendido com este teste"
+            next_test_recommendation: "Proximo teste sugerido baseado nos learnings"
+            strategy_md_update: "Entrada para Decision Log do STRATEGY.md"
+            status: "decision_made"
+
+      error_handling:
+        - condition: "Resultado ambiguo (confidence entre 90-95%)"
+          action: "Apresentar ambas opcoes: estender teste vs aceitar resultado marginal. HITL decide"
+        - condition: "Vencedor claro mas com menos de 50 conversoes"
+          action: "Flag — resultado estatisticamente fraco. Recomendar estender apesar do winner aparente"
+        - condition: "Humano discorda da recomendacao"
+          action: "Registrar decisao humana no decision log com justificativa"
+
+      checkpoint:
+        id: CP_DECISION
+        decision: CONFIRM_DECISION
+        human_review: true  # HITL — decisao final e humana
+        criteria:
+          - "Resultado apresentado com metricas e confidence"
+          - "Recomendacao formulada com justificativa"
+          - "Humano confirma decisao"
+          - "Learning documentado"
+
+    # ─────────────────────────────────────────────────────────────
+    # PHASE 6: ACTION
+    # ─────────────────────────────────────────────────────────────
+    - phase: action
+      id: PH_ACTION
+      name: "Execucao da Acao"
+      agent: campaign-manager
+      tier: hitl
+      estimated_days: 1
+
+      description: |
+        @campaign-manager executa a acao decidida na Phase 5:
+        - Pause loser variant
+        - Scale winner variant (HITL para budget change)
+        - Update STRATEGY.md decision log
+
+        Toda acao segue o protocolo WAL + PAUSED + read-back.
+        Budget changes seguem regras de rampagem (safety-rules.yaml).
+
+      skills:
+        - id: api-resilience
+          path: skills/operational/api-resilience/SKILL.md
+          purpose: "Resilience para chamadas MCP de pause/scale"
+        - id: campaign-monitor
+          path: skills/automation/campaign-monitor/SKILL.md
+          purpose: "Verificar estado apos acoes executadas"
+
+      input:
+        required:
+          - decision: "ab-test-decision.yaml com decision confirmada (HITL approved)"
+          - action_ledger: "action-ledger.yaml para registrar acoes"
+        optional:
+          - wal: "WAL entries das operacoes"
+
+      output:
+        - file: "ab-test-result.yaml"
+          location: "workspace/businesses/{business}/ads/meta/reports/ab-tests/"
+          schema:
+            test_id: "AB-{YYYYMMDD}-{NNN}"
+            actions_executed:
+              - action: "descricao"
+                timestamp: "ISO8601"
+                wal_entry_id: "WAL-XXXX"
+                status: "executed|failed"
+            loser_paused: true|false
+            winner_scaled: true|false
+            budget_change: "descricao da mudanca de budget"
+            strategy_md_updated: true|false
+            decision_log_entry: "Texto adicionado ao STRATEGY.md"
+            learning_documented: "Resumo do que foi aprendido"
+            next_test: "Proximo teste recomendado"
+            status: "complete"
+
+      error_handling:
+        - condition: "MCP falha ao pausar loser"
+          action: "Retry com backoff. Apos 3 falhas → HALT manual. Loser continua gastando"
+        - condition: "Budget change excede +20%"
+          action: "Aplicar rampagem (safety-rules.yaml): Day 1=25%, Day 3=50%, Day 7=100%"
+          reference: "config/safety-rules.yaml (rampagem section)"
+        - condition: "Winner entra em learning phase apos scale"
+          action: "Normal — aguardar 50 conversoes na nova configuracao antes de avaliar"
+        - condition: "STRATEGY.md nao encontrado"
+          action: "Criar STRATEGY.md a partir do template (templates/strategy.md)"
+
+      checkpoint:
+        id: CP_ACTION
+        decision: CONFIRM_ACTION
+        human_review: true  # HITL — acoes de budget e pause requerem aprovacao
+        criteria:
+          - "Loser pausada via API (read-back confirmado)"
+          - "Winner escalada com budget aprovado"
+          - "Action ledger atualizado"
+          - "STRATEGY.md decision log atualizado"
+          - "Learning documentado"
+          - "Proximo teste recomendado"
+
+  # ═══════════════════════════════════════════════════════════════
+  # COMPLETION SIGNALS
+  # ═══════════════════════════════════════════════════════════════
+
+  completion_signals:
+    success:
+      - "Resultado declarado com 95%+ confidence (winner_clear)"
+      - "Acao executada (loser paused, winner scaled)"
+      - "STRATEGY.md decision log atualizado"
+      - "Learning documentado"
+      - "Proximo teste recomendado"
+    partial_success:
+      - "Resultado marginal (90-95% confidence) com decisao tomada"
+      - "Early stop com vencedor claro (CPA > 3x divergence)"
+    failure:
+      - "Inconclusive apos duracao maxima"
+      - "Budget insuficiente para significancia"
+      - "Ambas variantes fracassaram (both_bad)"
+      - "Delivery desbalanceado (> 70/30) invalidando teste"
+
+  # ═══════════════════════════════════════════════════════════════
+  # OUTPUTS SUMMARY
+  # ═══════════════════════════════════════════════════════════════
+
+  outputs:
+    - ab-test-hypothesis.yaml  # Phase 1
+    - ab-test-variants.yaml  # Phase 2
+    - ab-test-execution.yaml  # Phase 3
+    - ab-test-analysis.yaml  # Phase 4
+    - ab-test-decision.yaml  # Phase 5
+    - ab-test-result.yaml  # Phase 6
+    - "STRATEGY.md decision log update"  # Phase 6
+
+  # ═══════════════════════════════════════════════════════════════
+  # AGENTS BY PHASE
+  # ═══════════════════════════════════════════════════════════════
+
+  handoff_prompts:
+    ad-midas_to_creative-analyst: >-
+      Hipotese definida e validada. Variavel de teste isolada. Entregar hipotese
+      para @creative-analyst criar variantes mantendo constantes.
+    creative-analyst_to_campaign-manager: >-
+      Variantes aprovadas pelo humano. Entregar para @campaign-manager publicar
+      ambas com budget 50/50 via MCP.
+    campaign-manager_to_performance-analyst: >-
+      Teste em execucao. Apos periodo minimo (7d) ou early stop trigger,
+      @performance-analyst coleta e analisa resultados.
+    performance-analyst_to_campaign-manager: >-
+      Decisao tomada (scale/kill/extend). @campaign-manager executa acao
+      aprovada pelo humano (pause loser, scale winner).
+
+  agents_by_phase:
+    hypothesis: ad-midas
+    variant_creation: creative-analyst
+    execution: campaign-manager
+    analysis: performance-analyst
+    decision: [performance-analyst, ad-midas]
+    action: campaign-manager
+
+  # ═══════════════════════════════════════════════════════════════
+  # METADATA
+  # ═══════════════════════════════════════════════════════════════
+
+  metadata:
+    created: "2026-03-18"
+    story: "SAIOX-ADS-V5-5.3"
+    adapted_from: "squads/media-buyer-squad/workflows/wf-ab-test-cycle.yaml"
+    total_phases: 6
+    estimated_duration: "10-17 dias por ciclo"
+    framework: "Constants vs Variables (Brandon Carter)"
+    min_budget: "R$100/dia (R$50 por variante)"
+    statistical_method: "Two-proportion z-test, 95% confidence, 50+ conversions/variant"

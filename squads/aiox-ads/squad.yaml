@@ -1,0 +1,485 @@
+# AIOX Ads - Multi-Agent Paid Traffic Squad
+# Version: 5.0.0 (Optimization: 13→10 agents, MCP integration, safety systems, concierge model)
+# Upgrade Date: 2026-03-17
+# Previous: v4.0.0 (Fusion: media-buyer-squad v2.0 + traffic-masters v3.0)
+# Epic: SAIOX-ADS-V5 | Story: SAIOX-ADS-V5-1.3
+
+name: aiox-ads
+version: 5.0.0
+description: |
+  Multi-platform paid traffic operational squad (Meta, Google, YouTube, TikTok, LinkedIn).
+  10 agents in 3 tiers: command/concierge, core execution, platform/market.
+  29 executable skills from 47 frameworks by 5+ experts.
+  Integration with 2 external MCPs (Pipeboard + ads-mcp) for real API execution.
+  Safety systems with 3 autonomy tiers (Auto/HITL/Human).
+  Concierge model: @ad-midas as the user's single interface.
+
+  v5.0.0 changes:
+  - Restructured 13→10 agents (removed ads-traffic-chief and audit-orchestrator)
+  - campaign-manager promoted to Tier 1 with Opus model (MCP execution)
+  - ad-midas: Lead → Strategist & Concierge
+  - fiscal: QA Gate → Quality Gate & Safety Officer
+  - Added: MCP tools, safety references, concierge model, progressive disclosure
+  - Expanded handoff rules between tiers
+
+author:
+  name: Thiago Finch
+  organization: BILHON
+  base: SynkraAI
+
+license: MIT
+
+keywords:
+  - paid-traffic
+  - meta-ads
+  - google-ads
+  - youtube-ads
+  - roas
+  - media-buyer
+  - performance-marketing
+  - trafego-pago
+  - multi-platform
+  - mcp-integrated
+  - safety-first
+
+workspace_integration:
+  level: controlled_runtime_consumer
+  rationale: >-
+    The AIOX Ads squad depends on canonical business context to operate
+    campaigns with quality, but the main runtime remains oriented toward
+    ads platforms and operational artifacts external to the workspace. The COO
+    resolves readiness before operational execution.
+  read_paths:
+    - workspace/config.yaml
+    - workspace/businesses/{business}/ads/
+  write_paths:
+    - workspace/businesses/{business}/ads/campaigns/
+  readiness_owner: workspace-chief
+  readiness_resolver: squads/aiox-workspace/scripts/resolve-squad-workspace-readiness.cjs
+
+# ═══════════════════════════════════════════════════════════════
+# SQUAD CONFIGURATION
+# ═══════════════════════════════════════════════════════════════
+squad:
+  id: aiox-ads
+  icon: "🎯"
+  activation: "@aiox-ads"
+  lead: ad-midas
+
+  # ─────────────────────────────────────────────────────────────
+  # CONCIERGE MODEL
+  # ─────────────────────────────────────────────────────────────
+  # The user interacts ONLY with ad-midas. It routes to
+  # specialized agents when needed. The user never
+  # needs to know which agents exist internally.
+  concierge:
+    entry_point: SKILL.md
+    concierge: ad-midas
+    routing: |
+      ad-midas receives ALL user interaction and decides:
+      1. Resolve directly (strategy, scaling decision)
+      2. Delegate to Tier 1 (core execution)
+      3. Delegate to Tier 2 (platform/market expertise)
+      The user receives a consolidated response via ad-midas.
+
+  # ─────────────────────────────────────────────────────────────
+  # PROGRESSIVE DISCLOSURE
+  # ─────────────────────────────────────────────────────────────
+  # Controls which skills/capabilities are exposed to the user
+  # based on account maturity level.
+  progressive_disclosure:
+    disclosure_mode: progressive
+    levels: [starter, growth, scale]
+    starter:
+      description: "New account or first campaign. Focus on setup and fundamentals."
+      skills_exposed: [campaign-structure, funnel-selection, tracking-audit, pixel-setup, ad-compliance-gate]
+      agents_visible: [ad-midas]
+    growth:
+      description: "Active campaigns, optimizing performance. Metrics and creatives."
+      skills_exposed: [metric-diagnosis, kill-scale-rules, budget-allocation, hook-generator, creative-brief, creative-fatigue-detector]
+      agents_visible: [ad-midas]
+    scale:
+      description: "Aggressive scaling, multi-platform. All capabilities."
+      skills_exposed: all
+      agents_visible: [ad-midas]
+
+  # ═══════════════════════════════════════════════════════════════
+  # TIER 0 — COMMAND & CONCIERGE (1 agent)
+  # ═══════════════════════════════════════════════════════════════
+  tier_0:
+    - id: ad-midas
+      name: Midas
+      icon: "🎯"
+      archetype: The Commander
+      role: Strategist & Concierge
+      file: agents/ad-midas.md
+      type: operational
+      skills: [campaign-monitor, funnel-selection, campaign-structure, scale-readiness-check, unit-economics]
+      whenToUse: "Campaign strategy, funnel selection, scaling decisions, squad coordination, user-facing concierge"
+
+  # ═══════════════════════════════════════════════════════════════
+  # TIER 1 — CORE EXECUTION (5 agents)
+  # ═══════════════════════════════════════════════════════════════
+  tier_1:
+    - id: campaign-manager
+      name: Executor
+      icon: "⚙️"
+      archetype: The Executor
+      role: API Executor
+      file: agents/campaign-manager.md
+      model: opus
+      type: operational
+      skills: [campaign-monitor, campaign-structure]
+      mcp_tools: [meta-ads-mcp, ads-mcp]
+      whenToUse: "Campaign creation via MCP, API execution, campaign state management, budget changes via API"
+      notes: |
+        Promoted from Sonnet to Opus in v5.0.0.
+        Only agent with WRITE permission via MCP tools.
+        Requires WAL (Write-Ahead Log) for all write operations.
+        All campaigns created with PAUSED status by default.
+
+    - id: performance-analyst
+      name: Dash
+      icon: "📊"
+      archetype: The Analyzer
+      role: Specialist
+      file: agents/performance-analyst.md
+      type: operational
+      skills: [metric-diagnosis, kill-scale-rules, budget-allocation, audience-expansion, funnel-analysis, attribution-analysis]
+      whenToUse: "Metric diagnosis, CPA/ROAS analysis, kill/scale decisions, budget allocation, performance numbers evaluation"
+
+    - id: creative-analyst
+      name: Nova
+      icon: "🎨"
+      archetype: The Creator
+      role: Specialist
+      file: agents/creative-analyst.md
+      type: operational
+      skills: [hook-generator, creative-brief, copy-generator, angle-generator, dsl-structure, creative-fatigue-detector]
+      whenToUse: "Hook generation, creative briefs, copy writing, DSL structure, creative fatigue, content quality evaluation"
+
+    - id: pixel-specialist
+      name: Track
+      icon: "📍"
+      archetype: The Tracker
+      role: Specialist
+      file: agents/pixel-specialist.md
+      type: operational
+      skills: [tracking-audit, attribution-analysis, pixel-setup]
+      whenToUse: "Pixel setup, audits, CAPI configuration, event setup, match rate optimization"
+
+    - id: fiscal
+      name: Sentinel
+      icon: "🛡️"
+      archetype: The Guardian
+      role: Quality Gate & Safety Officer
+      file: agents/fiscal.md
+      type: operational
+      skills: [ad-compliance-gate, scorecard-builder, accountability-loop]
+      whenToUse: "QA gate before publish, policy compliance, safety enforcement, scorecards, accountability tracking, ban prevention"
+      notes: |
+        Promoted from "QA Gate" to "Quality Gate & Safety Officer" in v5.0.0.
+        Responsible for enforcement of safety-rules.yaml and autonomy-tiers.yaml.
+        Mandatory gate before any HITL operation or campaign publish.
+
+  # ═══════════════════════════════════════════════════════════════
+  # TIER 2 — PLATFORM / MARKET (4 agents)
+  # ═══════════════════════════════════════════════════════════════
+  tier_2:
+    - id: kasim-aslam
+      name: Kasim
+      icon: "🔍"
+      archetype: The Architect
+      role: Platform Master (Google)
+      file: agents/kasim-aslam.md
+      type: operational
+      skills: [google-campaign-architect, google-search-optimizer]
+      whenToUse: "Google Ads campaigns, PMax, Search/Display, Quality Score, negative keywords"
+
+    - id: tom-breeze
+      name: Tom
+      icon: "🎬"
+      archetype: The Director
+      role: Platform Master (YouTube)
+      file: agents/tom-breeze.md
+      type: operational
+      skills: [youtube-ad-scriptwriter, youtube-campaign-launcher]
+      whenToUse: "YouTube Ads scripts, 7-Part structure, launch protocol, targeting pyramid"
+
+    - id: ralph-burns
+      name: Ralph
+      icon: "🚀"
+      archetype: The Scaler
+      role: Scaling Master
+      file: agents/ralph-burns.md
+      type: operational
+      skills: [creative-bombardment, forester-scaling-system]
+      whenToUse: "Aggressive scaling, Creative Lab bombardment, Forester 6-campaign structure"
+
+    - id: br-traffic-operator
+      name: Sobral
+      icon: "🇧🇷"
+      archetype: The Operator
+      role: Market Master (Brasil)
+      file: agents/br-traffic-operator.md
+      type: operational
+      skills: [br-campaign-ops]
+      whenToUse: "Brasil market, PAF 4 fases, BFCM seasonal, daily checklist, WhatsApp funnels"
+
+  # ═══════════════════════════════════════════════════════════════
+  # REMOVED AGENTS (v4.0.0 → v5.0.0)
+  # ═══════════════════════════════════════════════════════════════
+  # ads-traffic-chief: pure routing, no substantive work. SKILL.md + ad-midas concierge absorbs the function.
+  # audit-orchestrator: proxy for ads-audit sub-squad. Audit integrated via fiscal (Quality Gate & Safety Officer).
+
+  # ═══════════════════════════════════════════════════════════════
+  # COLLABORATION & HANDOFF RULES (v5 — Sprint 5 flows)
+  # ═══════════════════════════════════════════════════════════════
+  collaboration:
+    # ─────────────────────────────────────────────────────────────
+    # MANDATORY GATES
+    # ─────────────────────────────────────────────────────────────
+    # @fiscal is the MANDATORY quality/safety gate. No workflow may
+    # bypass fiscal validation. Every write operation, every campaign
+    # publish, every tracking audit — fiscal signs off or it doesn't ship.
+    mandatory_gate:
+      agent: fiscal
+      enforcement: |
+        1. No campaign goes live without fiscal QA PASS.
+        2. No MCP write operation executes without fiscal compliance check.
+        3. No workflow phase completes without fiscal validation when applicable.
+        4. Bypassing fiscal is a BLOCK-level violation.
+
+    # ─────────────────────────────────────────────────────────────
+    # MCP WRITE PERMISSION
+    # ─────────────────────────────────────────────────────────────
+    # @campaign-manager is the ONLY agent authorized to perform
+    # MCP write operations. All other agents are READ-ONLY.
+    mcp_write_permission:
+      exclusive_agent: campaign-manager
+      enforcement: |
+        1. Only campaign-manager may call MCP tools with write intent.
+        2. All other agents interact with MCP in read-only mode.
+        3. campaign-manager logs every write via WAL (Write-Ahead Log).
+        4. Violation = immediate HALT and escalation to ad-midas.
+
+    # ─────────────────────────────────────────────────────────────
+    # HANDOFF RULES
+    # ─────────────────────────────────────────────────────────────
+    handoff_rules:
+      # ── @ad-midas outbound (Tier 0 → Tier 1) ──
+      - from: ad-midas
+        to: campaign-manager
+        message: "Execute campaign as specified in briefing"
+        trigger: "briefing approved"
+      - from: ad-midas
+        to: creative-analyst
+        message: "Generate creatives as per briefing"
+        trigger: "creative direction set"
+      - from: ad-midas
+        to: pixel-specialist
+        message: "Validate tracking setup"
+        trigger: "tracking needed OR conversions == 0"
+      - from: ad-midas
+        to: performance-analyst
+        message: "Analyze metrics"
+        trigger: "metrics needed OR CPA > target"
+
+      # ── Tier 1 cross-handoffs ──
+      - from: creative-analyst
+        to: performance-analyst
+        message: "Evaluate creative performance"
+        trigger: "new creatives ready"
+      - from: performance-analyst
+        to: ad-midas
+        message: "Recommend kill/scale with data"
+        trigger: "scaling decision OR budget > 50%"
+      - from: performance-analyst
+        to: creative-analyst
+        message: "Creative refresh needed"
+        trigger: "creative fatigue detected"
+
+      # ── @fiscal mandatory gates (Tier 1 → fiscal) ──
+      - from: campaign-manager
+        to: fiscal
+        message: "Validate campaign before reporting done"
+        trigger: "MANDATORY after every create"
+      - from: pixel-specialist
+        to: fiscal
+        message: "Report EMQ score"
+        trigger: "tracking audit complete"
+
+      # ── Universal fiscal gate ──
+      - from: ANY
+        to: fiscal
+        message: "Compliance check before any write operation"
+        trigger: "MANDATORY"
+
+      # ── @ad-midas → Tier 2 (platform/market routing) ──
+      - from: ad-midas
+        to: kasim-aslam
+        message: "Google Ads strategy"
+        trigger: "platform == google"
+      - from: ad-midas
+        to: tom-breeze
+        message: "YouTube Ads strategy"
+        trigger: "platform == youtube"
+      - from: ad-midas
+        to: ralph-burns
+        message: "Aggressive scaling"
+        trigger: "scale mode"
+      - from: ad-midas
+        to: br-traffic-operator
+        message: "Brasil market ops"
+        trigger: "market == brasil"
+
+# ═══════════════════════════════════════════════════════════════
+# MCP TOOLS
+# ═══════════════════════════════════════════════════════════════
+# Detailed MCP configuration in separate file.
+# squad.yaml declares the reference; mcp-config.json has the details.
+mcp_tools:
+  config_file: mcp/mcp-config.json
+  servers:
+    - name: meta-ads-mcp
+      provider: Pipeboard
+      purpose: "Meta Ads R/W operations (primary)"
+      platforms: [meta]
+    - name: ads-mcp
+      provider: Adspirer
+      purpose: "Cross-platform operations + Meta fallback"
+      platforms: [google, linkedin, tiktok, meta-fallback]
+  rules:
+    - "Never two MCPs writing to the same campaign/ad simultaneously"
+    - "Pipeboard = primary Meta R/W operations"
+    - "ads-mcp = cross-platform + Meta fallback if Pipeboard unavailable"
+    - "Separate tokens for each MCP (avoid exhausting rate limit 2x)"
+
+# ═══════════════════════════════════════════════════════════════
+# SAFETY SYSTEMS
+# ═══════════════════════════════════════════════════════════════
+# Safety files that govern ALL squad operations.
+# Created in Story 1.5 (SAIOX-ADS-V5-1.5).
+safety:
+  autonomy_tiers: config/autonomy-tiers.yaml
+  safety_rules: config/safety-rules.yaml
+  rate_limits: data/rate-limits.yaml
+  enforcement:
+    - "Every WRITE operation requires Auto/HITL/Human classification"
+    - "Campaigns ALWAYS created with PAUSED status"
+    - "Budget changes > 20% require human approval (HITL)"
+    - "fiscal is mandatory gate before any publish"
+    - "Max +20%/day of ad spend (ban prevention)"
+
+# ═══════════════════════════════════════════════════════════════
+# SKILLS (29 total: 18 original + 11 fusion)
+# ═══════════════════════════════════════════════════════════════
+skills:
+  strategic:
+    - campaign-structure
+    - funnel-selection
+    - scale-readiness-check
+    - unit-economics
+    - google-campaign-architect      # NEW — kasim-aslam
+    - youtube-campaign-launcher      # NEW — tom-breeze
+    - forester-scaling-system        # NEW — ralph-burns
+    - scorecard-builder              # NEW — fiscal
+  diagnostic:
+    - metric-diagnosis
+    - tracking-audit
+    - funnel-analysis
+    - attribution-analysis
+    - creative-fatigue-detector
+  generative:
+    - hook-generator
+    - creative-brief
+    - copy-generator
+    - angle-generator
+    - dsl-structure
+    - youtube-ad-scriptwriter        # NEW — tom-breeze
+  optimization:
+    - kill-scale-rules
+    - budget-allocation
+    - audience-expansion
+    - google-search-optimizer        # NEW — kasim-aslam
+    - creative-bombardment           # NEW — ralph-burns
+  automation:
+    - campaign-monitor
+  operational:
+    - ad-compliance-gate             # NEW — fiscal
+    - accountability-loop            # NEW — fiscal
+    - pixel-setup                    # NEW — pixel-specialist
+    - br-campaign-ops                # NEW — br-traffic-operator
+
+# ═══════════════════════════════════════════════════════════════
+# EXPERT SOURCES (47 frameworks from 5 experts)
+# ═══════════════════════════════════════════════════════════════
+expert_sources:
+  jeremy_haynes:
+    frameworks: 28
+    weight: 0.95
+    primary: [DSL Revolution, CBO vs ABO, Kill/Scale Rules, Funnel Selection, Constants vs Variables]
+  brian_moncada:
+    frameworks: 10
+    weight: 0.90
+    primary: [Andromeda Method, Metric Thresholds, Audience Saturation]
+  alex_hormozi:
+    frameworks: 5
+    weight: 0.92
+    primary: [Unit Economics, LTV/CAC Ratio, Hydra Strategy]
+  brandon_carter:
+    frameworks: 3
+    weight: 0.88
+    primary: [Constants vs Variables, Scientific Hook Testing]
+  jordan_stupar:
+    frameworks: 1
+    weight: 0.85
+    primary: [Creative Strategy]
+
+# ═══════════════════════════════════════════════════════════════
+# SKILL EXTRACTION LOG (Pipeline Alan — 2026-03-16)
+# ═══════════════════════════════════════════════════════════════
+# Source: 10 playbooks do Mega Brain (28.971 files, 32 playbooks)
+# Assessment: 25 checkpoints x 5 dimensoes → 3 MIXED, 7 BRONZE
+# Extraction: ~87 frameworks → Pareto ao Cubo → 3 genialidade (0.8%) + 15 excelencia (4%)
+# Result: 11 novas skills criadas (10 + 1 formalizada)
+# All 10 agents now type: operational
+
+# ═══════════════════════════════════════════════════════════════
+# FUSION METADATA
+# ═══════════════════════════════════════════════════════════════
+fusion:
+  date: "2026-03-16"
+  sources:
+    - name: media-buyer-squad
+      version: "2.0.0"
+      contributed: "4 agents, 18 skills, 5 tasks, 2 checklists, 3 templates, 3 configs"
+    - name: traffic-masters
+      version: "3.0.0"
+      contributed: "5 agents (kasim-aslam, tom-breeze, ralph-burns, br-traffic-operator, fiscal)"
+  cut_agents:
+    - traffic-masters-chief  # routing absorbed by ad-midas
+    - molly-pittman          # advisory absorbed by ad-midas frameworks
+    - depesh-mandalia        # BPM absorbed by ad-midas Meta strategy
+    - nicholas-kusmich       # lead gen absorbed by funnel-selection skill
+    - media-buyer            # superseded by ad-midas
+    - ads-analyst            # diagnostics absorbed by performance-analyst
+    - scale-optimizer        # scaling absorbed by ad-midas + performance-analyst
+  v5_cut_agents:
+    - ads-traffic-chief      # routing absorbed by SKILL.md + ad-midas concierge model
+    - audit-orchestrator     # proxy removed, auditoria integrada via fiscal
+
+dependencies:
+  aios-core: "^3.0.0"
+
+metadata:
+  created: "2026-03-16"
+  updated: "2026-03-17"
+  status: active
+  maturity: production
+  score: 9.2
+
+tags:
+  platforms: [meta-ads, google-ads, youtube-ads, tiktok-ads, linkedin-ads]
+  markets: [brasil, latam]
+  use_cases: [lead-generation, ecommerce, infoproducts, saas]

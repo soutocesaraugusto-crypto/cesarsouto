@@ -1,0 +1,320 @@
+name: aiox-workspace
+version: "1.1.0"
+description: |
+  Squad AIOX Workspace - Gestão de workspace, businesses, diagnósticos e operações.
+  Responsável por elicitação profunda, geração de documentos de referência,
+  e organização completa do workspace com visão executiva.
+
+  Suporta múltiplos negócios (businesses) dentro de um único workspace.
+
+author: Synkra AIOX
+license: MIT
+entry_agent: workspace-chief
+tested: true
+
+# Squad metadata
+metadata:
+  version: "1.0.0"
+  score: 7.4
+  category: strategy
+  tags:
+    - executive
+    - workspace
+    - company-structure
+    - elicitation
+    - strategy
+    - multi-business
+  maturity: beta
+
+workspace_integration:
+  level: workspace_first
+  rationale: >-
+    AIOX Workspace coordena a estrutura canônica de `workspace`, então precisa validar
+    bootstrap, templates e contexto antes de qualquer elicitação.
+  read_paths:
+    - workspace/config.yaml
+    - workspace/user.yaml
+    - workspace/config.yaml
+    - workspace/businesses/
+    - workspace/_templates/company/
+    - workspace/_templates/operations/
+  write_paths:
+    - workspace/businesses/
+    - workspace/config.yaml
+    - docs/qa/workspace-health/
+  bootstrap:
+    required: true
+    script: "scripts/bootstrap-aiox-workspace.sh"
+  essentials_validation:
+    required: true
+    script: "scripts/validate-workspace-essentials.sh"
+
+# Agents in this squad
+agents:
+  - id: workspace-chief
+    file: agents/workspace-chief.md
+    role: Chief Operating Officer - Orchestrator
+    description: Orquestra o squad, coordena estrutura geral do workspace
+    is_lead: true
+    tier: orchestrator
+
+  - id: vision-strategist
+    file: agents/vision-strategist.md
+    role: Chief Executive Officer
+    description: Visão estratégica macro, direção geral, missão e visão
+    tier: 0
+
+  - id: cmo-architect
+    file: agents/cmo-architect.md
+    role: Chief Marketing Officer
+    description: ICP, proposta de valor, brand, messaging, posicionamento
+    tier: 0
+
+  - id: cto-architect
+    file: agents/cto-architect.md
+    role: Chief Technology Officer
+    description: Estratégia tecnológica, escolhas de stack, roadmap técnico
+    tier: 1
+
+  - id: cio-engineer
+    file: agents/cio-engineer.md
+    role: Chief Information Officer
+    description: Tech stack operacional, code standards, infraestrutura
+    tier: 1
+
+  - id: caio-architect
+    file: agents/caio-architect.md
+    role: Chief AI Officer
+    description: Estratégia de IA, configuração de agentes, orquestração
+    tier: 1
+
+# Tasks available
+tasks:
+  # Bootstrap (required first)
+  - id: bootstrap
+    file: tasks/bootstrap.md
+    description: Primeira task obrigatória - cria user.md e estrutura inicial
+    required: true
+    order: 1
+
+  - id: load-workspace-context
+    file: tasks/load-workspace-context.md
+    description: Carrega contexto do workspace antes de orquestrar handoffs
+    agent: workspace-chief
+
+  - id: resolve-squad-workspace-readiness
+    file: tasks/resolve-squad-workspace-readiness.md
+    description: Resolve readiness canônico de workspace para squads consumidores
+    agent: workspace-chief
+
+  - id: classify-squad-workspace-fit
+    file: tasks/classify-squad-workspace-fit.md
+    description: Decide se um squad deve integrar com workspace e em qual nível
+    agent: workspace-chief
+
+  # Business management
+  - id: add-business
+    file: tasks/add-business.md
+    description: Adiciona novo negócio ao workspace
+    agent: workspace-chief
+
+  # Elicitation tasks by AIOX Workspace
+  - id: elicit-vision
+    file: tasks/elicit-vision.md
+    description: CEO elicita missão, visão e direção estratégica
+    agent: vision-strategist
+
+  - id: elicit-icp
+    file: tasks/elicit-icp.md
+    description: CMO elicita ICP, proposta de valor, brand e messaging
+    agent: cmo-architect
+
+  - id: elicit-tech-strategy
+    file: tasks/elicit-tech-strategy.md
+    description: CTO elicita estratégia tecnológica e roadmap
+    agent: cto-architect
+
+  - id: elicit-tech-stack
+    file: tasks/elicit-tech-stack.md
+    description: CIO elicita tech stack, code standards e infraestrutura
+    agent: cio-engineer
+
+  - id: elicit-ai-strategy
+    file: tasks/elicit-ai-strategy.md
+    description: CAIO elicita estratégia de IA, modelos e orquestração
+    agent: caio-architect
+
+  - id: elicit-operations
+    file: tasks/elicit-operations.md
+    description: COO elicita estrutura operacional e processos
+    agent: workspace-chief
+
+  # Full workspace setup
+  - id: setup-workspace
+    file: tasks/setup-workspace.md
+    description: Configura workspace completo (executa todas as elicitações)
+    agent: workspace-chief
+
+  # Business Profile Pipeline (YAML-output tasks)
+  - id: scaffold-templates
+    file: tasks/scaffold-templates.md
+    description: Copia templates YAML de _templates/ para diretório do negócio
+    agent: workspace-chief
+
+  - id: setup-business-profile
+    file: tasks/setup-business-profile.md
+    description: Pipeline completo de perfil de negócio (6 fases, 7 YAMLs)
+    agent: workspace-chief
+
+  - id: elicit-company-profile
+    file: tasks/elicit-company-profile.md
+    description: COO elicita perfil completo da empresa → company-profile.yaml
+    agent: workspace-chief
+
+  - id: elicit-founder-dna
+    file: tasks/elicit-founder-dna.md
+    description: CEO elicita DNA do fundador → founder-dna.yaml
+    agent: vision-strategist
+
+  - id: elicit-credentials
+    file: tasks/elicit-credentials.md
+    description: CEO elicita credenciais e provas de autoridade → credentials.yaml
+    agent: vision-strategist
+
+  - id: elicit-team-structure
+    file: tasks/elicit-team-structure.md
+    description: COO elicita estrutura de time → team-structure.yaml
+    agent: workspace-chief
+
+  - id: elicit-icp-yaml
+    file: tasks/elicit-icp-yaml.md
+    description: CMO elicita ICP completo com diagnosis gate → icp.yaml
+    agent: cmo-architect
+
+  - id: elicit-brand-yaml
+    file: tasks/elicit-brand-yaml.md
+    description: CMO elicita brand guidelines completo → brand.yaml
+    agent: cmo-architect
+
+  - id: elicit-pricing-strategy
+    file: tasks/elicit-pricing-strategy.md
+    description: CMO elicita estratégia de pricing → pricing-strategy.yaml
+    agent: cmo-architect
+
+  # Product-level tasks
+  - id: add-product
+    file: tasks/add-product.md
+    description: Adiciona novo produto ao workspace com posicionamento próprio
+    agent: cmo-architect
+
+  # Governance tasks (COO)
+  - id: workspace-health-check
+    file: tasks/workspace-health-check.md
+    description: Auditoria completa de saúde do workspace (semanal)
+    agent: workspace-chief
+    trigger: scheduled
+    schedule: "0 9 * * 1"
+
+# Checklists
+checklists:
+  - id: workspace-health-checklist
+    file: checklists/workspace-health-checklist.md
+    description: Checklist completo para validação de saúde do workspace
+    owner: workspace-chief
+
+  - id: squad-workspace-fit-checklist
+    file: checklists/squad-workspace-fit-checklist.md
+    description: Checklist de decisão para classificar integração de squads com workspace
+    owner: workspace-chief
+
+# Workflows
+workflows:
+  - id: workspace-governance
+    file: workflows/workspace-governance.yaml
+    description: Workflow de governança com validações automáticas e agendadas
+    owner: workspace-chief
+
+  - id: business-profile-pipeline
+    file: workflows/business-profile-pipeline.yaml
+    description: Pipeline de 6 fases para elicitação completa do perfil de negócio (7 YAMLs)
+    owner: workspace-chief
+
+# Workspace structure this squad manages (multi-business)
+workspace_structure:
+  root: workspace/
+
+  # Root level files
+  root_files:
+    - path: workspace/user.yaml
+      owner: bootstrap
+      description: Bootstrap - informações do usuário
+      required: true
+
+    - path: workspace/config.yaml
+      owner: workspace-chief
+      description: Configuração geral do workspace
+
+  # Business structure template
+  business_template:
+    path: workspace/businesses/{business-slug}/
+    directories:
+      company:
+        path: company/
+        owner: cmo-architect + vision-strategist
+        files:
+          - icp.md (CMO)
+          - mission-vision.md (CEO)
+          - value-proposition.md (CMO)
+          - elevator-pitch.md (CMO)
+          - brand.md (CMO)
+
+      operations:
+        path: operations/
+        owner: workspace-chief + cmo-architect
+        files:
+          - team-structure.yaml (COO)
+          - pricing-strategy.yaml (CMO)
+          - kpi-scorecards.yaml (COO, placeholder)
+          - commission-design.yaml (COO, placeholder)
+
+      products:
+        path: products/{product-slug}/
+        owner: cmo-architect + workspace-chief
+        files:
+          - positioning.md (CMO)
+          - offer.md (CMO)
+          - operations.md (COO)
+
+      tech:
+        path: tech/
+        owner: cto-architect + cio-engineer
+        files:
+          - strategy.md (CTO)
+          - stack.md (CIO)
+          - code_stand.md (CIO)
+          - infra.md (CIO)
+
+      ai:
+        path: ai/
+        owner: caio-architect
+        files:
+          - strategy.md
+          - models.md
+          - agents.md
+
+  # Shared across businesses
+  shared:
+    - path: workspace/design/
+      owner: transversal
+      description: Design system compartilhado
+      subdirs:
+        - tokens/
+        - components/
+        - styles/
+
+# Dependencies
+dependencies:
+  squads: []
+  tools:
+    - name: elicitation
+      description: Framework de elicitação estruturada

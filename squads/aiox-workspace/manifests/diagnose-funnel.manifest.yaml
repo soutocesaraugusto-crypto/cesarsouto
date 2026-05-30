@@ -1,0 +1,189 @@
+# Context Manifest: diagnose-funnel
+# Variáveis para diagnóstico vertical de saúde do funil (product-level)
+# Baseado nos templates: buyer-journey, conversion-funnel, email-sequences,
+# campaign-brief, hooks, headlines, sales-page, launch-playbook
+
+manifest:
+  id: diagnose-funnel
+  version: "1.0.0"
+  description: Contexto para diagnóstico de funil por produto
+  total_variables: 32
+  agent: cmo-architect
+
+params:
+  required:
+    - slug     # business slug
+    - product  # product slug
+  optional: []
+
+variables:
+
+  # === BUYER-JOURNEY.YAML ===
+  - id: buyer_journey_exists
+    source: "products/{product}/marketing/buyer-journey.yaml"
+    field: _exists
+    type: boolean
+
+  - id: buyer_journey_stages_count
+    source: "products/{product}/marketing/buyer-journey.yaml"
+    field: buyer_journey
+    type: array_length  # 6 stages
+
+  - id: buyer_journey_touchpoints_total
+    source: "products/{product}/marketing/buyer-journey.yaml"
+    field: buyer_journey.*.touchpoints
+    type: array_length_sum
+
+  - id: buyer_journey_dropout_prevention
+    source: "products/{product}/marketing/buyer-journey.yaml"
+    field: dropout_prevention
+    type: array_length
+
+  - id: buyer_journey_retention_hooks
+    source: "products/{product}/marketing/buyer-journey.yaml"
+    field: retention_hooks
+    type: array_length
+
+  - id: buyer_journey_metrics
+    source: "products/{product}/marketing/buyer-journey.yaml"
+    field: overall_journey_metrics
+    type: completeness
+
+  # === CONVERSION-FUNNEL.YAML ===
+  - id: conversion_funnel_exists
+    source: "products/{product}/marketing/conversion-funnel.yaml"
+    field: _exists
+    type: boolean
+
+  - id: funnel_stages_count
+    source: "products/{product}/marketing/conversion-funnel.yaml"
+    field: _stages
+    type: integer  # 5 stages
+
+  - id: funnel_awareness_volume
+    source: "products/{product}/marketing/conversion-funnel.yaml"
+    field: stage_1_awareness.volume_target
+    type: number
+
+  - id: funnel_conversion_rate
+    source: "products/{product}/marketing/conversion-funnel.yaml"
+    field: stage_5_conversion.conversion_from_decision
+    type: percentage
+
+  - id: funnel_math_complete
+    source: "products/{product}/marketing/conversion-funnel.yaml"
+    field: funnel_math
+    type: completeness
+
+  - id: funnel_health_score
+    source: "products/{product}/marketing/conversion-funnel.yaml"
+    field: funnel_health_score
+    type: score_block
+
+  - id: funnel_bottleneck_stages
+    source: "products/{product}/marketing/conversion-funnel.yaml"
+    field: "*.bottleneck_diagnostic"
+    type: array  # quais stages têm bottleneck identificado
+
+  # === EMAIL-SEQUENCES.YAML ===
+  - id: email_sequences_exists
+    source: "products/{product}/marketing/email-sequences.yaml"
+    field: _exists
+    type: boolean
+
+  - id: email_sequences_count
+    source: "products/{product}/marketing/email-sequences.yaml"
+    field: sequences
+    type: array_length
+
+  - id: email_total_emails
+    source: "products/{product}/marketing/email-sequences.yaml"
+    field: sequences.*.emails
+    type: array_length_sum
+
+  # === CAMPAIGN-BRIEF.YAML ===
+  - id: campaign_brief_exists
+    source: "products/{product}/marketing/campaign-brief.yaml"
+    field: _exists
+    type: boolean
+
+  - id: campaign_objective
+    source: "products/{product}/marketing/campaign-brief.yaml"
+    field: objective.primary_outcome
+    type: string
+
+  - id: campaign_awareness_stage
+    source: "products/{product}/marketing/campaign-brief.yaml"
+    field: audience.awareness_stage
+    type: string
+
+  - id: campaign_traffic_temperature
+    source: "products/{product}/marketing/campaign-brief.yaml"
+    field: audience.traffic_temperature
+    type: string
+
+  - id: campaign_channels_count
+    source: "products/{product}/marketing/campaign-brief.yaml"
+    field: channels.in_scope
+    type: array_length
+
+  - id: campaign_proof_sources
+    source: "products/{product}/marketing/campaign-brief.yaml"
+    field: proof.proof_sources
+    type: array_length
+
+  # === HOOKS.YAML ===
+  - id: hooks_exists
+    source: "products/{product}/marketing/hooks.yaml"
+    field: _exists
+    type: boolean
+
+  - id: hooks_count
+    source: "products/{product}/marketing/hooks.yaml"
+    field: hooks
+    type: array_length
+
+  # === HEADLINES.YAML ===
+  - id: headlines_exists
+    source: "products/{product}/marketing/headlines.yaml"
+    field: _exists
+    type: boolean
+
+  - id: headlines_count
+    source: "products/{product}/marketing/headlines.yaml"
+    field: headlines
+    type: array_length
+
+  # === SALES-PAGE.YAML ===
+  - id: sales_page_exists
+    source: "products/{product}/marketing/sales-page.yaml"
+    field: _exists
+    type: boolean
+
+  # === LAUNCH-PLAYBOOK.YAML ===
+  - id: launch_playbook_exists
+    source: "products/{product}/marketing/launch-playbook.yaml"
+    field: _exists
+    type: boolean
+
+  # === WEBINAR-SCRIPT.YAML ===
+  - id: webinar_script_exists
+    source: "products/{product}/marketing/webinar-script.yaml"
+    field: _exists
+    type: boolean
+
+  # === CONTEXTO ICP (para cross-check funil↔ICP) ===
+  - id: icp_awareness_level
+    source: "company/diagnosis.yaml"
+    field: market_awareness_level.identified_level
+    type: string
+
+  - id: icp_sophistication_stage
+    source: "company/diagnosis.yaml"
+    field: market_sophistication_stage.identified_stage
+    type: string
+
+  - id: icp_action_triggers
+    source: "company/icp.yaml"
+    field: motivations_action_triggers
+    type: array_length

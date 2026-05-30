@@ -1,0 +1,199 @@
+# Context Manifest: diagnose-movement
+# Variáveis para diagnóstico vertical de maturidade do movimento
+# Baseado nos 43 templates de movement/
+
+manifest:
+  id: diagnose-movement
+  version: "1.0.0"
+  description: Contexto para diagnóstico de maturidade do movimento cultural
+  total_variables: 35
+  agent: workspace-chief
+
+params:
+  required:
+    - slug  # business slug
+  optional: []
+
+variables:
+
+  # === FOUNDATION ===
+  - id: tribe_identity_exists
+    source: "movement/foundation/tribe-identity.yaml"
+    field: _exists
+    type: boolean
+
+  - id: tribe_archetypes_count
+    source: "movement/foundation/tribe-identity.yaml"
+    field: tribe.archetypes
+    type: array_length
+
+  - id: tribe_transformation_stages
+    source: "movement/foundation/tribe-identity.yaml"
+    field: tribe.transformation_arc.stages
+    type: array_length
+
+  - id: tribe_semantic_clusters
+    source: "movement/foundation/tribe-identity.yaml"
+    field: tribe.semantic_clusters
+    type: array_length
+
+  - id: tribe_narrative_gaps
+    source: "movement/foundation/tribe-identity.yaml"
+    field: tribe.narrative_gaps
+    type: array_length
+
+  # === IDENTITY ===
+  - id: leaders_exists
+    source: "movement/identity/leaders.yaml"
+    field: _exists
+    type: boolean
+
+  - id: leaders_count
+    source: "movement/identity/leaders.yaml"
+    field: leaders
+    type: array_length
+
+  - id: leaders_have_values
+    source: "movement/identity/leaders.yaml"
+    field: leaders.*.top_values
+    type: boolean_any  # pelo menos 1 leader tem values
+
+  - id: leaders_have_phrases
+    source: "movement/identity/leaders.yaml"
+    field: leaders.*.signature_phrases
+    type: boolean_any
+
+  - id: founders_dynamics_exists
+    source: "movement/identity/founders-dynamics.yaml"
+    field: _exists
+    type: boolean
+
+  - id: matrix_n3_n4_exists
+    source: "movement/identity/matrix-n3-n4.yaml"
+    field: _exists
+    type: boolean
+
+  # === SYSTEM ===
+  - id: cosmology_exists
+    source: "movement/system/cosmology.yaml"
+    field: _exists
+    type: boolean
+
+  - id: cosmology_axioms_count
+    source: "movement/system/cosmology.yaml"
+    field: cosmology.axioms
+    type: array_length
+
+  - id: cosmology_doctrine_core_count
+    source: "movement/system/cosmology.yaml"
+    field: cosmology.doctrine_core
+    type: array_length
+
+  - id: mrd_doctrines_exists
+    source: "movement/system/mrd-bank/doctrines.yaml"
+    field: _exists
+    type: boolean
+
+  - id: mrd_myths_exists
+    source: "movement/system/mrd-bank/myths.yaml"
+    field: _exists
+    type: boolean
+
+  - id: mrd_rites_exists
+    source: "movement/system/mrd-bank/rites.yaml"
+    field: _exists
+    type: boolean
+
+  - id: mrd_vocabulary_exists
+    source: "movement/system/mrd-bank/vocabulary.yaml"
+    field: _exists
+    type: boolean
+
+  # === DIAGNOSTICS / HEALTH ===
+  - id: movement_health_exists
+    source: "movement/diagnostics/movement-health.yaml"
+    field: _exists
+    type: boolean
+
+  - id: health_doctrine_consistency
+    source: "movement/diagnostics/movement-health.yaml"
+    field: health.doctrine_consistency
+    type: string  # green|yellow|red|pending
+
+  - id: health_ritual_adoption
+    source: "movement/diagnostics/movement-health.yaml"
+    field: health.ritual_adoption
+    type: string
+
+  - id: health_narrative_cohesion
+    source: "movement/diagnostics/movement-health.yaml"
+    field: health.narrative_cohesion
+    type: string
+
+  - id: health_flywheel_know_trust
+    source: "movement/diagnostics/movement-health.yaml"
+    field: health.flywheel_transition_health.know_to_trust
+    type: string
+
+  - id: health_root_causes
+    source: "movement/diagnostics/movement-health.yaml"
+    field: analysis.root_causes
+    type: array_length
+
+  # === CYCLE ===
+  - id: cycle_strategy_exists
+    source: "movement/cycle/strategy.yaml"
+    field: _exists
+    type: boolean
+
+  - id: cycle_type
+    source: "movement/cycle/strategy.yaml"
+    field: cycle_strategy.cycle_type
+    type: string
+
+  - id: cycle_objective_metric
+    source: "movement/cycle/strategy.yaml"
+    field: cycle_strategy.objective.primary_metric
+    type: string
+
+  - id: cycle_channels_count
+    source: "movement/cycle/strategy.yaml"
+    field: cycle_strategy.channel_strategy
+    type: array_length
+
+  - id: cycle_doctrines_prioritized
+    source: "movement/cycle/strategy.yaml"
+    field: cycle_strategy.doctrine_prioritization
+    type: array_length
+
+  # === READING / INTAKE ===
+  - id: fenomenologia_exists
+    source: "movement/reading/fenomenologia-cultural.yaml"
+    field: _exists
+    type: boolean
+
+  - id: ideological_personas_exists
+    source: "movement/reading/persona/ideological-personas.yaml"
+    field: _exists
+    type: boolean
+
+  - id: intake_sources_exists
+    source: "movement/intake/sources.yaml"
+    field: _exists
+    type: boolean
+
+  # === CROSS-CHECK: brand archetype ===
+  - id: brand_archetype
+    source: "brand/brandbook.yaml"
+    field: archetype_mix
+    type: object
+
+  - id: brand_voice_tone
+    source: "brand/brandbook.yaml"
+    field: voice
+    type: object
+
+  - id: brand_enemy
+    source: "brand/brandbook.yaml"
+    field: positioning.enemy_core
+    type: string

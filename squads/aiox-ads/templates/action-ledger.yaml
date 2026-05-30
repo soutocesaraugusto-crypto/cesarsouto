@@ -1,0 +1,107 @@
+# Action Ledger Template — AIOX Ads Squad
+# Append-only log com rotacao mensal. Registro de TODA acao executada na campanha.
+# Salvo em: workspace/businesses/{slug}/ads/{platform}/{campaign_slug}/ledger-YYYY-MM.yaml
+# Arquivo companheiro: _archive/ledger-YYYY-MM.yaml (meses anteriores)
+#
+# Story: SAIOX-ADS-V5-2.4 (AC7)
+# Created: 2026-03-17
+# Sources:
+#   - Roundtable P0 #8: Action ledger append-only com rotacao mensal (~60KB/mes)
+#   - safety-rules.yaml: write_ahead_log (WAL) pattern
+#   - autonomy-tiers.yaml: tier-tagged actions
+
+version: "1.0.0"
+template: action-ledger
+managed_by: "@campaign-manager"  # Unico agente que escreve no ledger
+audited_by: "@fiscal"            # Fiscal audita o ledger para compliance
+
+# ═══════════════════════════════════════════════════════════════
+# HEADER
+# ═══════════════════════════════════════════════════════════════
+
+header:
+  campaign_slug: ""           # ref: campaign-state.yaml campaign.slug
+  month: ""                   # ex: "2026-03"
+  total_actions: 0            # contador incremental
+  last_action_id: ""          # ex: "ACT-047"
+
+# ═══════════════════════════════════════════════════════════════
+# ACTIONS (append-only)
+# ═══════════════════════════════════════════════════════════════
+# Cada entrada e imutavel apos escrita. Nunca editar, nunca deletar.
+# Novo registro = append ao final da lista.
+#
+# Campos:
+#   id: ACT-NNN (sequencial, nunca reutilizado)
+#   timestamp: ISO8601
+#   agent: quem executou a acao (ex: "@campaign-manager", "@performance-analyst")
+#   action: ID da acao em autonomy-tiers.yaml (ex: "activate-campaign", "collect-campaign-metrics")
+#   params: snapshot dos parametros relevantes (YAML inline)
+#   result: resultado da acao (ex: "success", "failed:timeout", "failed:rate_limit")
+#   tier: tier em autonomy-tiers.yaml ("auto" | "hitl" | "human")
+#
+# Para acoes HITL: registrar quem aprovou
+#   approved_by: "humano" (com timestamp de aprovacao)
+#
+# Para acoes com WAL: referenciar o WAL entry
+#   wal_ref: "WAL-2026-03-001"
+
+actions: []
+  # Exemplo de entries:
+  #
+  # - id: "ACT-001"
+  #   timestamp: "2026-03-17T14:30:00Z"
+  #   agent: "@campaign-manager"
+  #   action: "collect-campaign-metrics"
+  #   params:
+  #     campaign_id: "120210345678901234"
+  #     metrics_requested: ["spend", "cpa", "roas", "ctr"]
+  #   result: "success"
+  #   tier: "auto"
+  #
+  # - id: "ACT-002"
+  #   timestamp: "2026-03-17T15:00:00Z"
+  #   agent: "@campaign-manager"
+  #   action: "activate-campaign"
+  #   params:
+  #     campaign_id: "120210345678901234"
+  #     from_status: "paused"
+  #     to_status: "active"
+  #   result: "success"
+  #   tier: "hitl"
+  #   approved_by: "Thiago Finch"
+  #   approved_at: "2026-03-17T14:58:00Z"
+  #   wal_ref: "WAL-2026-03-001"
+  #
+  # - id: "ACT-003"
+  #   timestamp: "2026-03-17T16:00:00Z"
+  #   agent: "@performance-analyst"
+  #   action: "detect-anomaly-cpa"
+  #   params:
+  #     campaign_id: "120210345678901234"
+  #     current_cpa: 85.00
+  #     target_cpa: 30.00
+  #     threshold: "2x"
+  #   result: "anomaly_detected"
+  #   tier: "auto"
+
+# ═══════════════════════════════════════════════════════════════
+# ARCHIVE CONVENTION
+# ═══════════════════════════════════════════════════════════════
+# Ao virar o mes:
+#   1. Rename arquivo atual para _archive/ledger-YYYY-MM.yaml
+#   2. Criar novo ledger-YYYY-MM.yaml com header limpo
+#   3. Continuar ACT-NNN sequencial (nao resetar para ACT-001)
+#
+# Path de arquivamento:
+#   workspace/businesses/{slug}/ads/{platform}/{campaign_slug}/_archive/ledger-YYYY-MM.yaml
+#
+# Max ~60KB/mes (~300-400 actions). Se exceder, investigar automacao excessiva.
+
+# ═══════════════════════════════════════════════════════════════
+# SIZE BUDGET
+# ═══════════════════════════════════════════════════════════════
+# Estimativa: cada action entry ~150-200 bytes em YAML
+# 60KB / 175 bytes = ~340 actions/mes
+# ~11 actions/dia = operacao normal (coletas + analises + ajustes)
+# Se > 20 actions/dia consistentemente: review automacao para otimizar

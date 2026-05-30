@@ -1,0 +1,287 @@
+# Safety Rules — AIOX Ads Squad
+# Regras de segurança que governam TODA operação da squad.
+# Agentes DEVEM ler este arquivo antes de qualquer operação de write.
+#
+# Story: SAIOX-ADS-V5-1.5
+# Created: 2026-03-17
+# Sources:
+#   - Roundtable consolidado (03-roundtable.md) — P0 #2, #7, #8
+#   - Meta API Risks & Bans research (05-meta-api-risks-bans.md)
+#   - Squad.yaml v5.0.0 safety section
+#   - Ban Wave 2026 prevention patterns
+#   - Advolve case study (rampagem gradual)
+
+version: "1.0.0"
+squad: aiox-ads
+enforced_by: fiscal  # Sentinel é o Safety Officer
+
+# ═══════════════════════════════════════════════════════════════
+# CAMPAIGN CREATION DEFAULTS
+# ═══════════════════════════════════════════════════════════════
+
+paused_by_default: true
+# Toda campanha criada via API DEVE ter status: PAUSED.
+# Ativação é ação HITL separada (autonomy-tiers.yaml: activate-campaign).
+# Justificativa: Roundtable Consenso #8, Ban Wave 2026 — ativação prematura
+# é trigger de moderação AI. Criar PAUSED → humano revisa → humano aprova ativação.
+# Source: 03-roundtable.md, 05-meta-api-risks-bans.md Seção 6
+
+# ═══════════════════════════════════════════════════════════════
+# BUDGET THRESHOLDS
+# ═══════════════════════════════════════════════════════════════
+
+budget_thresholds:
+  max_daily_increase_pct: 20
+  # Máximo aumento de budget diário: 20% do valor atual.
+  # Aumentos > 20% requerem aprovação HITL e rampagem.
+  # Source: 05-meta-api-risks-bans.md — Seção 6: "max +20% spend/dia"
+  # Rationale: Spike de ad spend é trigger #1 de ban (ALTO).
+
+  max_weekly_increase_pct: 50
+  # Máximo aumento acumulado semanal: 50% do valor base (início da semana).
+  # Previne rampagem que parece gradual diariamente mas é explosiva semanalmente.
+  # Exemplo: 20%/dia por 5 dias = ~148% — excede este limit. Agente deve
+  # recalibrar base semanal ao atingir 50%.
+  # Source: Padrão derivado do +20%/dia com guardrail semanal.
+
+  new_account_max_daily: 50
+  # Contas com < 90 dias: budget máximo diário de R$50 (ou equivalente local).
+  # Contas novas são mais vigiadas. Rampagem agressiva em conta nova = ban.
+  # Source: 05-meta-api-risks-bans.md — Seção 6: "conta com histórico mínimo de 30 dias"
+  # Rationale: Advolve case study — contas novas com spend alto no dia 1 foram flagged.
+
+# ═══════════════════════════════════════════════════════════════
+# RAMPAGEM (GRADUAL SCALING)
+# ═══════════════════════════════════════════════════════════════
+
+rampagem:
+  description: |
+    Protocolo de rampagem para novas campanhas ou aumentos significativos de budget.
+    O objetivo é simular comportamento humano e evitar triggers de moderação AI.
+    Aplica-se a: nova campanha ativada, aumento > 20%, ou conta < 90 dias.
+  day1_pct: 25
+  # Dia 1: rodar com 25% do budget target.
+  # Valida tracking, delivery, e performance baseline.
+  day3_pct: 50
+  # Dia 3: se performance estável e tracking OK, escalar para 50%.
+  # "Estável" = CPA dentro de 1.5x target, sem erros de tracking.
+  day7_pct: 100
+  # Dia 7: se performance mantida, liberar 100% do budget target.
+  # Somente após 7 dias com dados consistentes.
+
+  abort_conditions:
+    - "CPA > 3x target em qualquer dia da rampagem"
+    - "Conversões zeradas por 6h+ durante rampagem"
+    - "Tracking broken (match rate < 40%)"
+    - "Conta recebe warning/restriction da plataforma"
+  abort_action: "Pausar campanha imediatamente (HITL: pause-campaign) e reportar"
+  source: "05-meta-api-risks-bans.md — Seção 6, Advolve case study"
+
+# ═══════════════════════════════════════════════════════════════
+# IP CONSISTENCY
+# ═══════════════════════════════════════════════════════════════
+
+ip_consistency: required
+# Chamadas API DEVEM vir de IP fixo e consistente.
+# Agentes rodando em cloud/VPS que trocam IPs frequentemente são flagged.
+# Source: 05-meta-api-risks-bans.md — Trigger: IP inconsistente (MÉDIO)
+# Implementação: .env deve ter IP fixo configurado; agente valida
+# antes de fazer API calls.
+#
+# Checklist de validação:
+#   - VPN: DESLIGADA durante operações API
+#   - Proxy: NENHUM entre agente e Meta API
+#   - Cloud: IP estático (Elastic IP ou equivalente)
+#   - Região: consistente com Business Manager location
+
+# ═══════════════════════════════════════════════════════════════
+# RATE LIMITING & CREATION CAPS
+# ═══════════════════════════════════════════════════════════════
+
+max_campaigns_per_day_new_account: 5
+# Contas com < 90 dias: máximo 5 novas campanhas por dia.
+# Criação em massa é trigger de ban (MÉDIO).
+# Source: 05-meta-api-risks-bans.md — Seção 6: "Max 5 novas campanhas/dia em contas < 90 dias"
+# Aplica-se a: campaigns, não a adsets/ads individualmente.
+
+# ═══════════════════════════════════════════════════════════════
+# POST-CREATE VALIDATION
+# ═══════════════════════════════════════════════════════════════
+
+post_create_validation: true
+# Após criar qualquer entidade via API (campaign/adset/ad), o campaign-manager
+# DEVE fazer uma leitura de volta (GET) para confirmar que a entidade:
+#   1. Foi criada com sucesso (status 200/201)
+#   2. Tem o status correto (PAUSED, não ACTIVE)
+#   3. Tem os parâmetros exatos solicitados (budget, targeting, creative)
+#   4. Não gerou warnings da plataforma
+#
+# Se qualquer validação falhar: HALT e reportar para humano.
+# Source: 05-meta-api-risks-bans.md — Seção 4: "Ações duplicadas: retry logic sem idempotency"
+# Rationale: Previne campanhas fantasma e estados inconsistentes.
+
+# ═══════════════════════════════════════════════════════════════
+# WRITE-AHEAD LOG (WAL)
+# ═══════════════════════════════════════════════════════════════
+
+write_ahead_log: required
+# Toda operação de WRITE via API DEVE ser registrada no WAL ANTES da execução.
+# O WAL é append-only com rotação mensal (máx ~60KB/mês).
+#
+# Formato do entry:
+#   timestamp: ISO8601
+#   action_id: (referência ao autonomy-tiers.yaml)
+#   agent: (quem está executando)
+#   entity_type: campaign|adset|ad
+#   entity_id: (ID da entidade na plataforma, se existente)
+#   operation: create|update|pause|activate|delete
+#   params: (snapshot dos parâmetros)
+#   approval: (humano que aprovou para HITL, "auto" para Auto)
+#   status: pending|executed|failed|rolled_back
+#
+# Agente: campaign-manager (único com permissão de write)
+# Path: workspace/businesses/{business}/ads/meta/wal/
+# Rotação: 1 arquivo por mês (YYYY-MM-wal.yaml)
+#
+# Source: Roundtable P0 #2 — campaign-manager como SPOF, WAL pattern
+# Rationale: Audit trail completo + capacidade de rollback + evidência para appeals
+
+# ═══════════════════════════════════════════════════════════════
+# CONCURRENT MCP WRITES
+# ═══════════════════════════════════════════════════════════════
+
+concurrent_mcp_write: forbidden
+# NUNCA dois MCPs escrevendo na mesma entidade simultaneamente.
+# Pipeboard (meta-ads-mcp) e ads-mcp NUNCA devem modificar a mesma
+# campanha/adset/ad ao mesmo tempo.
+#
+# Regra de exclusividade:
+#   - Meta operations: Pipeboard é PRIMARY (write)
+#   - Cross-platform: ads-mcp é PRIMARY (write)
+#   - Meta fallback: ads-mcp SOMENTE se Pipeboard estiver DOWN
+#   - NUNCA ambos em write mode para mesma plataforma simultaneamente
+#
+# Implementação: campaign-manager verifica qual MCP está ativo antes de
+# cada write operation. Se ambos estão disponíveis para Meta, Pipeboard tem
+# prioridade exclusiva.
+#
+# Source: squad.yaml v5 mcp_tools rules, mcp-config.json conflict_rules
+# Rationale: Race conditions em campanhas ativas = inconsistência de estado + possível ban
+
+# ═══════════════════════════════════════════════════════════════
+# ADDITIONAL SAFETY RULES
+# ═══════════════════════════════════════════════════════════════
+
+additional_rules:
+
+  # --- Outage Protection ---
+  outage_protection:
+    check_metastatus_before_writes: true
+    on_5xx_response: halt_all_writes
+    on_5xx_consecutive_threshold: 3
+    on_5xx_action: |
+      Após 3 respostas HTTP 5xx consecutivas:
+      1. HALT todas as operações de write
+      2. Registrar no WAL com status "halted_outage"
+      3. Alertar humano
+      4. NÃO tentar retry automático — esperar instrução humana
+      5. Armazenar último estado conhecido para reconciliação pós-outage
+    source: "05-meta-api-risks-bans.md — Seção 4: Outages de Março 2026"
+
+  # --- Learning Phase Protection ---
+  learning_phase:
+    description: |
+      Campanhas em learning phase (< 50 conversões no adset) são frágeis.
+      Alterações durante learning phase reiniciam o processo.
+    forbidden_during_learning:
+      - "Alterar budget em > 20%"
+      - "Alterar targeting"
+      - "Pausar por mais de 24h"
+      - "Trocar criativo"
+    warning: |
+      Se campanha está em learning phase e ação HITL é solicitada,
+      fiscal DEVE alertar: "Campanha em learning phase. Alteração reiniciará
+      o processo. Confirma? (APROVADO/CANCELAR)"
+
+  # --- Account Age Safety Tiers ---
+  account_age_tiers:
+    new:
+      age_days: "0-30"
+      restrictions:
+        - "HUMAN required para primeira ativação"
+        - "Max R$50/dia"
+        - "Max 5 campanhas/dia"
+        - "Sem audience expansion"
+        - "Sem scaling agressivo"
+    young:
+      age_days: "31-90"
+      restrictions:
+        - "Max 5 campanhas/dia"
+        - "Rampagem obrigatória para todo aumento > 20%"
+        - "Sem Creative Bombardment"
+    mature:
+      age_days: "91+"
+      restrictions:
+        - "Rampagem obrigatória para aumentos > 50%"
+        - "Demais regras padrão aplicam"
+
+  # --- Idempotency ---
+  idempotency:
+    description: |
+      Toda operação de criação DEVE incluir external_id ou deduplication_key
+      para evitar duplicatas em caso de timeout/retry.
+    implementation: |
+      campaign-manager gera UUID antes de cada create.
+      Se API timeout: verificar se entidade com mesmo UUID já existe antes de retry.
+    source: "05-meta-api-risks-bans.md — Seção 4: Ações duplicadas"
+
+  # --- Audit Trail ---
+  audit_trail:
+    description: |
+      Log de todas as ações API para evidência em caso de appeal.
+      Complementar ao WAL — o audit trail é formato human-readable.
+    path: "workspace/businesses/{business}/ads/meta/audit/"
+    format: "action-ledger append-only com rotação mensal"
+    max_size_per_month: "~60KB"
+    source: "Roundtable P1 — action ledger append-only"
+
+  # --- Escalation Protocol ---
+  escalation:
+    description: "Quando agente não consegue resolver, escala para humano."
+    triggers:
+      - "3 falhas consecutivas na mesma operação"
+      - "Rate limit atingido (HTTP 429)"
+      - "Conta recebe warning/restriction"
+      - "Budget gastou 100% antes do período planejado"
+      - "CPA > 5x target por 24h+"
+      - "Ação não mapeada em autonomy-tiers.yaml"
+    action: |
+      1. HALT operação
+      2. Registrar no WAL
+      3. Gerar relatório de escalonamento (O QUE / POR QUE / O QUE FAZER)
+      4. Notificar humano via ad-midas
+    source: "Roundtable P1 #16 — Protocolo de erro"
+
+# ═══════════════════════════════════════════════════════════════
+# CHECKLIST REFERENCES
+# ═══════════════════════════════════════════════════════════════
+
+checklists:
+  ban_prevention:
+    path: "checklists/ban-prevention.md"
+    enforced_by: fiscal
+    when: "Antes de conectar agentes a conta (Pre-Automacao), durante operacao (Operacao), e em caso de ban (Se Banido)"
+    total_checks: 16
+    block_checks: 13
+    warn_checks: 3
+    source: "SAIOX-ADS-V5-1.6"
+
+  launch_dod:
+    path: "checklists/launch-dod.md"
+    enforced_by: fiscal
+    when: "Gate FINAL antes de ativar qualquer campanha (activate-campaign HITL action)"
+    total_checks: 8
+    block_checks: 8
+    warn_checks: 0
+    prerequisite_for: "activate-campaign (autonomy-tiers.yaml HITL action)"
+    source: "SAIOX-ADS-V5-1.6"

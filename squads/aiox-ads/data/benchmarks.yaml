@@ -1,0 +1,85 @@
+# Industry Benchmark Metrics — Quick Reference
+# Source: squads/ads-audit/data/benchmarks.md (full details with YoY trends)
+# Updated: 2026-03
+
+google_search:
+  all_industries:
+    ctr: "6.66%"
+    cpc: "$5.26"
+    cvr: "7.52%"
+    cpl: "~$70"
+  by_industry:
+    ecommerce: { cpc: "$1.15", ctr: "4.13%", cvr: "2.81%" }
+    saas_b2b: { cpc: "$4.50-$8.00", ctr: "4.28%", cvr: "1.65%", cpl: "$100-$200" }
+    local_services: { cpc: "$7.85-$15.00", ctr: "5.50-6.37%", cvr: "7.33-15.0%" }
+    healthcare: { cpc: "$40+", ctr: "4.90%", cvr: "3.10%" }
+    legal: { cpc: "$8.58-$9.21", ctr: "5.20-5.97%", cvr: "4.60-5.09%" }
+    finance: { cpc: "$3.46-$3.77", ctr: "4.65-8.33%", cvr: "2.55-3.50%" }
+    real_estate: { cpc: "$1.55-$2.53", ctr: "8.43%", cvr: "3.28%" }
+
+meta_ads:
+  traffic:
+    ctr: "1.71%"
+    cpc: "$0.70"
+  leads:
+    ctr: "2.59%"
+    cpc: "$1.92"
+    cvr: "7.72%"
+    cpl: "$27.66"
+  ecommerce:
+    cpa: "$23.74"
+    cpm: "$12.79"
+    roas: "3.68"
+
+linkedin_ads:
+  all_industries:
+    ctr: "0.44-0.65%"
+    cpc: "$5.26-$8.00"
+    cvr: "2.35%"
+    cpl: "$75-$150"
+  b2b_saas:
+    cpc: "$6.00-$10.00"
+    cpl: "$100-$200"
+
+tiktok_ads:
+  all_industries:
+    ctr: "0.84-1.0%"
+    cpc: "$0.50-$1.00"
+    cpm: "$6.00-$10.00"
+  ecommerce:
+    roas: "2.0-4.0"
+    cpa: "$15-$30"
+
+microsoft_ads:
+  all_industries:
+    ctr: "2.83%"
+    cpc: "$1.54"
+    cvr: "2.94%"
+  notes: "Generally 20-30% cheaper CPC than Google with lower volume"
+
+youtube_ads:
+  all_industries:
+    cpv: "$0.010-$0.030"
+    view_rate: "31.9%"
+    ctr: "0.65%"
+
+apple_search_ads:
+  all_industries:
+    tap_through_rate: "7.45%"
+    cpt: "$1.00-$3.00"
+    cvr: "50-60%"
+  notes: "High CVR due to high-intent App Store searches"
+
+# Thresholds for Kill/Scale decisions
+decision_thresholds:
+  kill:
+    cpa_multiplier: 3.0  # CPA > 3x target = pause
+    roas_floor: 0.5       # ROAS < 0.5 = pause
+    ctr_floor: 0.005      # CTR < 0.5% = pause ad
+  watch:
+    cpa_multiplier: 1.5   # CPA > 1.5x target = reduce budget
+    frequency_ceiling: 3.0 # Frequency > 3.0 = refresh
+  scale:
+    roas_stable_days: 7   # Minimum days above target
+    max_budget_increase: 0.20  # +20% max per adjustment
+    min_conversions: 50   # Minimum conversions for confidence

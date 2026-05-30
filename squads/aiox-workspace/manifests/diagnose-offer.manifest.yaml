@@ -1,0 +1,220 @@
+# Context Manifest: diagnose-offer
+# Variáveis para diagnóstico vertical da força da oferta (product-level)
+# Baseado nos templates: offerbook, value-equation, proof, testimonials, guarantee-design, competitor-analysis
+
+manifest:
+  id: diagnose-offer
+  version: "1.0.0"
+  description: Contexto para diagnóstico de força da oferta por produto
+  total_variables: 39
+  agent: cmo-architect
+
+params:
+  required:
+    - slug     # business slug
+    - product  # product slug
+  optional: []
+
+variables:
+
+  # === OFFERBOOK.YAML ===
+  - id: offerbook_exists
+    source: "products/{product}/offerbook.yaml"
+    field: _exists
+    type: boolean
+
+  - id: offer_name
+    source: "products/{product}/offerbook.yaml"
+    field: positioning.offer_name
+    type: string
+
+  - id: offer_price
+    source: "products/{product}/offerbook.yaml"
+    field: offer_architecture.grand_slam_offer.price
+    type: number
+
+  - id: offer_payment_options
+    source: "products/{product}/offerbook.yaml"
+    field: offer_architecture.grand_slam_offer.payment_options
+    type: string
+
+  - id: offer_unique_mechanism
+    source: "products/{product}/offerbook.yaml"
+    field: positioning.unique_mechanism
+    type: string
+
+  - id: offer_modules_count
+    source: "products/{product}/offerbook.yaml"
+    field: core_modules
+    type: array_length
+
+  - id: offer_bonuses_count
+    source: "products/{product}/offerbook.yaml"
+    field: offer_architecture.bonuses
+    type: array_length
+
+  - id: offer_objections_count
+    source: "products/{product}/offerbook.yaml"
+    field: objections_responses
+    type: array_length
+
+  - id: offer_diagnostic_summary
+    source: "products/{product}/offerbook.yaml"
+    field: diagnostic_summary
+    type: string
+
+  # === VALUE-EQUATION.YAML ===
+  - id: value_equation_exists
+    source: "products/{product}/value-equation.yaml"
+    field: _exists
+    type: boolean
+
+  - id: ve_dream_outcome_score
+    source: "products/{product}/value-equation.yaml"
+    field: composite_diagnostic.dream_outcome_score
+    type: number
+
+  - id: ve_perceived_likelihood_score
+    source: "products/{product}/value-equation.yaml"
+    field: composite_diagnostic.perceived_likelihood_score
+    type: number
+
+  - id: ve_time_delay_score
+    source: "products/{product}/value-equation.yaml"
+    field: composite_diagnostic.time_delay_score
+    type: number
+
+  - id: ve_effort_sacrifice_score
+    source: "products/{product}/value-equation.yaml"
+    field: composite_diagnostic.effort_sacrifice_score
+    type: number
+
+  - id: ve_weakest_variable
+    source: "products/{product}/value-equation.yaml"
+    field: composite_diagnostic.weakest_variable_analysis
+    type: string
+
+  # === PROOF.YAML ===
+  - id: proof_exists
+    source: "products/{product}/proof.yaml"
+    field: _exists
+    type: boolean
+
+  - id: proof_case_studies_count
+    source: "products/{product}/proof.yaml"
+    field: case_studies
+    type: array_length
+
+  - id: proof_testimonials_by_archetype_count
+    source: "products/{product}/proof.yaml"
+    field: testimonials_by_archetype
+    type: array_length
+
+  - id: proof_statistics_count
+    source: "products/{product}/proof.yaml"
+    field: statistics
+    type: array_length
+
+  - id: proof_before_after_count
+    source: "products/{product}/proof.yaml"
+    field: before_after_comparisons
+    type: array_length
+
+  - id: proof_verification_tiers
+    source: "products/{product}/proof.yaml"
+    field: header_summary.verification_tier_distribution
+    type: object
+
+  - id: proof_missing_to_gather
+    source: "products/{product}/proof.yaml"
+    field: missing_proof_to_gather
+    type: array_length
+
+  # === TESTIMONIALS.YAML ===
+  - id: testimonials_exists
+    source: "products/{product}/testimonials.yaml"
+    field: _exists
+    type: boolean
+
+  - id: testimonials_total_count
+    source: "products/{product}/testimonials.yaml"
+    field: testimonials_database
+    type: array_length
+
+  - id: testimonials_by_awareness_coverage
+    source: "products/{product}/testimonials.yaml"
+    field: testimonials_by_awareness_level
+    type: array_length
+
+  - id: testimonials_by_result_coverage
+    source: "products/{product}/testimonials.yaml"
+    field: testimonials_by_result
+    type: array_length
+
+  - id: testimonials_video_count
+    source: "products/{product}/testimonials.yaml"
+    field: video_testimonial_format
+    type: array_length
+
+  - id: testimonials_checklist_completion
+    source: "products/{product}/testimonials.yaml"
+    field: testimonial_collection_checklist
+    type: percentage
+
+  # === GUARANTEE-DESIGN.YAML ===
+  - id: guarantee_exists
+    source: "products/{product}/guarantee-design.yaml"
+    field: _exists
+    type: boolean
+
+  - id: guarantee_level
+    source: "products/{product}/guarantee-design.yaml"
+    field: guarantee_design.chosen_level
+    type: string
+
+  - id: guarantee_name
+    source: "products/{product}/guarantee-design.yaml"
+    field: guarantee_language.guarantee_name
+    type: string
+
+  - id: guarantee_ethical_passed
+    source: "products/{product}/guarantee-design.yaml"
+    field: ethical_filter.ethical_verdict
+    type: string
+
+  - id: guarantee_diagnostic
+    source: "products/{product}/guarantee-design.yaml"
+    field: diagnostic_summary
+    type: object
+
+  # === COMPETITOR-ANALYSIS.YAML ===
+  - id: competitor_exists
+    source: "products/{product}/competitor-analysis.yaml"
+    field: _exists
+    type: boolean
+
+  - id: competitor_count
+    source: "products/{product}/competitor-analysis.yaml"
+    field: competitive_landscape
+    type: array_length
+
+  - id: competitor_your_position
+    source: "products/{product}/competitor-analysis.yaml"
+    field: positioning_map.your_position
+    type: object
+
+  - id: competitor_differentiation_strength
+    source: "products/{product}/competitor-analysis.yaml"
+    field: competitive_strength_score.differentiation_strength
+    type: number
+
+  - id: competitor_unfair_advantage
+    source: "products/{product}/competitor-analysis.yaml"
+    field: differentiation.your_unfair_advantage
+    type: string
+
+  # === PRICING-ANCHORING.YAML ===
+  - id: pricing_anchoring_exists
+    source: "products/{product}/pricing-anchoring.yaml"
+    field: _exists
+    type: boolean
