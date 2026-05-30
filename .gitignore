@@ -1,9 +1,0 @@
-.env
-.env.*
-node_modules/
-.aiox/
-*.log
-.DS_Store
-Thumbs.db
-workspace/businesses/*/inputs/
-workspace/businesses/*/outputs/
