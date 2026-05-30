@@ -1,0 +1,250 @@
+# IMERSAO BUSINESS MAP — Mapeamento determinístico de fontes por business
+# Resolve discrepancias de nomes entre fontes e slugs de workspace
+# Owner: COO (workspace-chief)
+# Usage: Referenciado por tasks etl-deep-pass, etl-local-extract, etl-batch-runner
+
+version: 1
+source_root: "apps/aiox-imersao/recursos"
+
+businesses:
+  mentoria_andre_franco:
+    display_name: "Mentoria Andre Franco"
+    perfil: "perfis/andre-franco.md"
+    formulario: "formulario/André Franco/formulario.md"
+    call_vendas: "Calls vendas/André Franco/transcricao.md"
+    call_vendas_json: "Calls vendas/André Franco/transcricao.json"
+    instalacao: "Instalacao/Andre Franco/instalacao.md"
+    website_hint: null
+    call_lines: 261
+    data_richness: "ALTA"
+
+  eu_medico_residente:
+    display_name: "Eu Medico Residente"
+    perfil: "perfis/bruno-kosminsky.md"
+    formulario: "formulario/Bruno Kosminsky/formulario.md"
+    call_vendas: "Calls vendas/Bruno Kominsky/transcricao.md"  # NOTA: Kominsky (sem o s)
+    call_vendas_json: "Calls vendas/Bruno Kominsky/transcricao.json"
+    instalacao: null
+    website_hint: null
+    call_lines: 529
+    data_richness: "ALTA"
+
+  daniel_tenorio:
+    display_name: "Daniel Tenorio"
+    perfil: "perfis/daniel-tenorio.md"
+    formulario: "formulario/Daniel Tenório/formulario.md"
+    call_vendas: "Calls vendas/Daniel Tenório/transcricao.md"
+    call_vendas_json: "Calls vendas/Daniel Tenório/transcricao.json"
+    instalacao: "Instalacao/Daniel Tenorio/instalacao.md"
+    website_hint: null
+    call_lines: 161
+    data_richness: "ALTA"
+
+  youfront:
+    display_name: "YouFront"
+    perfil: "perfis/diogo-pereira.md"
+    formulario: "formulario/Diogo Pereira/formulario.md"
+    call_vendas: "Calls vendas/Diogo Pereira/transcricao.md"
+    call_vendas_json: "Calls vendas/Diogo Pereira/transcricao.json"
+    instalacao: null
+    website_hint: null
+    call_lines: 325
+    data_richness: "ALTA"
+
+  eduardo_colautti:
+    display_name: "Eduardo Colautti"
+    perfil: "perfis/eduardo-colautti.md"
+    formulario: "formulario/Eduardo Colautti/formulario.md"
+    call_vendas: "Calls vendas/Eduardo Colautti/transcricao.md"
+    call_vendas_json: "Calls vendas/Eduardo Colautti/transcricao.json"
+    instalacao: "Instalacao/Eduardo Colautti/instalacao.md"
+    website_hint: null
+    call_lines: 315
+    data_richness: "ALTA"
+
+  conta_magic:
+    display_name: "Conta Magic"
+    perfil: "perfis/egio-roberto.md"
+    formulario: "formulario/Égio Roberto/formulario.md"
+    call_vendas: "Calls vendas/Égio - Thalison/transcricao.md"  # Call conjunta Egio + Thalison
+    call_vendas_json: "Calls vendas/Égio - Thalison/transcricao.json"
+    instalacao: null
+    website_hint: null
+    call_lines: 145
+    data_richness: "MEDIA"
+    socios:
+      - name: "Thalison Samuel Franca Abreu"
+        empresa: "Contourline Equipamentos Medicos (CNPJ 14.458.149/0001-23)"
+        email: "thalison@contourline.com.br"
+        phone: "55 31995810314"
+        role: "Socio — participa da imersao no lugar do Egio"
+      - name: "Claudio Kaizer"
+        email: "claudio.kaizer@contourline.com.br"
+        phone: "55 31996845374"
+        role: "Socio — participa da imersao no lugar do Egio"
+    nota: "Egio (dono) em procedimento de saude. Thalison e Claudio participam no seu lugar. Possibilidade remota do Egio participar."
+
+  grupo_fabio_avelar:
+    display_name: "Grupo Fabio Avelar"
+    perfil: "perfis/fabio-avelar.md"
+    formulario: "formulario/Fabio Avelar/formulario.md"
+    call_vendas: "Calls vendas/Fabio Avelar/transcricao.md"
+    call_vendas_json: null  # NOTA: apenas 1 arquivo (sem json)
+    instalacao: "Instalacao/Fabio Avelar/instalacao.md"
+    website_hint: null
+    call_lines: 403
+    data_richness: "ALTA"
+
+  nutraself:
+    display_name: "NutraSelf"
+    perfil: "perfis/hugo-santos.md"
+    formulario: "formulario/Hugo Santos/formulario.md"
+    call_vendas: "Calls vendas/Hugo Santos/transcricao.md"
+    call_vendas_json: "Calls vendas/Hugo Santos/transcricao.json"
+    instalacao: "Instalacao/Hugo Santos/instalacao.md"
+    website_hint: null
+    call_lines: 137
+    data_richness: "MEDIA"
+
+  italo_gustavo:
+    display_name: "Italo Gustavo"
+    perfil: "perfis/italo-gustavo.md"
+    formulario: "formulario/Italo Gustavo/formulario.md"
+    call_vendas: "Calls vendas/Italo Gustavo/transcricao.md"
+    call_vendas_json: "Calls vendas/Italo Gustavo/transcricao.json"
+    instalacao: "Instalacao/Italo Gustavo/instalacao.md"
+    website_hint: null
+    call_lines: 207
+    data_richness: "ALTA"
+
+  level8_herobase:
+    display_name: "Level 8 / Hero Base"
+    perfil: "perfis/joao-biggie.md"  # NOTA: perfil sob nome Joao Biggie
+    formulario: "formulario/Rômulo Medeiros/formulario.md"  # NOTA: formulario sob Romulo
+    call_vendas: null  # NOTA: sem call direto — verificar se ha call sob outro nome
+    call_vendas_json: null
+    instalacao: "Instalacao/João Biggie/instalacao.md"
+    website_hint: null
+    call_lines: 0
+    data_richness: "MEDIA"
+    nota: "Business conjunto. Perfil sob Joao, formulario sob Romulo, instalacao sob Joao."
+
+  ecossistema_builder:
+    display_name: "Ecossistema Builder"
+    perfil: "perfis/junior-lorenzi.md"
+    formulario: "formulario/Junior Lorenzi/formulario.md"
+    call_vendas: "Calls vendas/Junior Lorenzi/transcricao.md"
+    call_vendas_json: "Calls vendas/Junior Lorenzi/transcricao.json"
+    instalacao: null
+    website_hint: null
+    call_lines: 125
+    data_richness: "MEDIA"
+
+  nexos_educacao:
+    display_name: "Nexos Educacao"
+    perfil: "perfis/karine-lago.md"
+    formulario: "formulario/Karine Lago/formulario.md"
+    call_vendas: null  # NOTA: pasta e "Karine Gouvea" com 3 arquivos (call1, encontro1, encontro2)
+    call_vendas_alt:
+      - "Calls vendas/Karine Gouvea/transcricao_call1.md"
+      - "Calls vendas/Karine Gouvea/transcricao_encontro1.md"
+      - "Calls vendas/Karine Gouvea/transcricao_encontro2.md"
+    instalacao: null
+    website_hint: null
+    call_lines: 0  # multiplos arquivos — contar na execucao
+    data_richness: "ALTA"
+    nota: "Sobrenome diferente nas fontes: Lago (perfil/form) vs Gouvea (calls). 3 arquivos de call."
+
+  optimus_isystem:
+    display_name: "Optimus iSystem"
+    perfil: "perfis/luca-cortez.md"
+    formulario: "formulario/Luca Cortez/formulario.md"
+    call_vendas: "Calls vendas/Luca Cortez/transcricao.md"
+    call_vendas_json: "Calls vendas/Luca Cortez/transcricao.json"
+    instalacao: "Instalacao/Luca Cortez/instalacao.md"
+    website_hint: null
+    call_lines: 213
+    data_richness: "ALTA"
+
+  grupo_scalco:
+    display_name: "Grupo Scalco"
+    perfil: "perfis/marcel-scalcko.md"
+    formulario: "formulario/Marcel Scalcko/formulario.md"
+    call_vendas: "Calls vendas/Marcel Scalcko/transcricao.md"
+    call_vendas_json: "Calls vendas/Marcel Scalcko/transcricao.json"
+    instalacao: "Instalacao/Marcel Scalcko/instalacao.md"
+    website_hint: null
+    call_lines: 337
+    data_richness: "ALTA"
+
+  omni_hypnosis:
+    display_name: "Omni Hypnosis"
+    perfil: "perfis/rafaela-mendes.md"  # NOTA: perfil sob Rafaela
+    formulario: "formulario/Rafaela Mendes/formulario.md"
+    call_vendas: "Calls vendas/Michel Arruda/transcricao.md"  # NOTA: call sob Michel
+    call_vendas_json: null  # NOTA: apenas 1 arquivo (sem json)
+    instalacao: "Instalacao/Michel Arruda/instalacao.md"  # NOTA: instalacao sob Michel
+    website_hint: null
+    call_lines: 34
+    data_richness: "MEDIA"
+    nota: "Business conjunto. Perfil/form sob Rafaela, call/instalacao sob Michel."
+
+  brasil_em_dobro:
+    display_name: "Brasil em Dobro"
+    perfil: "perfis/thiago-nishikata.md"
+    formulario: "formulario/Thiago Nishikata/formulario.md"
+    call_vendas: "Calls vendas/Thiago Nishikata/transcricao.md"
+    call_vendas_json: null  # NOTA: apenas 1 arquivo
+    instalacao: null
+    website_hint: "https://www.brasilemdobro.com.br/"
+    call_lines: 699
+    data_richness: "ALTA"
+    status: "COMPLETE — gold standard (40 files, 5849 lines, ~95%)"
+
+  grupo_wv:
+    display_name: "Grupo WV"
+    perfil: "perfis/wiliaquison-valentim.md"
+    formulario: "formulario/Wiliaquison Valentim/formulario.md"
+    call_vendas: "Calls vendas/Wiliaquison/transcricao.md"  # NOTA: sem sobrenome
+    call_vendas_json: "Calls vendas/Wiliaquison/transcricao.json"
+    instalacao: "Instalacao/Wiliaquison/instalacao.md"  # NOTA: sem sobrenome
+    website_hint: null
+    call_lines: 288
+    data_richness: "ALTA"
+
+  matheus_vinicius:
+    display_name: "Matheus Vinicius"
+    perfil: null  # Sem perfil na base de dados da imersao
+    formulario: null  # Sem formulario na base de dados
+    call_vendas: null  # Sem call de vendas
+    call_vendas_json: null
+    instalacao: null
+    website_hint: null
+    call_lines: 0
+    data_richness: "BAIXA"
+    nota: "Participante do CSV de cadastro. PF sem CNPJ. Socia: Vanessa (dados incompletos). Cidade: Recife/PE. Email: matheusvinicius.cursos@gmail.com. Telefone: 55 81993963860. Sem dados locais disponiveis — workspace scaffolded com templates baseline."
+    socios:
+      - name: "Vanessa"
+        role: "Socia (dados incompletos no CSV)"
+
+# Summary
+summary:
+  total_businesses: 18
+  with_perfil: 17
+  with_perfil: 17  # matheus_vinicius sem perfil
+  with_formulario: 17  # matheus_vinicius sem formulario
+  with_call_vendas: 16  # joao_biggie e matheus_vinicius sem call direto
+  with_instalacao: 11
+  completed: 1  # thiago_nishikata
+  pending: 17
+  data_richness_alta: 11
+  data_richness_media: 6
+  data_richness_baixa: 1  # matheus_vinicius
+  name_mismatches:
+    - "bruno_kosminsky: call vendas under 'Bruno Kominsky' (typo)"
+    - "egio_roberto: call vendas under 'Égio - Thalison' (socios: Thalison + Claudio participam no lugar do Egio)"
+    - "joao_biggie_com_romulo_medeiros: perfil=Joao, formulario=Romulo, instalacao=Joao"
+    - "karine_lago: calls under 'Karine Gouvea' (sobrenome diferente), 3 call files"
+    - "rafaela_mendes_com_michel_arruda: perfil/form=Rafaela, call/instalacao=Michel"
+    - "wiliaquison_valentim: calls/instalacao without sobrenome"
+    - "matheus_vinicius: sem dados locais — apenas cadastro CSV"

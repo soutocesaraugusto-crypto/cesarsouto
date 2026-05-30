@@ -1,0 +1,167 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "description": "Declarative MCP server registry for aiox-ads squad. This file defines WHAT MCPs exist and their capabilities -- it does NOT contain secrets or tokens.",
+  "last_updated": "2026-03-17",
+  "version": "1.0.0",
+
+  "servers": [
+    {
+      "name": "meta-ads-mcp",
+      "package": "@pipeboard/meta-ads-mcp",
+      "version": "1.0.59",
+      "version_note": "Pinned -- Pipeboard had 5 releases in 6 days. NEVER use @latest.",
+      "platform": "meta",
+      "tier": "primary",
+      "tools_count": 29,
+      "description": "Primary MCP for all Meta (Facebook/Instagram) read and write operations. Handles campaign CRUD, ad set management, audience targeting, creative uploads, pixel events, and reporting via Meta Marketing API.",
+      "capabilities": [
+        "campaign-crud",
+        "adset-management",
+        "ad-creative-upload",
+        "audience-targeting",
+        "pixel-event-read",
+        "reporting-insights",
+        "budget-management"
+      ],
+      "env_vars": [
+        {
+          "name": "META_ADS_ACCESS_TOKEN",
+          "description": "Meta Business long-lived access token (Pipeboard-specific). Obtain at: https://pipeboard.co/settings/tokens",
+          "required": true
+        }
+      ],
+      "rate_limits": {
+        "source": "Meta Marketing API",
+        "note": "Shares quota with Meta Business account. Separate token from ads-mcp to avoid double-counting against rate limit."
+      },
+      "health_check": {
+        "method": "tool_call",
+        "tool": "get_ad_accounts",
+        "expected": "Returns array of ad account objects"
+      }
+    },
+    {
+      "name": "adspirer",
+      "package": "@adspirer/ads-mcp",
+      "version": "0.3.2",
+      "version_note": "Pinned -- early-stage package, API surface may change between minors.",
+      "platforms": ["google", "linkedin", "tiktok", "meta-fallback"],
+      "tier": "secondary",
+      "tools_count": 91,
+      "description": "Cross-platform ads MCP covering Google Ads, LinkedIn Ads, TikTok Ads, and Meta as fallback. Use for any non-Meta platform, or as Meta fallback when Pipeboard is unavailable.",
+      "capabilities": [
+        "google-ads-crud",
+        "google-ads-reporting",
+        "linkedin-ads-crud",
+        "linkedin-ads-reporting",
+        "tiktok-ads-crud",
+        "tiktok-ads-reporting",
+        "meta-ads-read-fallback",
+        "cross-platform-reporting"
+      ],
+      "env_vars": [
+        {
+          "name": "GOOGLE_ADS_DEVELOPER_TOKEN",
+          "description": "Google Ads API developer token. Obtain at: https://ads.google.com/aw/apicenter",
+          "required": true,
+          "platforms": ["google"]
+        },
+        {
+          "name": "GOOGLE_ADS_CLIENT_ID",
+          "description": "Google OAuth2 client ID. Obtain at: https://console.cloud.google.com/apis/credentials",
+          "required": true,
+          "platforms": ["google"]
+        },
+        {
+          "name": "GOOGLE_ADS_CLIENT_SECRET",
+          "description": "Google OAuth2 client secret. Same credentials page as CLIENT_ID.",
+          "required": true,
+          "platforms": ["google"]
+        },
+        {
+          "name": "GOOGLE_ADS_REFRESH_TOKEN",
+          "description": "Google OAuth2 refresh token. Generated during OAuth flow.",
+          "required": true,
+          "platforms": ["google"]
+        },
+        {
+          "name": "GOOGLE_ADS_CUSTOMER_ID",
+          "description": "Google Ads customer/account ID (format: 123-456-7890). Find in Google Ads top-right corner.",
+          "required": true,
+          "platforms": ["google"]
+        },
+        {
+          "name": "META_ADS_ACCESS_TOKEN_SECONDARY",
+          "description": "Separate Meta access token for ads-mcp fallback operations. MUST be a different token than Pipeboard to avoid double rate-limit consumption. Obtain at: https://developers.facebook.com/tools/explorer/",
+          "required": false,
+          "platforms": ["meta-fallback"]
+        },
+        {
+          "name": "LINKEDIN_ADS_ACCESS_TOKEN",
+          "description": "LinkedIn Marketing API OAuth2 access token. Obtain at: https://www.linkedin.com/developers/apps",
+          "required": false,
+          "platforms": ["linkedin"]
+        },
+        {
+          "name": "TIKTOK_ADS_ACCESS_TOKEN",
+          "description": "TikTok Marketing API access token. Obtain at: https://ads.tiktok.com/marketing_api/developer",
+          "required": false,
+          "platforms": ["tiktok"]
+        }
+      ],
+      "rate_limits": {
+        "source": "Per-platform API limits",
+        "note": "Each platform has its own rate limit. Meta fallback token MUST be separate from Pipeboard token."
+      },
+      "health_check": {
+        "method": "tool_call",
+        "tool": "list_campaigns",
+        "expected": "Returns campaign list or empty array for any configured platform"
+      }
+    }
+  ],
+
+  "routing_rules": {
+    "meta": {
+      "primary": "meta-ads-mcp",
+      "fallback": "adspirer",
+      "note": "Always route Meta operations to Pipeboard (meta-ads-mcp) first. Use adspirer only if Pipeboard is down or rate-limited."
+    },
+    "google": {
+      "primary": "adspirer",
+      "fallback": null,
+      "note": "Google Ads exclusively via adspirer. No alternative MCP."
+    },
+    "linkedin": {
+      "primary": "adspirer",
+      "fallback": null,
+      "note": "LinkedIn Ads exclusively via adspirer."
+    },
+    "tiktok": {
+      "primary": "adspirer",
+      "fallback": null,
+      "note": "TikTok Ads exclusively via adspirer."
+    }
+  },
+
+  "conflict_rules": [
+    {
+      "rule": "NEVER_DUAL_WRITE",
+      "severity": "CRITICAL",
+      "description": "Never two MCPs writing to the same campaign/ad simultaneously. If meta-ads-mcp is performing a write operation on a Meta campaign, adspirer MUST NOT write to the same campaign until the first operation completes.",
+      "enforcement": "campaign-manager checks active_mcp_lock before dispatching any write operation"
+    },
+    {
+      "rule": "SEPARATE_TOKENS",
+      "severity": "HIGH",
+      "description": "Pipeboard and adspirer MUST use separate Meta access tokens to avoid exhausting the rate limit twice as fast. One token per MCP.",
+      "enforcement": "setup-guide validates token uniqueness during Phase 3"
+    },
+    {
+      "rule": "VERSION_PIN",
+      "severity": "HIGH",
+      "description": "All MCP versions MUST be pinned to exact semver. Never use @latest, @next, or version ranges. Update only via explicit story/task.",
+      "enforcement": "bootstrap.sh validates pinned versions on setup"
+    }
+  ]
+}

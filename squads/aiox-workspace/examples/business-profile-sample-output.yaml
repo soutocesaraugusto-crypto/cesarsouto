@@ -1,0 +1,16 @@
+example_output:
+  workflow: setup-business-profile
+  generated_at: "{iso_datetime}"
+  artifact_paths:
+    - workspace/businesses/{slug}/company/company-profile.yaml
+    - workspace/businesses/{slug}/company/founder-dna.yaml
+    - workspace/businesses/{slug}/company/credentials.yaml
+    - workspace/businesses/{slug}/company/icp.yaml
+    - workspace/businesses/{slug}/company/brand.yaml
+    - workspace/businesses/{slug}/company/diagnosis.yaml
+    - workspace/businesses/{slug}/operations/team-structure.yaml
+    - workspace/businesses/{slug}/operations/pricing-strategy.yaml
+    - workspace/businesses/{slug}/tech/strategy.yaml
+    - workspace/businesses/{slug}/tech/stack.yaml
+    - workspace/businesses/{slug}/ai/strategy.yaml
+    - workspace/businesses/{slug}/evidence/workspace-context-summary.yaml

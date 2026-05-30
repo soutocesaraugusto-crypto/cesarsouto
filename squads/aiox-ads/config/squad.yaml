@@ -1,0 +1,217 @@
+# Media Buyer Squad - Multi-Agent Paid Traffic System
+# Version: 2.0.0 (Officialized with custom names)
+# Author: Thiago Finch (BILHON) + SynkraAI Base
+# License: MIT
+
+name: media-buyer-squad
+version: 2.0.0
+description: |
+  Squad especializado em gestão de tráfego pago (Meta Ads, Google Ads).
+  Quatro agentes colaboram para maximizar ROAS através de estratégia,
+  criativos, tracking e análise de performance.
+
+  47 frameworks de 5 experts:
+  - Jeremy Haynes (28 frameworks)
+  - Brian Moncada (10 frameworks)
+  - Alex Hormozi (5 frameworks)
+  - Brandon Carter (3 frameworks)
+  - Jordan Stupar (1 framework)
+
+author:
+  name: Thiago Finch
+  organization: BILHON
+  base: SynkraAI
+
+license: MIT
+
+keywords:
+  - media-buyer
+  - paid-traffic
+  - meta-ads
+  - google-ads
+  - roas
+  - facebook-ads
+  - performance-marketing
+  - trafego-pago
+
+# Squad Configuration
+squad:
+  id: media-buyer-squad
+  icon: "🎯"
+  activation: "@media-buyer-squad"
+
+  # Lead Agent - Entry Point
+  lead: ad-midas
+
+  # All Agents in Squad (OFFICIAL NAMES)
+  agents:
+    - id: ad-midas
+      name: Midas
+      icon: "🎯"
+      archetype: The Commander
+      role: Lead
+      file: ../../agents/ad-midas.md
+      whenToUse: "Campaign strategy, funnel selection, scaling decisions, squad coordination"
+
+    - id: performance-analyst
+      name: Dash
+      icon: "📊"
+      archetype: The Analyzer
+      role: Specialist
+      file: ../../agents/performance-analyst.md
+      whenToUse: "Metric diagnosis, CPA/ROAS analysis, kill/scale decisions, budget allocation"
+
+    - id: creative-analyst
+      name: Nova
+      icon: "🎨"
+      archetype: The Creator
+      role: Specialist
+      file: ../../agents/creative-analyst.md
+      whenToUse: "Hook generation, creative briefs, copy writing, DSL structure, creative fatigue"
+
+    - id: pixel-specialist
+      name: Track
+      icon: "📍"
+      archetype: The Tracker
+      role: Specialist
+      file: ../../agents/pixel-specialist.md
+      whenToUse: "Pixel audits, CAPI configuration, event setup, match rate optimization"
+
+  # Collaboration Rules
+  collaboration:
+    handoff_rules:
+      - from: ad-midas
+        to: creative-analyst
+        trigger: "creative briefing needed OR hook_rate < 15%"
+      - from: ad-midas
+        to: pixel-specialist
+        trigger: "tracking setup needed OR conversions == 0"
+      - from: ad-midas
+        to: performance-analyst
+        trigger: "metrics analysis needed OR CPA > target"
+      - from: performance-analyst
+        to: ad-midas
+        trigger: "scaling decision needed OR budget change > 50%"
+      - from: performance-analyst
+        to: creative-analyst
+        trigger: "CTR dropping OR creative fatigue detected"
+
+    workflow:
+      - step: 1
+        agent: ad-midas
+        action: "Define strategy and campaign structure"
+        skill: campaign-structure
+      - step: 2
+        agent: pixel-specialist
+        action: "Configure tracking and attribution"
+        skill: tracking-audit
+      - step: 3
+        agent: creative-analyst
+        action: "Create creative briefs and generate hooks"
+        skill: hook-generator
+      - step: 4
+        agent: ad-midas
+        action: "Launch campaign"
+        skill: scale-readiness-check
+      - step: 5
+        agent: performance-analyst
+        action: "Monitor metrics and apply kill/scale rules"
+        skill: kill-scale-rules
+      - step: 6
+        agent: ad-midas
+        action: "Scale, optimize, or pause"
+        skill: campaign-monitor
+
+# Skills (18 total from 47 frameworks)
+skills:
+  strategic:
+    - campaign-structure
+    - funnel-selection
+    - scale-readiness-check
+    - unit-economics
+  diagnostic:
+    - metric-diagnosis
+    - tracking-audit
+    - funnel-analysis
+    - attribution-analysis
+  generative:
+    - hook-generator
+    - creative-brief
+    - copy-generator
+    - angle-generator
+    - dsl-structure
+    - creative-fatigue-detector
+  optimization:
+    - kill-scale-rules
+    - budget-allocation
+    - audience-expansion
+  automation:
+    - campaign-monitor
+
+# Expert Sources
+expert_sources:
+  jeremy_haynes:
+    frameworks: 28
+    primary:
+      - DSL Revolution
+      - CBO vs ABO Strategy
+      - Kill/Scale Rules
+      - Funnel Selection
+      - Constants vs Variables
+  brian_moncada:
+    frameworks: 10
+    primary:
+      - Andromeda Method
+      - Metric Thresholds
+      - Audience Saturation
+  alex_hormozi:
+    frameworks: 5
+    primary:
+      - Unit Economics
+      - LTV/CAC Ratio
+      - Hydra Strategy
+  brandon_carter:
+    frameworks: 3
+    primary:
+      - Constants vs Variables
+      - Scientific Hook Testing
+  jordan_stupar:
+    frameworks: 1
+    primary:
+      - Creative Strategy
+
+# Dependencies
+dependencies:
+  aios-core: "^3.0.0"
+
+# Location Reference
+location:
+  agents: .aios-core/development/agents/
+  skills: .aios-core/development/skills/media-buyer/
+  note: |
+    Agentes ficam no core porque são parte do AIOS Master (Mega Brain).
+    Skills são capabilities fundamentais, não específicas de projeto.
+
+# Metadata
+metadata:
+  created: "2026-02-01"
+  updated: "2026-02-02"
+  status: active
+  maturity: production
+  officializedBy: "Thiago Finch"
+  officializedAt: "2026-02-02"
+
+# Tags for discovery
+tags:
+  platforms:
+    - meta-ads
+    - google-ads
+    - tiktok-ads
+  markets:
+    - brasil
+    - latam
+  use_cases:
+    - lead-generation
+    - ecommerce
+    - infoproducts
+    - saas

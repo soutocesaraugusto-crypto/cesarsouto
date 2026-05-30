@@ -1,0 +1,104 @@
+# Campaign State Template — AIOX Ads Squad
+# Rolling window design: arquivo constante ~100 linhas / ~4KB independente da idade da campanha.
+# Salvo em: workspace/businesses/{slug}/ads/{platform}/{campaign_slug}/campaign-state.yaml
+#
+# Story: SAIOX-ADS-V5-2.4 (AC6)
+# Created: 2026-03-17
+# Sources:
+#   - Roundtable P0 #7: Rolling window para campaign-state (nao append infinito)
+#   - Data Engineer roundtable: "Arquivo constante ~4KB, memoria sem crescimento"
+#   - autonomy-tiers.yaml: read-campaign-state (Auto), update-campaign-state (Auto)
+#   - safety-rules.yaml: learning_phase protection
+
+version: "1.0.0"
+template: campaign-state
+managed_by: "@campaign-manager"  # Unico agente com write no state file
+read_by: ["@ad-midas", "@performance-analyst", "@creative-analyst", "@fiscal"]
+
+# ═══════════════════════════════════════════════════════════════
+# CAMPAIGN IDENTITY
+# ═══════════════════════════════════════════════════════════════
+
+campaign:
+  id: ""                      # ID na plataforma (ex: "120210345678901234")
+  name: ""                    # Nome descritivo (ex: "Launch Meta Ads Pro - Cold - CBO")
+  slug: ""                    # Slug local (ex: "launch-meta-cold-cbo")
+  platform: ""                # "meta" | "google" | "youtube" | "tiktok" | "linkedin"
+  status: "paused"            # "paused" | "active" | "learning" | "completed" | "error"
+  created_date: ""            # ISO8601 (ex: "2026-03-17")
+  briefing_ref: ""            # Path do campaign-briefing.yaml que originou
+
+# ═══════════════════════════════════════════════════════════════
+# CURRENT METRICS (snapshot mais recente)
+# ═══════════════════════════════════════════════════════════════
+# Atualizado a cada coleta de metricas (Auto: collect-campaign-metrics).
+# Sobrescreve valores anteriores — rolling, nao append.
+
+current_metrics:
+  last_updated: ""            # ISO8601 timestamp da ultima coleta
+  spend: 0.0                  # gasto total acumulado
+  cpa: 0.0                    # custo por aquisicao atual
+  roas: 0.0                   # retorno sobre investimento atual
+  ctr: 0.0                    # click-through rate (%)
+  cpm: 0.0                    # custo por mil impressoes
+  conversions: 0              # conversoes totais
+  frequency: 0.0              # frequencia media
+
+# ═══════════════════════════════════════════════════════════════
+# ROLLING 7D (media movel dos ultimos 7 dias)
+# ═══════════════════════════════════════════════════════════════
+# Recalculado diariamente. Nao armazena historico — apenas a media.
+
+rolling_7d:
+  avg_cpa: 0.0
+  avg_roas: 0.0
+  trend: "stable"             # "improving" | "stable" | "declining"
+  # trend = comparacao do avg_cpa atual vs avg_cpa do ciclo 7d anterior
+  # improving: avg_cpa caiu >=10%
+  # declining: avg_cpa subiu >=10%
+  # stable: variacao < 10%
+
+# ═══════════════════════════════════════════════════════════════
+# ROLLING 30D (media movel dos ultimos 30 dias)
+# ═══════════════════════════════════════════════════════════════
+
+rolling_30d:
+  avg_cpa: 0.0
+  avg_roas: 0.0
+  trend: "stable"             # mesma logica do rolling_7d
+
+# ═══════════════════════════════════════════════════════════════
+# MEMORY (insights acumulados, bounded)
+# ═══════════════════════════════════════════════════════════════
+# Listas com limite fixo. Quando atinge max, remove o mais antigo (FIFO).
+# Isso garante que o arquivo nunca cresce alem de ~4KB.
+
+memory:
+  winning_patterns: []        # max 5 — padroes que funcionaram
+  # Exemplo:
+  # - "Video hooks com pergunta performam 2x melhor que afirmacao (CTR 3.2% vs 1.5%)"
+  # - "LAL 1% compradores > Interest targeting para conversions"
+
+  failed_patterns: []         # max 5 — padroes que falharam
+  # Exemplo:
+  # - "Broad targeting em conta < 90 dias: CPA 5x acima do target"
+  # - "Static images com texto > 20%: rejection rate alto"
+
+  notes: []                   # max 10 — observacoes contextuais
+  # Exemplo:
+  # - "Sazonalidade: CPM sobe 40% em novembro (BFCM)"
+  # - "Criativo 'depoimento Maria' esgotou em 14 dias (frequency > 4)"
+
+# ═══════════════════════════════════════════════════════════════
+# LEARNING PHASE
+# ═══════════════════════════════════════════════════════════════
+# Tracking do status de learning phase da campanha.
+# Ref: safety-rules.yaml — learning_phase protection.
+# Enquanto status: "active", alteracoes sao RESTRITAS.
+
+learning_phase:
+  status: "not_started"       # "not_started" | "active" | "completed" | "reset"
+  started: ""                 # ISO8601 — quando entrou em learning
+  estimated_exit: ""          # ISO8601 — estimativa de saida (~7 dias ou 50 conversoes)
+  conversions_in_phase: 0     # conversoes acumuladas durante learning (target: 50)
+  resets: 0                   # quantas vezes learning foi reiniciado (indica instabilidade)

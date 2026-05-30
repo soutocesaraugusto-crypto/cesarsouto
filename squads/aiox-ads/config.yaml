@@ -1,0 +1,139 @@
+name: aiox-ads
+version: "5.0.0"
+score: 9.2
+slashPrefix: aiox-ads
+title: "Ads & Traffic — Unified Campaign Management & Optimization"
+description: >
+  Squad operacional de tráfego pago multi-plataforma.
+  10 agentes em 3 tiers com modelo concierge (@ad-midas).
+  38 skills, 47 frameworks de 5+ experts.
+  Integração com 2 MCPs externos (Pipeboard + ads-mcp).
+  Safety systems com 3 tiers de autonomia (Auto/HITL/Human).
+author: "AIOS Team"
+icon: "🎯"
+type: operational
+
+independence: false
+independence_details: |
+  Requer conexão com APIs de plataformas de ads para funcionalidade
+  completa. O bootstrap.sh configura credenciais. Setup conversacional
+  via *setup guia a configuração. Funciona em modo read-only sem tokens.
+
+dependencies:
+  required: []
+  optional:
+    - name: meta-ads-mcp
+      description: "Pipeboard Meta Marketing API (29 tools R/W)"
+      get_at: "pipeboard.co"
+    - name: ads-mcp
+      description: "Adspirer cross-platform (91+ tools, 4 plataformas)"
+      get_at: "github.com/amekala/ads-mcp"
+
+environment:
+  required:
+    - name: META_ADS_ACCESS_TOKEN
+      description: "Meta System User token via Pipeboard OAuth"
+    - name: META_ADS_ACCOUNT_ID
+      description: "Meta Ad Account ID (format: act_XXXXXXXXX)"
+  optional:
+    - name: META_ADS_PIXEL_ID
+      description: "Facebook Pixel ID"
+    - name: META_ADS_PAGE_ID
+      description: "Facebook Page ID"
+    - name: GOOGLE_ADS_DEVELOPER_TOKEN
+      description: "Google Ads Developer Token"
+    - name: GOOGLE_ADS_CLIENT_ID
+      description: "Google Ads OAuth Client ID"
+    - name: GOOGLE_ADS_CLIENT_SECRET
+      description: "Google Ads OAuth Client Secret"
+    - name: GOOGLE_ADS_REFRESH_TOKEN
+      description: "Google Ads OAuth Refresh Token"
+
+workspace_integration:
+  level: controlled_runtime_consumer
+  rationale: >-
+    The AIOX Ads squad depends on canonical business context to run quality
+    campaigns, but the primary runtime remains oriented toward ad platforms
+    and operational artifacts external to the workspace. The COO resolves
+    readiness before operational execution. The load-workspace-context task
+    reads canonical sources to pre-fill the business profile, eliminating
+    redundant questions during onboarding.
+  read_paths:
+    - workspace/config.yaml
+    - workspace/businesses/{business}/ads/
+    - workspace/businesses/{business}/company/company-profile.yaml
+    - workspace/businesses/{business}/company/icp.yaml
+    - workspace/businesses/{business}/company/brand.yaml
+    - workspace/businesses/{business}/brand/brandbook.yaml
+    - workspace/businesses/{business}/brand/domain-decision.yaml
+    - workspace/businesses/{business}/products/{product}/offerbook.yaml
+    - workspace/businesses/{business}/products/{product}/proof.yaml
+    - workspace/businesses/{business}/products/{product}/testimonials.yaml
+    - workspace/businesses/{business}/products/{product}/narrative/objection-destroyers.yaml
+    - workspace/businesses/{business}/operations/pricing-strategy.yaml
+  write_paths:
+    - workspace/businesses/{business}/ads/campaigns/
+  readiness_owner: workspace-chief
+  readiness_resolver: squads/aiox-workspace/scripts/resolve-squad-workspace-readiness.cjs
+  context_loader:
+    task: load-workspace-context
+    trigger: before_setup_business_profile
+    fallback: full_elicitation
+    coverage_target: "75%"
+
+entry_agent: ad-midas
+
+agents:
+  - ad-midas
+  - campaign-manager
+  - performance-analyst
+  - creative-analyst
+  - pixel-specialist
+  - fiscal
+  - kasim-aslam
+  - tom-breeze
+  - ralph-burns
+  - br-traffic-operator
+  - tiago-kiss   # cross-list de squads/ads-high-ticket — especialista em high ticket (R$10k+), copy/branding/funil 1-1
+
+tasks:
+  - setup-platform
+  - load-workspace-context
+  - setup-business-profile
+  - configure-mcp
+  - run-research-protocol
+  - create-campaign
+  - optimize-campaign
+  - analyze-creatives
+  - audit-tracking
+  - scale-campaign
+
+workflows:
+  - wf-meta-launch
+  - wf-meta-daily-optimization
+  - wf-meta-ab-test
+
+checklists:
+  - campaign-launch
+  - scaling-readiness
+  - ban-prevention
+  - launch-dod
+
+data:
+  - benchmarks
+  - benchmarks-brasil
+  - rate-limits
+  - migration-triggers
+  - knowledge/meta/
+
+tags:
+  - ads
+  - traffic
+  - campaigns
+  - meta-ads
+  - google-ads
+  - roas
+  - cpa
+  - media-buying
+  - safety
+  - multi-platform

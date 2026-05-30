@@ -1,0 +1,175 @@
+# Context Manifest: diagnose-retention
+# Variáveis para diagnóstico vertical de sistema de retenção (product-level)
+# Baseado nos templates: onboarding-flow, churn-prevention, nps-feedback-loop,
+# retention-strategy, adoption-signals, curriculum
+
+manifest:
+  id: diagnose-retention
+  version: "1.0.0"
+  description: Contexto para diagnóstico de retenção por produto
+  total_variables: 30
+  agent: workspace-chief
+
+params:
+  required:
+    - slug     # business slug
+    - product  # product slug
+  optional: []
+
+variables:
+
+  # === ONBOARDING-FLOW.YAML ===
+  - id: onboarding_exists
+    source: "products/{product}/onboarding/onboarding-flow.yaml"
+    field: _exists
+    type: boolean
+
+  - id: onboarding_total_duration
+    source: "products/{product}/onboarding/onboarding-flow.yaml"
+    field: onboarding_overview.total_duration
+    type: string
+
+  - id: onboarding_first_value_moment
+    source: "products/{product}/onboarding/onboarding-flow.yaml"
+    field: onboarding_overview.first_value_moment
+    type: string
+
+  - id: onboarding_day0_actions_count
+    source: "products/{product}/onboarding/onboarding-flow.yaml"
+    field: day_0_welcome.actions
+    type: array_length
+
+  - id: onboarding_completion_criteria
+    source: "products/{product}/onboarding/onboarding-flow.yaml"
+    field: onboarding_completion.completion_criteria
+    type: string
+
+  - id: onboarding_strength_score
+    source: "products/{product}/onboarding/onboarding-flow.yaml"
+    field: onboarding_strength_score
+    type: score_block
+
+  # === CHURN-PREVENTION.YAML ===
+  - id: churn_prevention_exists
+    source: "products/{product}/retention/churn-prevention.yaml"
+    field: _exists
+    type: boolean
+
+  - id: churn_signals_count
+    source: "products/{product}/retention/churn-prevention.yaml"
+    field: churn_signals
+    type: completeness  # behavioral + engagement + sentiment
+
+  - id: churn_interventions_count
+    source: "products/{product}/retention/churn-prevention.yaml"
+    field: interventions
+    type: completeness  # low + medium + high
+
+  - id: churn_top_reasons
+    source: "products/{product}/retention/churn-prevention.yaml"
+    field: churn_analysis.top_churn_reasons
+    type: array_length
+
+  - id: churn_strength_score
+    source: "products/{product}/retention/churn-prevention.yaml"
+    field: churn_prevention_score
+    type: score_block
+
+  # === NPS-FEEDBACK-LOOP.YAML ===
+  - id: nps_exists
+    source: "products/{product}/retention/nps-feedback-loop.yaml"
+    field: _exists
+    type: boolean
+
+  - id: nps_current
+    source: "products/{product}/retention/nps-feedback-loop.yaml"
+    field: nps_measurement.current_nps
+    type: number
+
+  - id: nps_target
+    source: "products/{product}/retention/nps-feedback-loop.yaml"
+    field: nps_measurement.target_nps
+    type: number
+
+  - id: nps_measurement_frequency
+    source: "products/{product}/retention/nps-feedback-loop.yaml"
+    field: nps_measurement.measurement_frequency
+    type: string
+
+  - id: nps_touchpoints_count
+    source: "products/{product}/retention/nps-feedback-loop.yaml"
+    field: feedback_touchpoints
+    type: array_length
+
+  - id: nps_strength_score
+    source: "products/{product}/retention/nps-feedback-loop.yaml"
+    field: feedback_loop_score
+    type: score_block
+
+  # === RETENTION-STRATEGY.YAML ===
+  - id: retention_strategy_exists
+    source: "products/{product}/retention/retention-strategy.yaml"
+    field: _exists
+    type: boolean
+
+  - id: retention_30d_rate
+    source: "products/{product}/retention/retention-strategy.yaml"
+    field: current_metrics.first_30d_retention
+    type: percentage
+
+  - id: retention_90d_rate
+    source: "products/{product}/retention/retention-strategy.yaml"
+    field: current_metrics.first_90d_retention
+    type: percentage
+
+  - id: retention_annual_rate
+    source: "products/{product}/retention/retention-strategy.yaml"
+    field: current_metrics.annual_retention
+    type: percentage
+
+  - id: retention_churn_monthly
+    source: "products/{product}/retention/retention-strategy.yaml"
+    field: current_metrics.churn_rate_monthly
+    type: percentage
+
+  - id: retention_layers_filled
+    source: "products/{product}/retention/retention-strategy.yaml"
+    field: _completeness  # 5 layers
+    type: completeness
+
+  - id: retention_strength_score
+    source: "products/{product}/retention/retention-strategy.yaml"
+    field: retention_strength_score
+    type: score_block
+
+  # === ADOPTION-SIGNALS.YAML ===
+  - id: adoption_exists
+    source: "products/{product}/adoption-signals.yaml"
+    field: _exists
+    type: boolean
+
+  - id: adoption_activation_definition
+    source: "products/{product}/adoption-signals.yaml"
+    field: adoption_model.activation_definition
+    type: string
+
+  - id: adoption_risk_signals_count
+    source: "products/{product}/adoption-signals.yaml"
+    field: risk_signals
+    type: array_length
+
+  - id: adoption_diagnostic_summary
+    source: "products/{product}/adoption-signals.yaml"
+    field: diagnostic_summary
+    type: object
+
+  # === CURRICULUM.YAML ===
+  - id: curriculum_exists
+    source: "products/{product}/curriculum.yaml"
+    field: _exists
+    type: boolean
+
+  - id: curriculum_modules_count
+    source: "products/{product}/curriculum.yaml"
+    field: modules
+    type: array_length

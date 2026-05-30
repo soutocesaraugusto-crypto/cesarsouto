@@ -1,0 +1,632 @@
+# Meta Daily Optimization Workflow
+# Squad: aiox-ads
+# Version: 1.0.0
+# Adapted from: squads/media-buyer-squad/workflows/wf-daily-optimization.yaml
+# Story: SAIOX-ADS-V5-5.2
+#
+# v5 Enhancements over source:
+#   - Learning Phase Gate (FIRST check -- blocks kill/scale if active)
+#   - Breakdown Effect Disclaimer (NEVER decide from breakdowns alone)
+#   - Auction Overlap pre-scale gate (>30% blocks scale)
+#   - HITL for all kill/scale ACTIONS (agent recommends, human approves)
+#   - Action Ledger updated on every action
+#   - Reads campaign-monitors.yaml thresholds (monitoring-setup integration)
+#   - Creative fatigue triggers @creative-analyst for refresh (not just flag)
+#   - Generates pulse-report.md + updates campaign-state.yaml
+
+workflow:
+  id: wf-meta-daily-optimization
+  name: Meta Daily Optimization Cycle
+  version: 1.0.0
+  platform: meta
+  purpose: >-
+    Ciclo diario de otimizacao de campanhas Meta ativas -- pull metrics,
+    check learning phase, apply kill/scale rules com safety gates,
+    detect creative fatigue, e gerar pulse report.
+  description: |
+    Workflow operacional adaptado do wf-daily-optimization.yaml (media-buyer-squad)
+    para o modelo v5 do aiox-ads. Diferencias criticas:
+
+    1. Learning Phase Check como fase independente (nao inline na fase de rules)
+    2. Kill/scale acoes sao HITL -- agente analisa e recomenda, humano aprova
+    3. Creative fatigue dispara handoff real para @creative-analyst (nao apenas flag)
+    4. Integra com monitoring-setup thresholds (campaign-monitors.yaml)
+    5. Action ledger atualizado com TODA acao tomada (AC4)
+
+  orchestrator: performance-analyst
+  type: operational
+
+  best_for:
+    - Otimizacao diaria de campanhas Meta ativas
+    - Monitoramento automatizado com safety gates
+    - Deteccao proativa de learning phase, fadiga criativa, overlap
+    - Manutencao de ROAS/CPA dentro do target com protecao contra ban
+
+  # ═══════════════════════════════════════════════════════════════
+  # PRE-REQUISITES
+  # ═══════════════════════════════════════════════════════════════
+
+  pre_requisites:
+    - name: campaign-monitors.yaml exists
+      check: "Read workspace/businesses/{slug}/ads/meta/campaign-monitors.yaml"
+      if_missing: "Dispatch *setup-monitoring {campaign_slug} before proceeding"
+      reference: "skills/operational/monitoring-setup/SKILL.md"
+
+    - name: campaign-state.yaml exists
+      check: "Read workspace/businesses/{slug}/ads/meta/campaigns/{slug}/campaign-state.yaml"
+      if_missing: "Initialize from templates/campaign-state.yaml"
+
+    - name: action-ledger.yaml exists
+      check: "Read workspace/businesses/{slug}/ads/meta/campaigns/{slug}/action-ledger.yaml"
+      if_missing: "Initialize from templates/action-ledger.yaml"
+
+    - name: MCP connection healthy
+      check: "Verify meta-ads-mcp responds to a lightweight call"
+      if_unhealthy: "Apply api-resilience circuit breaker protocol"
+      reference: "skills/operational/api-resilience/SKILL.md"
+
+  # ═══════════════════════════════════════════════════════════════
+  # PHASE 1: Pull Metrics
+  # ═══════════════════════════════════════════════════════════════
+
+  sequence:
+    - phase: pull_metrics
+      id: PH_METRICS
+      name: "Pull Metrics"
+      agent: performance-analyst
+      skills:
+        - id: campaign-monitor
+          path: "skills/automation/campaign-monitor/SKILL.md"
+          purpose: "Executes the metrics collection loop"
+        - id: api-resilience
+          path: "skills/operational/api-resilience/SKILL.md"
+          purpose: "Circuit breaker, backoff, rate limits"
+      tier: Auto
+      description: >-
+        Coletar metricas de TODAS as campanhas ativas via MCP (get_insights).
+        Dados sao usados como input para todas as fases subsequentes.
+
+      input:
+        - campaign-monitors.yaml (thresholds e schedule tier)
+        - campaign-state.yaml (baseline metrics para comparacao)
+      output:
+        - Raw metrics collection (in-memory, passed to next phases)
+        - campaign-state.yaml updated with latest current_metrics and rolling windows
+
+      actions:
+        - action: "Listar campanhas ativas"
+          mcp_call:
+            tool: meta-ads-mcp
+            action: get_campaigns
+            params:
+              effective_status: ["ACTIVE"]
+              fields: ["name", "status", "daily_budget", "lifetime_budget", "objective"]
+
+        - action: "Coletar insights por ad set (7d window + today)"
+          mcp_call:
+            tool: meta-ads-mcp
+            action: get_insights
+            params:
+              level: adset
+              date_preset: "last_7d"
+              fields:
+                - spend
+                - impressions
+                - clicks
+                - ctr
+                - cpm
+                - cpc
+                - actions
+                - cost_per_action_type
+                - frequency
+                - reach
+                - video_p75_watched_actions
+
+        - action: "Coletar insights por ad (7d window)"
+          mcp_call:
+            tool: meta-ads-mcp
+            action: get_insights
+            params:
+              level: ad
+              date_preset: "last_7d"
+              fields:
+                - spend
+                - impressions
+                - clicks
+                - ctr
+                - actions
+                - cost_per_action_type
+                - video_p25_watched_actions
+                - video_p75_watched_actions
+
+        - action: "Atualizar campaign-state.yaml"
+          description: |
+            Update current_metrics, rolling_7d, rolling_30d sections.
+            Maintain bounded memory (max 5/5/10 per templates/campaign-state.yaml spec).
+          file: "workspace/businesses/{slug}/ads/meta/campaigns/{slug}/campaign-state.yaml"
+
+      error_handling:
+        on_mcp_failure:
+          action: "Apply api-resilience circuit breaker"
+          fallback: "Use last known campaign-state.yaml metrics with STALE flag"
+          max_retries: 3
+          escalation: "If all retries fail, generate error notification and HALT workflow"
+          reference: "skills/operational/api-resilience/SKILL.md"
+
+      checkpoint:
+        id: CP_METRICS
+        decision: CONTINUE
+        criteria:
+          - "Metricas coletadas com sucesso para todas as campanhas ativas"
+          - "campaign-state.yaml atualizado com dados frescos"
+          - "Dados de pelo menos 24h disponiveis"
+
+    # ═══════════════════════════════════════════════════════════════
+    # PHASE 2: Learning Phase Check
+    # ═══════════════════════════════════════════════════════════════
+
+    - phase: learning_phase_check
+      id: PH_LEARNING
+      name: "Learning Phase Check"
+      agent: performance-analyst
+      skills:
+        - id: learning-phase-detector
+          path: "skills/diagnostic/learning-phase-detector/SKILL.md"
+          purpose: "Detect learning phase status per ad set"
+      tier: Auto
+      description: >-
+        Verificar status de Learning Phase para CADA ad set ativo.
+        Se Learning Phase ATIVA, ad sets sao marcados para SKIP na fase de rules.
+        Isso protege o investimento: metricas durante learning sao artificialmente volateis.
+
+      input:
+        - Metrics from PH_METRICS (conversions, effective_status, delivery_info)
+        - campaign-state.yaml learning_phase section
+        - action-ledger.yaml (recent edits that may have triggered learning reset)
+      output:
+        - Learning phase status per ad set (LEARNING_ACTIVE | LEARNING_LIMITED | LEARNING_COMPLETE | LEARNING_UNKNOWN)
+        - List of ad sets to SKIP in PH_RULES
+        - campaign-state.yaml learning_phase section updated
+        - Human alert if any ad set in Learning Phase
+
+      actions:
+        - action: "Classificar cada ad set"
+          process: |
+            FOR EACH ad_set:
+              IF api_status == LEARNING OR LEARNING_LIMITED:
+                status = LEARNING_ACTIVE
+              ELIF conversions_7d < 50 AND last_significant_edit < 7d:
+                status = LEARNING_ACTIVE (heuristic)
+              ELSE:
+                status = LEARNING_COMPLETE
+
+              IF status == LEARNING_ACTIVE:
+                Mark ad set for SKIP in Phase 3 (kill/scale)
+                Generate human alert with learning-phase-detector template
+                Update campaign-state.yaml learning_phase section
+
+        - action: "Update campaign-state.yaml learning_phase"
+          file: "workspace/businesses/{slug}/ads/meta/campaigns/{slug}/campaign-state.yaml"
+          section: "learning_phase"
+
+      error_handling:
+        on_insufficient_data:
+          action: "Classify as LEARNING_UNKNOWN"
+          fallback: "Treat as LEARNING_ACTIVE (conservative -- block modifications)"
+          note: "Better to over-protect than to kill a learning campaign"
+
+      checkpoint:
+        id: CP_LEARNING
+        decision: CONTINUE
+        gate: |
+          IF all ad sets LEARNING_ACTIVE:
+            SKIP Phase 3 entirely (no rules to apply)
+            Proceed to Phase 4 (creative health)
+          ELSE:
+            Proceed to Phase 3 with LEARNING_COMPLETE ad sets only
+
+    # ═══════════════════════════════════════════════════════════════
+    # PHASE 3: Apply Kill/Scale Rules
+    # ═══════════════════════════════════════════════════════════════
+
+    - phase: apply_rules
+      id: PH_RULES
+      name: "Apply Kill/Scale Rules"
+      agent: performance-analyst
+      skills:
+        - id: kill-scale-rules
+          path: "skills/optimization/kill-scale-rules/SKILL.md"
+          purpose: "Systematic kill/scale rule evaluation"
+        - id: auction-overlap-detector
+          path: "skills/diagnostic/auction-overlap-detector/SKILL.md"
+          purpose: "Pre-scale overlap check (>30% blocks scale)"
+      tier_analysis: Auto
+      tier_actions: HITL
+      description: >-
+        Avaliar kill/scale rules para ad sets que PASSARAM no Learning Phase Check
+        (status = LEARNING_COMPLETE). Analise e auto, acoes sao HITL.
+        Agente recomenda, humano aprova.
+
+      input:
+        - Metrics from PH_METRICS
+        - Learning phase results from PH_LEARNING (only LEARNING_COMPLETE ad sets)
+        - campaign-monitors.yaml (per-campaign thresholds)
+        - campaign-state.yaml (baseline for trend comparison)
+      output:
+        - Kill/scale recommendations with rule IDs and metrics evidence
+        - Pending actions list for human approval (HITL)
+        - action-ledger.yaml updated with every action taken (after approval)
+
+      actions:
+        # Step 0: Learning Phase Gate (already done in PH_LEARNING, enforced here)
+        - action: "Enforce Learning Phase Gate"
+          gate: |
+            ONLY evaluate ad sets with status = LEARNING_COMPLETE from PH_LEARNING.
+            Any ad set marked LEARNING_ACTIVE is EXCLUDED from all rules below.
+            This is NON-NEGOTIABLE per kill-scale-rules SKILL.md v5.0.
+
+        # Step 0.5: Breakdown Effect Disclaimer
+        - action: "Apply Breakdown Effect Disclaimer"
+          disclaimer: |
+            NEVER make kill/scale decisions based solely on breakdown data.
+            ALWAYS use aggregate (total) metrics as primary decision input.
+            Breakdowns may be used as SUPPORTING evidence only.
+            If breakdown data contradicts aggregate, aggregate wins.
+          reference: "data/knowledge/meta/breakdown_effect.md"
+
+        # Step 1: Evaluate Kill Rules (Auto analysis)
+        - action: "Evaluate Kill Rules"
+          tier: Auto
+          process: |
+            FOR EACH ad_set (LEARNING_COMPLETE only):
+              Read thresholds from campaign-monitors.yaml
+              Evaluate against kill-scale-rules SKILL.md kill_critical, kill_high, kill_medium
+              Use aggregate metrics (NOT breakdowns)
+              Generate recommendation with:
+                - rule_id triggered
+                - metrics evidence (actual vs threshold)
+                - recommended action (PAUSE ad/adset)
+                - severity (CRITICAL/HIGH/MEDIUM)
+
+        # Step 1.5: Evaluate Scale Rules (Auto analysis)
+        - action: "Evaluate Scale Rules"
+          tier: Auto
+          process: |
+            FOR EACH ad_set (LEARNING_COMPLETE only):
+              Check auction overlap FIRST (pre-scale gate):
+                IF overlap > 30%: BLOCK scale, recommend consolidation
+                IF overlap 15-30%: WARN, scale allowed with caution
+                IF overlap < 15%: PASS
+
+              IF not blocked by overlap:
+                Evaluate scale_vertical, scale_horizontal, scale_hydra
+                Generate recommendation with:
+                  - rule_id triggered
+                  - metrics evidence
+                  - recommended action and new budget/audience
+                  - requires_approval: true (ALL scale actions are HITL)
+
+        # Step 2: Present Recommendations (HITL)
+        - action: "Present Kill/Scale Recommendations to Human"
+          tier: HITL
+          format: |
+            Present ALL recommendations as a consolidated list:
+
+            KILL RECOMMENDATIONS:
+            #{N} | Rule: {rule_id} | Ad Set: {name} | Metric: {value} vs {threshold} | Action: {action}
+
+            SCALE RECOMMENDATIONS:
+            #{N} | Rule: {rule_id} | Ad Set: {name} | Metric: {value} | Action: {action} | New Budget: {value}
+
+            BLOCKED (Learning Phase):
+            #{N} | Ad Set: {name} | Status: LEARNING_ACTIVE | Days: {N}/7 | Conversions: {N}/50
+
+            Aguardando aprovacao. Responda com numeros a executar (ex: "1,3,5") ou "APROVAR TODOS" ou "NENHUM".
+          approval_timeout_minutes: 60
+
+        # Step 3: Execute Approved Actions
+        - action: "Execute Approved Kill/Scale Actions"
+          tier: HITL
+          process: |
+            FOR EACH approved action:
+              1. Log intent in action-ledger.yaml (BEFORE execution)
+              2. Execute via @campaign-manager dispatch (MCP call)
+              3. Log result in action-ledger.yaml (AFTER execution)
+              4. Verify execution with read-back (PAUSED verification)
+          ledger_update: |
+            Each action logged to action-ledger.yaml with:
+              - id: ACT-{NNN} (sequential)
+              - timestamp
+              - action_type: kill | scale
+              - entity: ad_set | ad | campaign
+              - entity_id
+              - rule_id
+              - metrics_at_decision (evidence)
+              - status: approved | executed | failed
+              - tier: HITL
+              - approved_by: human
+
+      error_handling:
+        on_approval_timeout:
+          action: "Log pending actions as EXPIRED in action-ledger"
+          escalation: "Include in next day's pulse report as 'Pendente: {N} acoes expiraram'"
+        on_execution_failure:
+          action: "Log failure in action-ledger, retry once via api-resilience"
+          escalation: "Generate error-notification if retry also fails"
+
+      checkpoint:
+        id: CP_RULES
+        decision: CONTINUE
+        criteria:
+          - "All LEARNING_COMPLETE ad sets evaluated against kill/scale rules"
+          - "All recommendations presented to human (HITL)"
+          - "Approved actions executed and verified"
+          - "action-ledger.yaml updated with every action"
+
+    # ═══════════════════════════════════════════════════════════════
+    # PHASE 4: Creative Health
+    # ═══════════════════════════════════════════════════════════════
+
+    - phase: creative_health
+      id: PH_CREATIVE
+      name: "Creative Health Check"
+      agent: performance-analyst
+      secondary_agent: creative-analyst
+      skills:
+        - id: creative-fatigue-detector
+          path: "skills/diagnostic/creative-fatigue-detector/SKILL.md"
+          purpose: "Detect fatigue via trend analysis (NUMBERS scope)"
+          agent: performance-analyst
+        - id: creative-evaluator
+          path: "skills/diagnostic/creative-evaluator/SKILL.md"
+          purpose: "Score creative performance (100-point, NUMBERS ONLY)"
+          agent: performance-analyst
+      tier: Auto
+      description: >-
+        Detectar fadiga criativa via tendencias de metricas (@performance-analyst).
+        Se fadiga detectada, trigger handoff para @creative-analyst para refresh.
+        Escopo critico: @performance-analyst avalia NUMEROS, @creative-analyst CRIA conteudo.
+
+      input:
+        - Metrics from PH_METRICS (CTR trend, frequency, CPM trend, hook rate)
+        - campaign-state.yaml (memory for pattern comparison)
+      output:
+        - Creative health status per ad (OK | FADIGA | CRITICO)
+        - Handoff to @creative-analyst if fatigue detected
+        - action-ledger.yaml updated if any creative action taken
+
+      actions:
+        - action: "Detect creative fatigue (NUMBERS analysis)"
+          agent: performance-analyst
+          tier: Auto
+          process: |
+            FOR EACH active ad:
+              Check fatigue indicators from creative-fatigue-detector:
+                Primary: CTR drop -30% 7d, Frequency > 3.0, CPM spike +50% 7d,
+                         Hook rate drop -25% 7d, Conversion drop -40% 7d
+                Secondary: Thumb stop ratio < 15%, Video 25% < 30%
+
+              Classify:
+                OK: No primary indicators triggered
+                FADIGA: 1-2 primary indicators triggered
+                CRITICO: 3+ primary indicators OR conversion drop > 40%
+
+        - action: "Trigger creative refresh (if FADIGA or CRITICO)"
+          agent: performance-analyst
+          tier: Auto
+          condition: "fatigue_status in [FADIGA, CRITICO]"
+          handoff:
+            to: creative-analyst
+            command: "*refresh-creative {campaign_slug}"
+            context_passed:
+              - fatigued_ad_ids
+              - fatigue_indicators_triggered
+              - current_performance_metrics
+              - campaign_slug
+            expected_output: "New hooks, copy variations, or creative brief for refresh"
+
+        - action: "Log fatigue detection in action-ledger"
+          tier: Auto
+          ledger_entry: |
+            id: ACT-{NNN}
+            action_type: creative_health_check
+            result: OK | FADIGA | CRITICO
+            ads_checked: {N}
+            fatigue_detected: {N}
+            handoff_triggered: true | false
+            tier: Auto
+
+      error_handling:
+        on_insufficient_data:
+          action: "Skip fatigue analysis for ads with < 500 impressions"
+          note: "Need minimum statistical significance"
+        on_creative_analyst_unavailable:
+          action: "Log fatigue findings, include in pulse report as actionable alert"
+
+      checkpoint:
+        id: CP_CREATIVE
+        decision: CONTINUE
+        criteria:
+          - "All active ads evaluated for fatigue"
+          - "Handoff triggered for FADIGA/CRITICO ads"
+          - "action-ledger.yaml updated"
+
+    # ═══════════════════════════════════════════════════════════════
+    # PHASE 5: Report
+    # ═══════════════════════════════════════════════════════════════
+
+    - phase: report
+      id: PH_REPORT
+      name: "Generate Pulse Report"
+      agent: performance-analyst
+      skills:
+        - id: monitoring-setup
+          path: "skills/operational/monitoring-setup/SKILL.md"
+          purpose: "Template and threshold reference for report generation"
+      tier: Auto
+      description: >-
+        Gerar pulse-report.md (diario, 5 linhas, 15s de leitura) por campanha
+        e atualizar campaign-state.yaml com estado final do dia.
+
+      input:
+        - Metrics from PH_METRICS
+        - Learning phase results from PH_LEARNING
+        - Kill/scale actions from PH_RULES
+        - Creative health results from PH_CREATIVE
+        - action-ledger.yaml (actions taken today)
+      output:
+        - pulse-report.md (one per active campaign)
+        - campaign-state.yaml updated (final state of the day)
+
+      actions:
+        - action: "Generate pulse-report.md per campaign"
+          tier: Auto
+          template: "templates/pulse-report.md"
+          output_path: "workspace/businesses/{slug}/ads/meta/reports/daily/pulse-{date}.md"
+          format: |
+            # Pulse -- {campaign_name} -- {date}
+            Spend: R${spend} | CPA: R${cpa} ({trend} vs 7d avg) | ROAS: {roas}
+            Top Winner: {best_ad_name} (CTR {ctr}%)
+            Alert: {alert_or_none}
+            Action: {auto_action_taken_or_none} | Tier: {Auto/HITL/Human}
+          rules:
+            - "Maximo 5 linhas. Sem excecao."
+            - "trend: CPA vs media 7d (-X%, +X%, ou =)"
+            - "alert: maior severidade apenas (demais para digest)"
+            - "action: acao mais relevante do dia"
+            - "Uma campanha por pulse"
+
+        - action: "Update campaign-state.yaml final state"
+          tier: Auto
+          file: "workspace/businesses/{slug}/ads/meta/campaigns/{slug}/campaign-state.yaml"
+          sections_updated:
+            - current_metrics
+            - rolling_7d
+            - rolling_30d
+            - learning_phase
+            - memory (bounded: max 5 good_days, 5 bad_days, 10 actions)
+
+        - action: "Log report generation in action-ledger"
+          tier: Auto
+          ledger_entry: |
+            id: ACT-{NNN}
+            action_type: pulse_report_generated
+            campaign_slug: {slug}
+            date: {date}
+            alerts_count: {N}
+            actions_count: {N}
+            tier: Auto
+
+      error_handling:
+        on_missing_data:
+          action: "Generate pulse with available data, mark missing fields with '--'"
+          note: "Partial pulse is better than no pulse"
+
+      checkpoint:
+        id: CP_REPORT
+        decision: REPORT_DELIVERED
+        criteria:
+          - "Pulse report generated for each active campaign"
+          - "campaign-state.yaml updated with final daily state"
+          - "action-ledger.yaml updated"
+
+  # ═══════════════════════════════════════════════════════════════
+  # COMPLETION
+  # ═══════════════════════════════════════════════════════════════
+
+  completion_signals:
+    success:
+      - "Metricas coletadas (PH_METRICS)"
+      - "Learning phase verificada (PH_LEARNING)"
+      - "Kill/scale rules aplicadas com HITL (PH_RULES)"
+      - "Creative health verificada com handoff se necessario (PH_CREATIVE)"
+      - "Pulse report entregue e campaign-state atualizado (PH_REPORT)"
+
+  outputs:
+    - pulse-report.md (diario, por campanha)
+    - campaign-state.yaml (atualizado)
+    - action-ledger.yaml (atualizado com todas as acoes do dia)
+    - creative refresh handoff (se fadiga detectada)
+    - kill/scale recommendations log
+
+  agents_by_phase:
+    pull_metrics: performance-analyst
+    learning_phase_check: performance-analyst
+    apply_rules: performance-analyst
+    creative_health: performance-analyst + creative-analyst (handoff)
+    report: performance-analyst
+
+  # ═══════════════════════════════════════════════════════════════
+  # SCHEDULE
+  # ═══════════════════════════════════════════════════════════════
+
+  schedule:
+    frequency: daily
+    preferred_time: "09:00 BRT"
+    skip_weekends: false
+    adaptive_schedule:
+      first_72h: "2x/dia (09:00 + 18:00 BRT)"
+      standard: "1x/dia (09:00 BRT)"
+      stable: "1x/dia (09:00 BRT) -- reducao de frequency check para alerts-only se 14 dias estavel"
+    note: "Schedule tiers read from campaign-monitors.yaml per campaign"
+
+  # ═══════════════════════════════════════════════════════════════
+  # SAFETY RULES (Quick Reference)
+  # ═══════════════════════════════════════════════════════════════
+
+  safety_rules:
+    learning_phase_protection: "BLOCK all kill/scale during Learning Phase (< 50 conversions)"
+    breakdown_effect: "NEVER decide from breakdown data alone -- aggregate metrics are source of truth"
+    auction_overlap: "BLOCK scale if overlap > 30% between ad sets"
+    kill_scale_hitl: "ALL kill/scale actions are HITL -- agent recommends, human approves (AC3)"
+    action_ledger: "EVERY action logged in action-ledger.yaml (AC4)"
+    budget_ramp: "Max +20% budget increase per 48h (safety-rules.yaml)"
+    paused_verification: "After pausing, read back status to confirm PAUSED (via @campaign-manager)"
+
+  # ═══════════════════════════════════════════════════════════════
+  # REFERENCES
+  # ═══════════════════════════════════════════════════════════════
+
+  references:
+    source_workflow: "squads/media-buyer-squad/workflows/wf-daily-optimization.yaml"
+    skills:
+      - "skills/automation/campaign-monitor/SKILL.md"
+      - "skills/operational/api-resilience/SKILL.md"
+      - "skills/diagnostic/learning-phase-detector/SKILL.md"
+      - "skills/optimization/kill-scale-rules/SKILL.md"
+      - "skills/diagnostic/auction-overlap-detector/SKILL.md"
+      - "skills/diagnostic/creative-fatigue-detector/SKILL.md"
+      - "skills/diagnostic/creative-evaluator/SKILL.md"
+      - "skills/operational/monitoring-setup/SKILL.md"
+    knowledge:
+      - "data/knowledge/meta/learning_phase.md"
+      - "data/knowledge/meta/breakdown_effect.md"
+      - "data/knowledge/meta/auction_overlap.md"
+    templates:
+      - "templates/pulse-report.md"
+      - "templates/campaign-state.yaml"
+      - "templates/action-ledger.yaml"
+    config:
+      - "config/autonomy-tiers.yaml"
+      - "config/safety-rules.yaml"
+
+  metadata:
+    created: "2026-03-18"
+    story: "SAIOX-ADS-V5-5.2"
+    total_phases: 5
+    estimated_duration: "15-30 minutos por execucao (varia com numero de campanhas)"
+    framework: "Kill/Scale Rules (Jeremy Haynes) + v5 Safety Gates"
+    requires_approval: true  # Kill/scale actions are HITL
+    auto_actions:
+      - "Collect metrics via MCP"
+      - "Detect learning phase status"
+      - "Evaluate kill/scale rules (analysis only)"
+      - "Detect creative fatigue"
+      - "Generate pulse report"
+      - "Update campaign-state.yaml"
+      - "Update action-ledger.yaml"
+    hitl_actions:
+      - "Approve/reject kill recommendations"
+      - "Approve/reject scale recommendations"
+    human_actions:
+      - "Override Learning Phase block (exceptional -- policy violation or zero results at 2x period)"

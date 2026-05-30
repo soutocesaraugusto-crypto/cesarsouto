@@ -1,0 +1,669 @@
+# Autonomy Tiers — AIOX Ads Squad
+# Governa o nível de autonomia para CADA ação possível na squad.
+# Toda operação DEVE ser classificada em exatamente 1 tier antes de execução.
+#
+# Story: SAIOX-ADS-V5-1.5
+# Created: 2026-03-17
+# Sources:
+#   - Roundtable consolidado (03-roundtable.md) — Consenso #8 e #9
+#   - Meta API Risks & Bans research (05-meta-api-risks-bans.md)
+#   - Squad.yaml v5.0.0 safety section
+#   - Advolve case study (ban wave prevention patterns)
+
+version: "1.0.0"
+squad: aiox-ads
+enforced_by: fiscal  # Sentinel é o gate obrigatório
+
+# ═══════════════════════════════════════════════════════════════
+# TIER DEFINITIONS
+# ═══════════════════════════════════════════════════════════════
+
+tiers:
+  auto:
+    label: "Auto"
+    description: |
+      Ações que o agente executa sem aprovação humana.
+      Critério: operações read-only, geração de conteúdo (sem publish),
+      análises, relatórios, e detecção de anomalias.
+      Risco: ZERO a BAIXO. Nenhuma dessas ações altera estado em plataforma externa.
+    approval_required: false
+    audit_log: true  # Registra mas não bloqueia
+
+  hitl:
+    label: "HITL (Human-in-the-Loop)"
+    description: |
+      Ações que requerem aprovação humana explícita antes da execução.
+      Critério: operações que alteram estado de campanha, budget, targeting ou criativos
+      em campanhas ATIVAS. Risco MÉDIO a ALTO.
+      Motivo: Ban Wave 2026 — mudanças bruscas são triggers de moderação AI da Meta.
+    approval_required: true
+    approval_format: "Agente apresenta plano → humano confirma com 'APROVADO' → execução"
+    timeout_minutes: 60  # Se humano não responder em 60min, ação expira
+    audit_log: true
+
+  human:
+    label: "Human Only"
+    description: |
+      Ações que o agente NUNCA executa. Apenas humanos.
+      Critério: decisões estratégicas de alto nível, compliance/legal,
+      gestão de crise, e operações cross-channel que afetam múltiplos negócios.
+      O agente pode RECOMENDAR, mas NUNCA executar.
+    approval_required: N/A  # Agente não executa
+    agent_action: "recommend_only"
+    audit_log: true
+
+# ═══════════════════════════════════════════════════════════════
+# ACTION → TIER MAPPING (completo, sem ações não-mapeadas)
+# ═══════════════════════════════════════════════════════════════
+
+actions:
+
+  # ─────────────────────────────────────────────────────────────
+  # AUTO — Ações sem aprovação (read-only, análise, geração)
+  # ─────────────────────────────────────────────────────────────
+
+  auto:
+    # --- Coleta de métricas e monitoramento (read-only API) ---
+    - id: collect-campaign-metrics
+      description: "Coletar métricas de campanhas via API (impressions, clicks, spend, conversions)"
+      agents: [ad-midas, performance-analyst, campaign-manager]
+      api_type: read
+      rationale: "Read-only. Nenhum risco de ban ou alteração de estado."
+
+    - id: collect-adset-metrics
+      description: "Coletar métricas de adsets (CTR, CPA, ROAS, CPM, frequency)"
+      agents: [performance-analyst, campaign-manager]
+      api_type: read
+      rationale: "Read-only. Dados necessários para decisões de kill/scale."
+
+    - id: collect-ad-metrics
+      description: "Coletar métricas de ads individuais (hook rate, view rate, CTR)"
+      agents: [performance-analyst, creative-analyst]
+      api_type: read
+      rationale: "Read-only. Dados necessários para creative fatigue detection."
+
+    - id: collect-audience-insights
+      description: "Coletar dados de audiência (demographics, overlap, saturation)"
+      agents: [performance-analyst]
+      api_type: read
+      rationale: "Read-only. Informa estratégia de audience expansion."
+
+    - id: collect-pixel-events
+      description: "Coletar dados de eventos do pixel (event count, match rate, CAPI status)"
+      agents: [pixel-specialist]
+      api_type: read
+      rationale: "Read-only. Necessário para tracking audit."
+
+    - id: check-campaign-status
+      description: "Verificar status de campanhas (ACTIVE, PAUSED, error states)"
+      agents: [campaign-manager, ad-midas]
+      api_type: read
+      rationale: "Read-only. Necessário para campaign monitor loop."
+
+    - id: check-account-spend
+      description: "Verificar spend diário/semanal da conta (budget consumed vs remaining)"
+      agents: [performance-analyst, ad-midas]
+      api_type: read
+      rationale: "Read-only. Informação de budget sem alteração."
+
+    - id: check-rate-limit-status
+      description: "Verificar consumo de rate limit atual da API (pontos usados vs disponíveis)"
+      agents: [campaign-manager]
+      api_type: read
+      rationale: "Read-only. Essencial para evitar HTTP 429."
+
+    - id: check-token-expiry
+      description: "Verificar validade do access token e alertar se < 7 dias"
+      agents: [campaign-manager]
+      api_type: read
+      rationale: "Read-only. Prevenção de falha por token expirado."
+
+    - id: check-metastatus
+      description: "Consultar metastatus.com antes de operações de escrita"
+      agents: [campaign-manager]
+      api_type: external
+      rationale: "Read-only externo. Checagem de saúde da plataforma antes de writes."
+      source: "05-meta-api-risks-bans.md — Seção 4, Recomendação 1"
+
+    # --- Relatórios e análises (geração local, sem API write) ---
+    - id: generate-pulse-report
+      description: "Gerar relatório Pulse diário (5 linhas: spend, CPA, ROAS, top ad, alerta)"
+      agents: [performance-analyst, ad-midas]
+      api_type: none
+      rationale: "Geração local. Report de 5 linhas baseado em métricas já coletadas."
+
+    - id: generate-digest-report
+      description: "Gerar relatório Digest semanal (tabela + insights + recomendações)"
+      agents: [performance-analyst, ad-midas]
+      api_type: none
+      rationale: "Geração local. Report semanal baseado em dados acumulados."
+
+    - id: generate-deep-dive-report
+      description: "Gerar relatório Deep Dive sob demanda (análise completa com gráficos e trends)"
+      agents: [performance-analyst]
+      api_type: none
+      rationale: "Geração local. Análise completa sem interação com API."
+
+    - id: generate-scorecard
+      description: "Gerar scorecard de campanha/agente (accountability loop)"
+      agents: [fiscal]
+      api_type: none
+      rationale: "Geração local. Scorecard baseado em dados já disponíveis."
+
+    # --- Detecção de anomalias (análise local) ---
+    - id: detect-anomaly-spend
+      description: "Detectar anomalia de spend (spike ou drop > 30% vs média 7d)"
+      agents: [performance-analyst, ad-midas]
+      api_type: none
+      rationale: "Análise local. Alerta sem ação automática."
+
+    - id: detect-anomaly-cpa
+      description: "Detectar anomalia de CPA (> 2x target por 6h consecutivas)"
+      agents: [performance-analyst]
+      api_type: none
+      rationale: "Análise local. Trigger para recomendação de kill, não execução direta."
+
+    - id: detect-creative-fatigue
+      description: "Detectar fadiga de criativo (frequency > 3, CTR drop > 30%, hook rate < 15%)"
+      agents: [creative-analyst, performance-analyst]
+      api_type: none
+      rationale: "Análise local. Detecta mas não age — escala para HITL se swap necessário."
+      source: "Registry: creative-fatigue-detector skill"
+
+    - id: detect-audience-saturation
+      description: "Detectar saturação de audiência (frequency > 3, audience overlap > 60%)"
+      agents: [performance-analyst]
+      api_type: none
+      rationale: "Análise local. Informa recomendação de expansion, não executa."
+
+    - id: detect-tracking-issues
+      description: "Detectar issues de tracking (conversions == 0 por 6h, match rate < 60%)"
+      agents: [pixel-specialist]
+      api_type: none
+      rationale: "Análise local. Alerta humano sobre problema de tracking."
+
+    # --- Geração de conteúdo criativo (local, sem publish) ---
+    - id: generate-hooks
+      description: "Gerar 10+ variações de hooks usando DSL Revolution"
+      agents: [creative-analyst]
+      api_type: none
+      rationale: "Geração local. Hooks são sugestões, humano decide quais usar."
+      source: "Registry: hook-generator skill"
+
+    - id: generate-copy
+      description: "Gerar copy usando frameworks PAS, AIDA, BAB, Story"
+      agents: [creative-analyst]
+      api_type: none
+      rationale: "Geração local. Copy é sugestão para review humano."
+      source: "Registry: copy-generator skill"
+
+    - id: generate-creative-brief
+      description: "Gerar brief completo para designers"
+      agents: [creative-analyst]
+      api_type: none
+      rationale: "Geração local. Brief é documento de referência."
+      source: "Registry: creative-brief skill"
+
+    - id: generate-angles
+      description: "Gerar ângulos criativos diferentes para mesma oferta"
+      agents: [creative-analyst]
+      api_type: none
+      rationale: "Geração local. Ângulos são sugestões."
+      source: "Registry: angle-generator skill"
+
+    - id: generate-dsl-structure
+      description: "Criar estrutura de Deck Sales Letter (DSL Revolution)"
+      agents: [creative-analyst]
+      api_type: none
+      rationale: "Geração local. Estrutura de slides para review."
+      source: "Registry: dsl-structure skill"
+
+    - id: generate-youtube-script
+      description: "Gerar script de YouTube Ad usando 7-Part structure"
+      agents: [tom-breeze]
+      api_type: none
+      rationale: "Geração local. Script para review humano."
+      source: "Registry: youtube-ad-scriptwriter skill"
+
+    # --- Análises estratégicas (local, recomendação) ---
+    - id: diagnose-metrics
+      description: "Executar diagnóstico completo de métricas (Andromeda Method + Kill Rules)"
+      agents: [performance-analyst]
+      api_type: none
+      rationale: "Análise local. Output é diagnóstico, não ação."
+      source: "Registry: metric-diagnosis skill"
+
+    - id: analyze-funnel
+      description: "Analisar funil de conversão e identificar drop-offs"
+      agents: [performance-analyst]
+      api_type: none
+      rationale: "Análise local. Identifica gargalos sem alterar nada."
+      source: "Registry: funnel-analysis skill"
+
+    - id: analyze-attribution
+      description: "Analisar atribuição e reconciliar dados entre plataformas"
+      agents: [pixel-specialist]
+      api_type: none
+      rationale: "Análise local. Reconciliação de dados Meta vs backend."
+      source: "Registry: attribution-analysis skill"
+
+    - id: evaluate-kill-scale
+      description: "Avaliar se campanha deve ser pausada ou escalada (gerar RECOMENDAÇÃO)"
+      agents: [performance-analyst]
+      api_type: none
+      rationale: "Análise local. Gera recomendação, EXECUÇÃO é HITL."
+      source: "Registry: kill-scale-rules skill"
+
+    - id: evaluate-budget-allocation
+      description: "Calcular alocação ideal de budget entre campanhas (gerar RECOMENDAÇÃO)"
+      agents: [performance-analyst]
+      api_type: none
+      rationale: "Análise local. Gera plano de realocação, execução é HITL."
+      source: "Registry: budget-allocation skill"
+
+    - id: evaluate-audience-expansion
+      description: "Estratégias para expandir audiências saturadas (gerar RECOMENDAÇÃO)"
+      agents: [performance-analyst]
+      api_type: none
+      rationale: "Análise local. Plano de expansion, execução é HITL."
+      source: "Registry: audience-expansion skill"
+
+    - id: evaluate-scale-readiness
+      description: "Avaliar prontidão para escalar (Scale Prerequisites check)"
+      agents: [performance-analyst, ad-midas]
+      api_type: none
+      rationale: "Análise local. Checklist de readiness."
+      source: "Registry: scale-readiness-check skill"
+
+    - id: calculate-unit-economics
+      description: "Calcular CAC, LTV, payback e decisão de scaling"
+      agents: [performance-analyst]
+      api_type: none
+      rationale: "Cálculo local. Números informam decisão, não executam."
+      source: "Registry: unit-economics skill"
+
+    - id: select-funnel
+      description: "Selecionar tipo de funil ideal para a oferta/nicho"
+      agents: [ad-midas]
+      api_type: none
+      rationale: "Recomendação estratégica local."
+      source: "Registry: funnel-selection skill"
+
+    - id: design-campaign-structure
+      description: "Definir estrutura de campanhas/adsets/ads (CBO vs ABO, naming)"
+      agents: [ad-midas, campaign-manager]
+      api_type: none
+      rationale: "Planejamento local. Estrutura é blueprint, criação real é HITL."
+      source: "Registry: campaign-structure skill"
+
+    - id: design-google-campaign
+      description: "Arquitetar campanha Google Ads (PMax, Search, Display)"
+      agents: [kasim-aslam]
+      api_type: none
+      rationale: "Planejamento local. Estrutura Google para review."
+      source: "Registry: google-campaign-architect skill"
+
+    - id: design-youtube-campaign
+      description: "Planejar campanha YouTube (targeting pyramid, launch protocol)"
+      agents: [tom-breeze]
+      api_type: none
+      rationale: "Planejamento local. Protocolo de lançamento para review."
+      source: "Registry: youtube-campaign-launcher skill"
+
+    - id: design-scaling-structure
+      description: "Planejar estrutura Forester 6-campaign para scaling"
+      agents: [ralph-burns]
+      api_type: none
+      rationale: "Planejamento local. Forester structure para review."
+      source: "Registry: forester-scaling-system skill"
+
+    - id: design-brasil-campaign
+      description: "Planejar campanha mercado Brasil (PAF 4 fases, BFCM seasonal)"
+      agents: [br-traffic-operator]
+      api_type: none
+      rationale: "Planejamento local. Ops Brasil para review."
+      source: "Registry: br-campaign-ops skill"
+
+    # --- Compliance e auditoria (verificação local) ---
+    - id: audit-ad-compliance
+      description: "Verificar compliance de ad com policies da plataforma (pré-publish)"
+      agents: [fiscal]
+      api_type: none
+      rationale: "Checagem local. Gate obrigatório antes de qualquer publish."
+      source: "Registry: ad-compliance-gate skill"
+
+    - id: audit-campaign-pre-launch
+      description: "Checklist completo de pré-launch (tracking, compliance, budget, targeting)"
+      agents: [fiscal, pixel-specialist]
+      api_type: none
+      rationale: "Verificação local. Checklists não alteram estado."
+
+    - id: optimize-google-search
+      description: "Otimizar campanhas Google Search (Quality Score, negative keywords)"
+      agents: [kasim-aslam]
+      api_type: none
+      rationale: "Análise local. Gera recomendações de otimização."
+      source: "Registry: google-search-optimizer skill"
+
+    - id: plan-creative-bombardment
+      description: "Planejar Creative Lab bombardment para scaling agressivo"
+      agents: [ralph-burns]
+      api_type: none
+      rationale: "Planejamento local. Bombardment plan para review."
+      source: "Registry: creative-bombardment skill"
+
+    # --- WAL e state management (local) ---
+    - id: write-wal-entry
+      description: "Registrar operação no Write-Ahead Log antes de execução via API"
+      agents: [campaign-manager]
+      api_type: none
+      rationale: "Escrita local (arquivo WAL). Pré-requisito para qualquer API write."
+      source: "Roundtable — Decisão #8: WAL pattern obrigatório"
+
+    - id: read-campaign-state
+      description: "Ler state file local de campanha (rolling window)"
+      agents: [campaign-manager, ad-midas, performance-analyst]
+      api_type: none
+      rationale: "Leitura local. State file mantido em rolling window ~4KB."
+
+    - id: update-campaign-state
+      description: "Atualizar state file local após coleta de métricas"
+      agents: [campaign-manager]
+      api_type: none
+      rationale: "Escrita local. Atualiza estado local, não plataforma."
+
+  # ─────────────────────────────────────────────────────────────
+  # HITL — Ações que requerem aprovação humana
+  # ─────────────────────────────────────────────────────────────
+
+  hitl:
+    # --- Alterações de estado de campanha ---
+    - id: activate-campaign
+      description: "Ativar campanha PAUSED → ACTIVE"
+      agents: [campaign-manager]
+      api_type: write
+      pre_requisites:
+        - audit-ad-compliance  # fiscal gate
+        - audit-campaign-pre-launch  # pre-launch checklist
+        - launch-dod  # 8 hard gates (checklists/launch-dod.md) — SAIOX-ADS-V5-1.6
+        - check-metastatus  # plataforma saudável
+        - write-wal-entry  # WAL obrigatório
+      rationale: |
+        HITL obrigatório. Ativar campanha expõe spend real.
+        Ban Wave 2026: ativação após revisão humana reduz risco de flag por padrão bot.
+      source: "Roundtable Consenso #8: campanhas SEMPRE paused por padrão"
+
+    - id: pause-campaign
+      description: "Pausar campanha ACTIVE → PAUSED (kill decision)"
+      agents: [campaign-manager]
+      api_type: write
+      pre_requisites:
+        - evaluate-kill-scale  # análise que gerou recomendação de kill
+        - write-wal-entry
+      rationale: |
+        HITL porque pausa afeta delivery e pode impactar learning phase.
+        Exceção: se CPA > 3x target por 12h+, agente pode recomendar pause urgente
+        mas AINDA requer confirmação humana.
+      source: "Registry: kill-scale-rules — CPA 2x Rule"
+
+    - id: scale-campaign-budget
+      description: "Aumentar budget de campanha (> 20% do atual)"
+      agents: [campaign-manager]
+      api_type: write
+      pre_requisites:
+        - evaluate-scale-readiness  # scale readiness check
+        - evaluate-budget-allocation  # budget allocation plan
+        - write-wal-entry
+      threshold: "budget_change_pct > 20"
+      rationale: |
+        HITL obrigatório para aumentos > 20%.
+        Ban Wave 2026: spike de ad spend é trigger #1 de moderação AI da Meta.
+        Rampagem obrigatória: Day 1 = 25%, Day 3 = 50%, Day 7 = 100%.
+      source: "05-meta-api-risks-bans.md — Trigger: Spike de ad spend (ALTO)"
+
+    - id: reduce-campaign-budget
+      description: "Reduzir budget de campanha (> 20% do atual)"
+      agents: [campaign-manager]
+      api_type: write
+      pre_requisites:
+        - evaluate-kill-scale
+        - write-wal-entry
+      threshold: "budget_change_pct > 20"
+      rationale: |
+        HITL para reduções significativas. Corte brusco de budget pode
+        reiniciar learning phase e desperdiçar dados acumulados.
+
+    - id: change-targeting
+      description: "Alterar targeting de adset (audiência, demographics, interests, placements)"
+      agents: [campaign-manager]
+      api_type: write
+      pre_requisites:
+        - evaluate-audience-expansion  # se expansion
+        - audit-ad-compliance  # compliance check
+        - write-wal-entry
+      rationale: |
+        HITL obrigatório. Mudança drástica de targeting é trigger #2 de ban.
+        Mudanças incrementais (ex: adicionar 1 interest) ainda requerem aprovação.
+      source: "05-meta-api-risks-bans.md — Trigger: Mudança drástica de targeting (ALTO)"
+
+    - id: swap-creative-live
+      description: "Trocar criativo em campanha ATIVA (novo ad copy, imagem ou vídeo)"
+      agents: [campaign-manager]
+      api_type: write
+      pre_requisites:
+        - detect-creative-fatigue  # motivo da troca
+        - audit-ad-compliance  # novo criativo compliance-checked
+        - write-wal-entry
+      rationale: |
+        HITL porque troca de criativo em campanha ativa reinicia learning.
+        Creative fatigue deve ser confirmada antes da troca.
+      source: "Registry: creative-fatigue-detector — triggers swap"
+
+    - id: create-campaign-api
+      description: "Criar campanha via API (sempre PAUSED por padrão)"
+      agents: [campaign-manager]
+      api_type: write
+      pre_requisites:
+        - design-campaign-structure  # estrutura definida
+        - audit-ad-compliance  # compliance verificada
+        - check-metastatus  # plataforma saudável
+        - write-wal-entry
+      constraints:
+        - "status: PAUSED (nunca ACTIVE na criação)"
+        - "max 5 campanhas/dia em contas < 90 dias"
+      rationale: |
+        HITL porque criação via API consome rate limit e cria entidade real.
+        Criação em massa é trigger de ban (MÉDIO).
+        Sempre PAUSED — ativação é ação HITL separada.
+      source: "05-meta-api-risks-bans.md — Trigger: Criação em massa de ads (MÉDIO)"
+
+    - id: create-adset-api
+      description: "Criar adset via API"
+      agents: [campaign-manager]
+      api_type: write
+      pre_requisites:
+        - write-wal-entry
+      rationale: "HITL porque cria entidade real e consome rate limit."
+
+    - id: create-ad-api
+      description: "Criar ad via API"
+      agents: [campaign-manager]
+      api_type: write
+      pre_requisites:
+        - audit-ad-compliance
+        - write-wal-entry
+      rationale: "HITL porque cria entidade real. Compliance gate obrigatório para copy/criativo."
+
+    - id: duplicate-campaign-api
+      description: "Duplicar campanha existente via API"
+      agents: [campaign-manager]
+      api_type: write
+      pre_requisites:
+        - write-wal-entry
+      constraints:
+        - "status da cópia: PAUSED"
+        - "max 5 duplicações/dia em contas < 90 dias"
+      rationale: "HITL porque cria entidades reais. Duplicação em massa é trigger."
+
+    - id: modify-bid-strategy
+      description: "Alterar estratégia de bid (manual → auto, cap change, etc.)"
+      agents: [campaign-manager]
+      api_type: write
+      pre_requisites:
+        - write-wal-entry
+      rationale: "HITL porque afeta diretamente custo e competitividade."
+
+    - id: update-ad-schedule
+      description: "Alterar schedule/dayparting de campanha"
+      agents: [campaign-manager]
+      api_type: write
+      pre_requisites:
+        - write-wal-entry
+      rationale: "HITL porque afeta delivery windows e pode impactar performance."
+
+    - id: execute-ab-test
+      description: "Criar/configurar A/B test (split test) via API"
+      agents: [campaign-manager]
+      api_type: write
+      pre_requisites:
+        - design-campaign-structure
+        - write-wal-entry
+      rationale: "HITL porque cria múltiplas entidades e afeta budget allocation."
+
+    # --- Budget adjustments menores (<=20%) ---
+    - id: adjust-budget-minor
+      description: "Ajustar budget de campanha (<= 20% do atual)"
+      agents: [campaign-manager]
+      api_type: write
+      pre_requisites:
+        - write-wal-entry
+      threshold: "budget_change_pct <= 20"
+      rationale: |
+        HITL mesmo para ajustes menores porque toda alteração de budget
+        consome pontos da API e registra ação. Transparência > velocidade.
+        Nota: Se futuras iterações provarem segurança, pode migrar para Auto.
+
+  # ─────────────────────────────────────────────────────────────
+  # HUMAN — Ações que o agente NUNCA executa
+  # ─────────────────────────────────────────────────────────────
+
+  human:
+    - id: define-brand-strategy
+      description: "Definir ou alterar estratégia de marca (posicionamento, tom, público)"
+      agents_can_recommend: [ad-midas]
+      rationale: |
+        Decisão de negócio que transcende tráfego pago.
+        Agente pode informar com dados, mas decisão é 100% humana.
+
+    - id: approve-compliance-legal
+      description: "Aprovar compliance e revisão legal de ads (claims, disclaimers, regulatório)"
+      agents_can_recommend: [fiscal]
+      rationale: |
+        Responsabilidade legal humana. Fiscal pode flag issues e recomendar
+        correções, mas aprovação final de compliance é do humano.
+
+    - id: manage-crisis
+      description: "Gestão de crise (conta banida, ad rejeitado em massa, appeal)"
+      agents_can_recommend: [ad-midas, fiscal]
+      rationale: |
+        Ban Wave 2026: appeals são majoritariamente automatizados e requerem
+        documentação cuidadosa. Ação errada na crise cascateia para TODAS as contas.
+        Agente pode documentar evidências e sugerir passos, mas humano executa.
+      source: "05-meta-api-risks-bans.md — Seção 2: Efeito Cascata"
+
+    - id: allocate-cross-channel-budget
+      description: "Alocar budget entre canais/plataformas (Meta vs Google vs YouTube vs TikTok)"
+      agents_can_recommend: [ad-midas, performance-analyst]
+      rationale: |
+        Decisão estratégica de portfólio que afeta múltiplos orçamentos.
+        Agente analisa performance por canal mas alocação cross-channel é humana.
+
+    - id: activate-first-campaign
+      description: "Ativar a PRIMEIRA campanha de uma conta nova (< 30 dias)"
+      agents_can_recommend: [ad-midas]
+      rationale: |
+        Contas novas são altamente vigiadas pela moderação AI da Meta.
+        Primeira ativação deve ser 100% humana para evitar flag de automação.
+      source: "05-meta-api-risks-bans.md — Seção 6: conta com histórico mínimo de 30 dias"
+
+    - id: connect-new-ad-account
+      description: "Conectar nova conta de ads ao Business Manager / adicionar acesso"
+      agents_can_recommend: [ad-midas]
+      rationale: |
+        Efeito cascata: conta flagged suspende TODAS as conectadas.
+        Conexão de nova conta é decisão de risco que só humano pode aceitar.
+      source: "05-meta-api-risks-bans.md — Efeito Cascata"
+
+    - id: manage-api-credentials
+      description: "Criar, renovar ou revogar access tokens e credenciais de API"
+      agents_can_recommend: [campaign-manager]
+      rationale: |
+        Segurança de credenciais é responsabilidade humana.
+        Agente alerta sobre expiração (Auto: check-token-expiry) mas renovação é humana.
+
+    - id: change-payment-method
+      description: "Alterar método de pagamento ou limite de gastos da conta"
+      agents_can_recommend: []
+      rationale: "Operação financeira. Nunca automatizável."
+
+    - id: accept-meta-tos-changes
+      description: "Aceitar mudanças nos Terms of Service da Meta"
+      agents_can_recommend: []
+      rationale: "Acordo legal. Requer leitura e aceitação humana."
+
+    - id: approve-high-value-creative
+      description: "Aprovar criativo de alto valor (vídeo de produção, brand campaign)"
+      agents_can_recommend: [creative-analyst]
+      rationale: |
+        Criativos de alto investimento de produção requerem aprovação humana
+        para evitar desperdiçar recursos em ads com problemas de brand.
+
+# ═══════════════════════════════════════════════════════════════
+# COVERAGE VALIDATION
+# ═══════════════════════════════════════════════════════════════
+# Garante que toda ação na squad está mapeada.
+# Se um agente precisa executar algo que não está listado aqui,
+# a ação DEVE ser adicionada antes da execução.
+
+coverage:
+  total_actions: 56
+  auto: 42
+  hitl: 14
+  human: 10
+  unmapped: 0  # ZERO — AC2 da story exige cobertura total
+
+  validation_rule: |
+    Antes de executar qualquer ação, campaign-manager DEVE:
+    1. Consultar este arquivo
+    2. Localizar a ação pelo id
+    3. Verificar o tier (auto/hitl/human)
+    4. Se HITL: apresentar plano e aguardar aprovação
+    5. Se Human: apresentar recomendação e NÃO executar
+    6. Se ação não encontrada: HALT e reportar para fiscal
+
+# ═══════════════════════════════════════════════════════════════
+# CHECKLIST INTEGRATION
+# ═══════════════════════════════════════════════════════════════
+# Checklists que @fiscal valida como parte do fluxo de autonomia.
+# Referenciados aqui para que agentes saibam quais gates existem.
+
+checklists:
+  ban_prevention:
+    path: "checklists/ban-prevention.md"
+    applies_to: "Todas as ações auto e hitl que envolvem API write"
+    enforced_by: fiscal
+    integration: |
+      @fiscal valida Pre-Automacao ANTES de qualquer operação.
+      @fiscal valida Operação CONTINUAMENTE durante execução.
+      Se ban detectado, @fiscal ativa Seção 3 (Se Banido) e escala para Human.
+    source: "SAIOX-ADS-V5-1.6"
+
+  launch_dod:
+    path: "checklists/launch-dod.md"
+    applies_to: "activate-campaign (HITL action)"
+    enforced_by: fiscal
+    integration: |
+      Launch DoD é PRE-REQUISITO adicional para activate-campaign.
+      Os 8 gates do DoD devem TODOS passar antes de @fiscal liberar ativação.
+      Sequência: audit-ad-compliance → audit-campaign-pre-launch → launch-dod → activate-campaign.
+    source: "SAIOX-ADS-V5-1.6"

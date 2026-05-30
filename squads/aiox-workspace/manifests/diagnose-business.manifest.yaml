@@ -1,0 +1,340 @@
+# Context Manifest: diagnose-business
+# Variáveis extraídas do workspace para diagnóstico geral de negócio (10 dimensões)
+# Determinadas por engenharia reversa dos templates reais em workspace/_templates/
+#
+# Uso: render-context lê este manifest + workspace/{slug}/ → research-context.md
+
+manifest:
+  id: diagnose-business
+  version: "1.0.0"
+  description: Contexto para diagnóstico estratégico de negócio em 10 dimensões
+  total_variables: 52
+  agent: workspace-chief
+
+# Parâmetros de entrada
+params:
+  required:
+    - slug  # business slug
+  optional: []
+
+# Variáveis agrupadas por dimensão
+# Cada variável aponta para: source (arquivo), field (caminho YAML), type (dado esperado)
+
+dimensions:
+
+  customer:
+    weight: 0.14
+    variables:
+      - id: diagnosis_exists
+        source: "company/diagnosis.yaml"
+        field: _exists
+        type: boolean
+
+      - id: icp_exists
+        source: "company/icp.yaml"
+        field: _exists
+        type: boolean
+
+      - id: analytics_exists
+        source: "company/analytics.yaml"
+        field: _exists
+        type: boolean
+
+      - id: icp_name
+        source: "company/icp.yaml"
+        field: core_icp.icp_name
+        type: string
+
+      - id: icp_completeness
+        source: "company/icp.yaml"
+        field: validation.completeness
+        type: percentage
+
+      - id: icp_archetypes_count
+        source: "company/icp.yaml"
+        field: archetypes
+        type: array_length
+
+      - id: icp_pain_stack_count
+        source: "company/icp.yaml"
+        field: pain_stack_hidden
+        type: array_length
+
+      - id: awareness_level
+        source: "company/diagnosis.yaml"
+        field: market_awareness_level.identified_level
+        type: string
+
+  brand:
+    weight: 0.11
+    variables:
+      - id: brandbook_exists
+        source: "brand/brandbook.yaml"
+        field: _exists
+        type: boolean
+
+      - id: brand_name
+        source: "brand/brandbook.yaml"
+        field: identity.brand_name
+        type: string
+
+      - id: brand_purpose
+        source: "brand/brandbook.yaml"
+        field: core.purpose
+        type: string
+
+      - id: brand_archetype
+        source: "brand/brandbook.yaml"
+        field: archetype_mix
+        type: object
+
+      - id: brand_voice_always
+        source: "brand/brandbook.yaml"
+        field: voice.always_use
+        type: array_length
+
+      - id: brand_voice_avoid
+        source: "brand/brandbook.yaml"
+        field: voice.avoid_use
+        type: array_length
+
+  offer:
+    weight: 0.14
+    variables:
+      - id: products_count
+        source: "products/"
+        field: _dir_count
+        type: integer
+
+      - id: offerbook_exists
+        source: "products/*/offerbook.yaml"
+        field: _exists_any
+        type: boolean
+
+      - id: proof_exists
+        source: "products/*/proof.yaml"
+        field: _exists_any
+        type: boolean
+
+      - id: testimonials_exists
+        source: "products/*/testimonials.yaml"
+        field: _exists_any
+        type: boolean
+
+      - id: proof_case_studies_count
+        source: "products/*/proof.yaml"
+        field: case_studies
+        type: array_length_sum
+
+      - id: testimonials_count
+        source: "products/*/testimonials.yaml"
+        field: testimonials_database
+        type: array_length_sum
+
+  narrative:
+    weight: 0.09
+    variables:
+      - id: brandscript_exists
+        source: "products/*/narrative/brandscript.yaml"
+        field: _exists_any
+        type: boolean
+
+      - id: product_story_exists
+        source: "products/*/narrative/product-story.yaml"
+        field: _exists_any
+        type: boolean
+
+      - id: objection_destroyers_exists
+        source: "products/*/narrative/objection-destroyers.yaml"
+        field: _exists_any
+        type: boolean
+
+      - id: founder_dna_exists
+        source: "company/founder-dna.yaml"
+        field: _exists
+        type: boolean
+
+      - id: founder_origin_story
+        source: "company/founder-dna.yaml"
+        field: origin_story.act_1_before
+        type: string
+
+  traffic:
+    weight: 0.07
+    variables:
+      - id: buyer_journey_exists
+        source: "products/*/marketing/buyer-journey.yaml"
+        field: _exists_any
+        type: boolean
+
+      - id: conversion_funnel_exists
+        source: "products/*/marketing/conversion-funnel.yaml"
+        field: _exists_any
+        type: boolean
+
+      - id: email_sequences_exists
+        source: "products/*/marketing/email-sequences.yaml"
+        field: _exists_any
+        type: boolean
+
+      - id: campaign_brief_exists
+        source: "products/*/marketing/campaign-brief.yaml"
+        field: _exists_any
+        type: boolean
+
+  operations:
+    weight: 0.09
+    variables:
+      - id: team_structure_exists
+        source: "operations/team-structure.yaml"
+        field: _exists
+        type: boolean
+
+      - id: pricing_strategy_exists
+        source: "operations/pricing-strategy.yaml"
+        field: _exists
+        type: boolean
+
+      - id: kpi_scorecards_exists
+        source: "operations/kpi-scorecards.yaml"
+        field: _exists
+        type: boolean
+
+      - id: team_headcount
+        source: "operations/team-structure.yaml"
+        field: current_team.total_headcount
+        type: integer
+
+      - id: pricing_model
+        source: "operations/pricing-strategy.yaml"
+        field: pricing_foundation.pricing_model
+        type: string
+
+  success:
+    weight: 0.07
+    variables:
+      - id: curriculum_exists
+        source: "products/*/curriculum.yaml"
+        field: _exists_any
+        type: boolean
+
+      - id: onboarding_exists
+        source: "products/*/onboarding/onboarding-flow.yaml"
+        field: _exists_any
+        type: boolean
+
+      - id: churn_prevention_exists
+        source: "products/*/retention/churn-prevention.yaml"
+        field: _exists_any
+        type: boolean
+
+  evidence:
+    weight: 0.09
+    variables:
+      - id: credentials_exists
+        source: "company/credentials.yaml"
+        field: _exists
+        type: boolean
+
+      - id: authority_story_exists
+        source: "company/authority-story.yaml"
+        field: _exists
+        type: boolean
+
+      - id: credentials_education_count
+        source: "company/credentials.yaml"
+        field: formal_education
+        type: array_length
+
+      - id: credentials_awards_count
+        source: "company/credentials.yaml"
+        field: awards
+        type: array_length
+
+  movement:
+    weight: 0.10
+    variables:
+      - id: tribe_identity_exists
+        source: "movement/foundation/tribe-identity.yaml"
+        field: _exists
+        type: boolean
+
+      - id: leaders_exists
+        source: "movement/identity/leaders.yaml"
+        field: _exists
+        type: boolean
+
+      - id: cosmology_exists
+        source: "movement/system/cosmology.yaml"
+        field: _exists
+        type: boolean
+
+      - id: movement_health_exists
+        source: "movement/diagnostics/movement-health.yaml"
+        field: _exists
+        type: boolean
+
+      - id: cycle_strategy_exists
+        source: "movement/cycle/strategy.yaml"
+        field: _exists
+        type: boolean
+
+  culture:
+    weight: 0.10
+    variables:
+      - id: manifesto_exists
+        source: "culture/manifesto.yaml"
+        field: _exists
+        type: boolean
+
+      - id: values_exists
+        source: "culture/values.yaml"
+        field: _exists
+        type: boolean
+
+      - id: pillars_exists
+        source: "culture/pillars.yaml"
+        field: _exists
+        type: boolean
+
+      - id: commandments_exists
+        source: "culture/commandments.yaml"
+        field: _exists
+        type: boolean
+
+      - id: hiring_criteria_exists
+        source: "culture/hiring-criteria.yaml"
+        field: _exists
+        type: boolean
+
+      - id: leadership_profile_exists
+        source: "culture/leadership-profile.yaml"
+        field: _exists
+        type: boolean
+
+# Variáveis de cross-reference (Fase 11)
+cross_reference:
+  variables:
+    - id: icp_offer_alignment
+      sources: ["company/icp.yaml", "products/*/offerbook.yaml"]
+      check: "ICP target_audience alinha com offerbook.avatar"
+
+    - id: brand_movement_alignment
+      sources: ["brand/brandbook.yaml", "movement/foundation/tribe-identity.yaml"]
+      check: "Archetype e voice alinham com tribal identity"
+
+    - id: narrative_evidence_alignment
+      sources: ["products/*/narrative/", "products/*/proof.yaml"]
+      check: "Claims narrativos sustentados por proof"
+
+    - id: offer_success_alignment
+      sources: ["products/*/offerbook.yaml", "products/*/curriculum.yaml"]
+      check: "Produto entregue = produto prometido"
+
+    - id: customer_traffic_alignment
+      sources: ["company/icp.yaml", "products/*/marketing/"]
+      check: "Canais alcançam o ICP"
+
+    - id: culture_brand_alignment
+      sources: ["culture/values.yaml", "brand/brandbook.yaml"]
+      check: "Valores internos consistentes com posicionamento externo"

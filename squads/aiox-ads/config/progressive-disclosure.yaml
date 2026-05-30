@@ -1,0 +1,216 @@
+# ═══════════════════════════════════════════════════════════════
+# PROGRESSIVE DISCLOSURE — aiox-ads Squad
+# ═══════════════════════════════════════════════════════════════
+# Philosophy: "Start simple, unlock complexity as the user earns it."
+#
+# Media buyers investing real money need confidence, not overwhelm.
+# A new user seeing 29 skills on day 1 = abandonment.
+# Instead, we unlock capabilities as the user's campaign maturity grows.
+#
+# Level detection is AUTOMATIC, based on campaign-state.yaml data
+# (workspace/businesses/{business}/ads/campaign-state.yaml).
+# The user never needs to manually track or declare their level.
+#
+# Manual override: *modo-expert unlocks all levels immediately
+# for experienced media buyers who don't need progressive onboarding.
+#
+# Story: SAIOX-ADS-V5-1.7 | Epic: SAIOX-ADS-V5
+# Created: 2026-03-17
+# ═══════════════════════════════════════════════════════════════
+
+version: "1.0.0"
+
+# ─────────────────────────────────────────────────────────────
+# DATA SOURCE
+# ─────────────────────────────────────────────────────────────
+# Level detection reads from campaign-state.yaml to determine
+# which level the user has unlocked. No manual tracking needed.
+data_source:
+  file: campaign-state.yaml
+  location: "workspace/businesses/{business}/ads/campaign-state.yaml"
+  note: |
+    campaign-state.yaml is the single source of truth for campaign data.
+    Agents read it to compute unlock conditions automatically.
+    If the file does not exist, default to starter level.
+
+# ─────────────────────────────────────────────────────────────
+# MANUAL BYPASS
+# ─────────────────────────────────────────────────────────────
+# Experienced media buyers can skip progressive disclosure entirely.
+# Running *modo-expert unlocks all levels immediately.
+manual_bypass:
+  command: "*modo-expert"
+  effect: "Unlocks all levels immediately — all skills and agents become visible"
+  description: |
+    Para media buyers experientes que nao precisam de onboarding progressivo.
+    Desbloqueia todos os niveis de uma vez, expondo todas as 29 skills
+    e todos os 10 agentes da squad. Usar quando o usuario ja domina
+    trafego pago e quer acesso completo desde o inicio.
+  persists: true
+  storage_key: "disclosure_override"
+
+# ═══════════════════════════════════════════════════════════════
+# LEVELS
+# ═══════════════════════════════════════════════════════════════
+
+levels:
+
+  # ─────────────────────────────────────────────────────────────
+  # LEVEL 1: STARTER
+  # ─────────────────────────────────────────────────────────────
+  # First campaign. The user is learning the system.
+  # Only the essentials: structure, funnel, hooks, tracking, compliance.
+  # ─────────────────────────────────────────────────────────────
+  starter:
+    description: |
+      Primeira campanha. Foco em fundamentos: estruturar a campanha,
+      escolher o funil certo, criar hooks iniciais, garantir que o
+      tracking esta funcionando, e passar pelo gate de compliance.
+      Voce fala apenas com Midas — ele cuida de tudo.
+    unlock_trigger:
+      condition: "default"
+      description: "Desbloqueado por padrao. Todo usuario comeca aqui."
+    visible_skills:
+      - campaign-structure
+      - funnel-selection
+      - hook-generator
+      - tracking-audit
+      - ad-compliance-gate
+    visible_agents:
+      - ad-midas  # concierge — ponto unico de contato
+    message: |
+      Sua primeira campanha esta sendo configurada.
+      Vou te guiar por cada passo. Quando tiver dados suficientes,
+      novas ferramentas de otimizacao serao desbloqueadas automaticamente.
+
+  # ─────────────────────────────────────────────────────────────
+  # LEVEL 2: GROWTH
+  # ─────────────────────────────────────────────────────────────
+  # After the first campaign has 7+ days of data.
+  # Now the user has real numbers to work with.
+  # Unlock optimization and diagnostic tools.
+  # ─────────────────────────────────────────────────────────────
+  growth:
+    description: |
+      Campanhas ativas com dados reais. Hora de otimizar: regras de
+      kill/scale, alocacao de budget, deteccao de fadiga criativa,
+      diagnostico de metricas, e setup de monitoramento automatico.
+      Dash (analista de performance) agora esta disponivel para
+      analises profundas dos seus numeros.
+    unlock_trigger:
+      condition: "campaigns_with_7d_data >= 1"
+      description: "Desbloqueado quando pelo menos 1 campanha tem 7+ dias de dados."
+      data_field: "campaigns_with_7d_data"
+      threshold: 1
+      operator: ">="
+    visible_skills:
+      # Starter skills remain visible (cumulative)
+      - campaign-structure
+      - funnel-selection
+      - hook-generator
+      - tracking-audit
+      - ad-compliance-gate
+      # Growth skills unlocked
+      - kill-scale-rules
+      - budget-allocation
+      - creative-fatigue-detector
+      - metric-diagnosis
+      - campaign-monitor
+    visible_agents:
+      - ad-midas             # concierge — sempre presente
+      - performance-analyst   # Dash — analise de numeros
+    message: |
+      Voce tem dados suficientes para otimizar.
+      Quer que eu analise oportunidades de melhoria nas suas campanhas?
+
+  # ─────────────────────────────────────────────────────────────
+  # LEVEL 3: SCALE
+  # ─────────────────────────────────────────────────────────────
+  # After 3+ campaigns with positive ROAS.
+  # The user has proven results and is ready to scale aggressively.
+  # Unlock everything: expansion, competitive intel, full research,
+  # bidding strategy, all platform specialists.
+  # ─────────────────────────────────────────────────────────────
+  scale:
+    description: |
+      Resultados consistentes em 3+ campanhas. Hora de escalar:
+      expansao de audiencia, inteligencia competitiva, protocolo
+      completo de research, verificacao de prontidao para escala,
+      e estrategia de bidding avancada. Todos os agentes da squad
+      estao disponiveis — specialists de Google, YouTube, scaling
+      agressivo, e operacao Brasil.
+    unlock_trigger:
+      condition: "campaigns_with_positive_roas >= 3"
+      description: "Desbloqueado quando 3+ campanhas tem ROAS positivo (acima do target)."
+      data_field: "campaigns_with_positive_roas"
+      threshold: 3
+      operator: ">="
+    visible_skills:
+      # All skills unlocked (cumulative — starter + growth + scale)
+      # Starter
+      - campaign-structure
+      - funnel-selection
+      - hook-generator
+      - tracking-audit
+      - ad-compliance-gate
+      # Growth
+      - kill-scale-rules
+      - budget-allocation
+      - creative-fatigue-detector
+      - metric-diagnosis
+      - campaign-monitor
+      # Scale skills unlocked
+      - audience-expansion
+      - scale-readiness-check
+      - unit-economics
+      - creative-brief
+      - copy-generator
+      - angle-generator
+      - dsl-structure
+      - funnel-analysis
+      - attribution-analysis
+      - scorecard-builder
+      - accountability-loop
+      - pixel-setup
+      - google-campaign-architect
+      - youtube-campaign-launcher
+      - forester-scaling-system
+      - youtube-ad-scriptwriter
+      - google-search-optimizer
+      - creative-bombardment
+      - br-campaign-ops
+    visible_agents:
+      # All agents visible
+      - ad-midas             # Tier 0 — concierge
+      - campaign-manager     # Tier 1 — API executor
+      - performance-analyst  # Tier 1 — analise de performance
+      - creative-analyst     # Tier 1 — criativos
+      - pixel-specialist     # Tier 1 — tracking
+      - fiscal               # Tier 1 — quality gate
+      - kasim-aslam          # Tier 2 — Google
+      - tom-breeze           # Tier 2 — YouTube
+      - ralph-burns          # Tier 2 — Scaling
+      - br-traffic-operator  # Tier 2 — Brasil
+    message: |
+      Seus resultados estao consistentes. Todas as ferramentas de escala
+      estao desbloqueadas. Posso propor um plano de expansao.
+
+# ═══════════════════════════════════════════════════════════════
+# LEVEL RESOLUTION LOGIC
+# ═══════════════════════════════════════════════════════════════
+# Agents use this section to determine the current user level.
+resolution:
+  order: [scale, growth, starter]  # check highest first, fall through
+  algorithm: |
+    1. If disclosure_override == true → return scale (all unlocked)
+    2. Read campaign-state.yaml
+    3. Check scale condition: campaigns_with_positive_roas >= 3
+       - If true → return scale
+    4. Check growth condition: campaigns_with_7d_data >= 1
+       - If true → return growth
+    5. Default → return starter
+  fallback: starter
+  note: |
+    Resolution always checks from the highest level down.
+    If campaign-state.yaml does not exist or is unreadable,
+    default to starter. Never error on missing data — degrade gracefully.

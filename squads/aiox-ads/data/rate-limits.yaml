@@ -1,0 +1,280 @@
+# Rate Limits — Meta Marketing API + Circuit Breaker
+# Referência para agentes antes de qualquer API call.
+# Agente DEVE consultar este arquivo para planejar cadência de requests.
+#
+# Story: SAIOX-ADS-V5-1.5
+# Created: 2026-03-17
+# Sources:
+#   - Meta Marketing API v21.0 official docs (rate limiting)
+#   - 05-meta-api-risks-bans.md — Seção 1: Rate Limits
+#   - Roundtable 03-roundtable.md — Recomendação P0 #11, #12
+#   - Meta Business Help Center (App Development tier descriptions)
+
+version: "1.0.0"
+squad: aiox-ads
+last_verified: "2026-03-17"  # Data da última verificação contra docs oficiais
+
+# ═══════════════════════════════════════════════════════════════
+# API RATE LIMITS POR TIER
+# ═══════════════════════════════════════════════════════════════
+
+api_tiers:
+
+  development:
+    label: "Development Tier"
+    description: |
+      Tier padrão para apps em desenvolvimento/teste.
+      MUITO restritivo para automação real — apenas para testes.
+    max_points_per_hour: 60
+    block_duration_seconds: 300
+    custom_audience_points_per_hour: 5000
+    notes:
+      - "Suficiente apenas para testes manuais e desenvolvimento"
+      - "NÃO usar para automação de campanhas reais"
+      - "Bloqueia por 5 minutos inteiros quando excede"
+    agent_guidance: |
+      Se a conta está em Development tier:
+      - Limitar a 1 request por minuto no máximo
+      - Priorizar GET (leitura) sobre POST/PUT (escrita)
+      - NÃO rodar campaign-monitor loop — frequência muito alta para este tier
+    source: "05-meta-api-risks-bans.md — Tabela de Rate Limits"
+
+  standard:
+    label: "Standard Tier"
+    description: |
+      Tier para apps com Basic ou Standard access.
+      Viável para operação de 1-5 contas de ads.
+    max_points_per_hour: 9000
+    block_duration_seconds: 60
+    custom_audience_points_per_hour: 700000
+    max_requests_per_second: 100
+    notes:
+      - "100 req/s é hard limit — mesmo requests duplicadas contam"
+      - "Budget adjustments consomem pontos extras — limitar frequência"
+      - "Audience refresh em alta frequência pode consumir toda quota em horas"
+      - "Batch API calls reduzem consumo de pontos vs calls individuais"
+    agent_guidance: |
+      Para Standard tier:
+      - campaign-monitor: max 1 cycle por 15 minutos (4/hora)
+      - Usar Batch API quando possível (reduz consumo de pontos)
+      - Monitorar consumo via check-rate-limit-status (action Auto)
+      - Alertar humano quando > 80% da quota consumida
+      - NÃO fazer audience refresh mais de 1x por hora
+    source: "05-meta-api-risks-bans.md — Tabela de Rate Limits"
+
+  advanced:
+    label: "Advanced Access Tier"
+    description: |
+      Tier para apps com Advanced access (requer aprovação Meta).
+      Necessário para agências com múltiplas contas.
+    max_points_per_hour: "Significativamente maior (varia por app)"
+    block_duration_seconds: "Menor que Standard"
+    custom_audience_points_per_hour: "Muito maior"
+    notes:
+      - "Requer aprovação explícita da Meta (processo de review)"
+      - "Limites variam por app e histórico de uso"
+      - "Mesmo com Advanced, respeitar rampagem e safety rules"
+      - "Block durations menores permitem recuperação mais rápida"
+    agent_guidance: |
+      Para Advanced tier:
+      - campaign-monitor: max 1 cycle por 5 minutos (12/hora)
+      - Batch API fortemente recomendado mesmo com quota maior
+      - Monitorar consumo — Advanced não é ilimitado
+      - Manter mesmas safety rules (budget thresholds, rampagem, etc.)
+    source: "05-meta-api-risks-bans.md — Tabela de Rate Limits"
+
+# ═══════════════════════════════════════════════════════════════
+# COST PER OPERATION (PONTOS ESTIMADOS)
+# ═══════════════════════════════════════════════════════════════
+
+operation_costs:
+  description: |
+    Estimativas de pontos consumidos por tipo de operação.
+    Valores variam por endpoint — usar como referência para planejamento.
+    Batch API reduz custo significativamente.
+  estimates:
+    read_campaign: 1
+    read_adset: 1
+    read_ad: 1
+    read_insights: 2-5  # Depende do breakdown e time range
+    create_campaign: 3-5
+    update_campaign: 3-5
+    create_adset: 3-5
+    update_adset: 3-5
+    create_ad: 3-5
+    update_ad: 3-5
+    read_audience_insights: 5-10
+    create_custom_audience: 10-20
+    audience_refresh: 40  # "40 pontos extras por audience ativa" — escala mal
+  batch_discount: |
+    Batch API calls (até 50 operações por batch):
+    - Custo por batch: pontos da operação mais cara no batch
+    - Exemplo: 50 reads em batch = custo de ~5 pontos (não 50)
+    - Fortemente recomendado para coleta de métricas em massa
+
+# ═══════════════════════════════════════════════════════════════
+# CIRCUIT BREAKER — HTTP 429 (Rate Limit Exceeded)
+# ═══════════════════════════════════════════════════════════════
+
+circuit_breaker:
+  http_429:
+    description: |
+      Quando API retorna HTTP 429 (Too Many Requests), TODA automação
+      deve parar imediatamente e aplicar exponential backoff.
+    strategy: exponential_backoff
+    backoff_sequence:
+      - delay_seconds: 1
+        attempt: 1
+      - delay_seconds: 2
+        attempt: 2
+      - delay_seconds: 4
+        attempt: 3
+      - delay_seconds: 8
+        attempt: 4
+      - delay_seconds: 16
+        attempt: 5
+      - delay_seconds: 32
+        attempt: 6
+      - delay_seconds: 60
+        attempt: 7  # max — não exceder 60s
+    max_delay_seconds: 60
+    max_retries: 7
+    jitter: true  # Adicionar +/- 20% random para evitar thundering herd
+    after_max_retries: |
+      Após 7 tentativas sem sucesso:
+      1. HALT todas as operações de API
+      2. Registrar no WAL com status "rate_limited"
+      3. Alertar humano: "Rate limit persistente. Quota provavelmente zerada."
+      4. Aguardar block_duration do tier (60s Standard, 300s Development)
+      5. Após block_duration: tentar 1 request de teste (GET status)
+      6. Se sucesso: retomar operações com cadência reduzida (50% da normal)
+      7. Se falha: HALT e escalar para humano
+    source: "05-meta-api-risks-bans.md — Seção 1: HTTP 429"
+
+  http_5xx:
+    description: |
+      Respostas HTTP 5xx indicam problema no lado da Meta (server error).
+      Não é culpa do agente, mas DEVE parar para evitar ações duplicadas.
+    strategy: halt_after_threshold
+    consecutive_threshold: 3
+    action_on_threshold: |
+      Após 3 respostas HTTP 5xx consecutivas:
+      1. HALT todas as operações de write (reads podem continuar com cautela)
+      2. Registrar no WAL: "platform_outage_suspected"
+      3. Verificar metastatus.com para confirmar outage
+      4. Se outage confirmado:
+         - Pausar ALL API operations
+         - Armazenar último estado conhecido localmente
+         - Alertar humano: "Outage Meta confirmado. Operações pausadas."
+         - NÃO executar retry automático durante outage
+      5. Se metastatus OK (falso positivo):
+         - Aguardar 60s
+         - Tentar 1 request de teste
+         - Se sucesso: retomar com cautela
+    recovery: |
+      Após outage resolvido:
+      1. Fazer reconciliação: comparar state local vs API
+      2. Identificar operações pendentes do WAL
+      3. Executar operações pendentes uma a uma (não batch)
+      4. Validar cada resultado antes de prosseguir
+    source: "05-meta-api-risks-bans.md — Seção 4: Outages de Março 2026"
+
+# ═══════════════════════════════════════════════════════════════
+# TOKEN & CREDENTIAL MONITORING
+# ═══════════════════════════════════════════════════════════════
+
+token_management:
+  expiry_alert:
+    days_before: 7
+    description: |
+      Alertar humano quando access token expira em < 7 dias.
+      Token expirado = todas as operações param instantaneamente.
+    check_frequency: "daily (parte do campaign-monitor cycle)"
+    alert_format: |
+      "[ALERTA TOKEN] Access token para {platform} expira em {days} dias.
+       Token: {masked_token_last_4}
+       Ação necessária: renovar token manualmente (Human Only action).
+       Consultar: squads/aiox-ads/mcp/setup-guide.md"
+    action: "Human Only — manage-api-credentials"
+    source: "Autonomy tiers: check-token-expiry (Auto) + manage-api-credentials (Human)"
+
+  token_rotation:
+    description: "Separar tokens para cada MCP para evitar esgotar rate limit 2x"
+    pipeboard_token: META_ADS_ACCESS_TOKEN  # Primary Meta operations
+    ads_mcp_token: META_ADS_ACCESS_TOKEN_SECONDARY  # Fallback / cross-platform
+    rule: "NUNCA usar o mesmo token para ambos os MCPs simultaneamente"
+    source: "Roundtable P0 #11 — Separar tokens para Pipeboard e ads-mcp"
+
+# ═══════════════════════════════════════════════════════════════
+# QUOTA MONITORING
+# ═══════════════════════════════════════════════════════════════
+
+quota_monitoring:
+  alert_threshold_pct: 80
+  description: |
+    Quando consumo de quota atinge 80%, agente DEVE:
+    1. Reduzir cadência de requests para 50% do normal
+    2. Priorizar operações críticas (reads de métricas) sobre operações opcionais
+    3. Adiar creates/updates não-urgentes para próximo ciclo de quota
+    4. Alertar humano: "Quota API > 80%. Cadência reduzida automaticamente."
+  check_frequency: "A cada cycle do campaign-monitor (antes de qualquer batch)"
+  recovery: |
+    Quando quota reset (início de nova hora):
+    - Retomar cadência normal gradualmente (não burst)
+    - Primeira hora após recovery: 75% da cadência normal
+    - Se sem 429 por 1 hora: retomar 100%
+
+# ═══════════════════════════════════════════════════════════════
+# PLATFORM STATUS CHECK
+# ═══════════════════════════════════════════════════════════════
+
+platform_status:
+  metastatus_url: "https://metastatus.com"
+  check_before_writes: true
+  description: |
+    ANTES de qualquer operação de write (create/update/activate/pause):
+    1. Consultar metastatus.com
+    2. Se algum serviço relevante está "Disrupted" ou "Degraded": HALT writes
+    3. Se todos OK: prosseguir normalmente
+  relevant_services:
+    - "Facebook Ads Manager"
+    - "Ad Creation and Editing"
+    - "Ad Delivery"
+    - "Marketing API"
+  source: "05-meta-api-risks-bans.md — Seção 4, Recomendação 1"
+
+# ═══════════════════════════════════════════════════════════════
+# CROSS-PLATFORM RATE LIMITS (NON-META)
+# ═══════════════════════════════════════════════════════════════
+
+cross_platform:
+  description: |
+    Rate limits para outras plataformas acessadas via ads-mcp.
+    Valores aproximados — verificar docs oficiais de cada plataforma.
+  google_ads:
+    daily_operations_limit: 10000
+    requests_per_second: 1  # QPS limit por customer ID
+    notes: "Operações de mutate (create/update) consomem mais quota"
+  linkedin_ads:
+    daily_requests: 100000
+    requests_per_second: 10
+    notes: "Rate limit mais permissivo, mas audience targeting é restrito"
+  tiktok_ads:
+    requests_per_minute: 600
+    notes: "Documentação menos madura — monitorar de perto"
+  agent_guidance: |
+    Para plataformas non-Meta via ads-mcp:
+    - Aplicar mesmos princípios de circuit breaker (429 → backoff, 5xx → halt)
+    - Mesmas safety rules se aplicam (PAUSED by default, HITL para activate, etc.)
+    - Rate limits específicos podem variar — verificar headers de resposta da API
+
+# ═══════════════════════════════════════════════════════════════
+# INSTAGRAM API (COMPLEMENTAR)
+# ═══════════════════════════════════════════════════════════════
+
+instagram_api:
+  dm_rate_limit:
+    max_per_hour: 200
+    description: "DMs automatizados: 200 por hora (hard limit). Exceder = conta restrita."
+    agent_guidance: "Agentes que usam Instagram para outreach/DM devem respeitar estritamente."
+  source: "05-meta-api-risks-bans.md — Seção 5: Instagram API Rate Limits"

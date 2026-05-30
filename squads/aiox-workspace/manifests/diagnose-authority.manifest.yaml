@@ -1,0 +1,166 @@
+# Context Manifest: diagnose-authority
+# Variáveis para diagnóstico vertical do stack de autoridade do fundador
+# Baseado nos templates: founder-dna, credentials, authority-story, proof (all products)
+
+manifest:
+  id: diagnose-authority
+  version: "1.0.0"
+  description: Contexto para diagnóstico de autoridade do fundador
+  total_variables: 29
+  agent: vision-strategist
+
+params:
+  required:
+    - slug  # business slug
+  optional: []
+
+variables:
+
+  # === FOUNDER-DNA.YAML ===
+  - id: founder_dna_exists
+    source: "company/founder-dna.yaml"
+    field: _exists
+    type: boolean
+
+  - id: founder_name
+    source: "company/founder-dna.yaml"
+    field: founder_essence.professional_name
+    type: string
+
+  - id: founder_archetype
+    source: "company/founder-dna.yaml"
+    field: founder_essence.archetype
+    type: string
+
+  - id: founder_origin_story_complete
+    source: "company/founder-dna.yaml"
+    field: origin_story
+    type: completeness  # % de atos preenchidos (4 atos)
+
+  - id: founder_years_experience
+    source: "company/founder-dna.yaml"
+    field: professional_background.years_of_experience.total_years
+    type: number
+
+  - id: founder_credibility_proofs_count
+    source: "company/founder-dna.yaml"
+    field: credibility_foundation
+    type: array_length
+
+  - id: founder_philosophy_complete
+    source: "company/founder-dna.yaml"
+    field: philosophy
+    type: completeness
+
+  - id: founder_teaching_philosophy
+    source: "company/founder-dna.yaml"
+    field: teaching_philosophy.core_teaching_principle
+    type: string
+
+  - id: founder_signature_insights_count
+    source: "company/founder-dna.yaml"
+    field: signature_insights
+    type: array_length
+
+  - id: founder_narrative_headline
+    source: "company/founder-dna.yaml"
+    field: founder_narrative.headline
+    type: string
+
+  - id: founder_checklist_completion
+    source: "company/founder-dna.yaml"
+    field: completion_checklist
+    type: percentage
+
+  # === CREDENTIALS.YAML ===
+  - id: credentials_exists
+    source: "company/credentials.yaml"
+    field: _exists
+    type: boolean
+
+  - id: credentials_education_count
+    source: "company/credentials.yaml"
+    field: formal_education
+    type: array_length
+
+  - id: credentials_certifications_count
+    source: "company/credentials.yaml"
+    field: formal_education.professional_certifications
+    type: array_length
+
+  - id: credentials_awards_count
+    source: "company/credentials.yaml"
+    field: awards
+    type: array_length
+
+  - id: credentials_speaking_count
+    source: "company/credentials.yaml"
+    field: speaking_engagements
+    type: array_length
+
+  - id: credentials_media_count
+    source: "company/credentials.yaml"
+    field: media_appearances
+    type: array_length
+
+  - id: credentials_notable_clients_count
+    source: "company/credentials.yaml"
+    field: notable_clients
+    type: array_length
+
+  - id: credentials_teaching_students
+    source: "company/credentials.yaml"
+    field: teaching_credentials.total_students_taught
+    type: number
+
+  - id: credentials_verification_status
+    source: "company/credentials.yaml"
+    field: verification
+    type: object
+
+  - id: credentials_checklist_completion
+    source: "company/credentials.yaml"
+    field: completion_checklist
+    type: percentage
+
+  # === AUTHORITY-STORY.YAML ===
+  - id: authority_story_exists
+    source: "company/authority-story.yaml"
+    field: _exists
+    type: boolean
+
+  - id: authority_stack_layers_filled
+    source: "company/authority-story.yaml"
+    field: authority_stack
+    type: completeness  # 7 layers
+
+  - id: authority_inflection_points_count
+    source: "company/authority-story.yaml"
+    field: inflection_points
+    type: array_length
+
+  - id: authority_one_page_versions
+    source: "company/authority-story.yaml"
+    field: one_page_story
+    type: completeness  # 3 versions
+
+  - id: authority_checklist_completion
+    source: "company/authority-story.yaml"
+    field: completion_checklist
+    type: percentage
+
+  # === PROOF (ALL PRODUCTS) ===
+  - id: total_proof_files
+    source: "products/*/proof.yaml"
+    field: _count
+    type: integer
+
+  - id: total_case_studies_all_products
+    source: "products/*/proof.yaml"
+    field: case_studies
+    type: array_length_sum
+
+  - id: total_statistics_all_products
+    source: "products/*/proof.yaml"
+    field: statistics
+    type: array_length_sum

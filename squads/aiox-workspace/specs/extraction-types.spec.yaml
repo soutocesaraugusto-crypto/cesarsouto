@@ -1,0 +1,573 @@
+# ============================================================================
+# EXTRACTION-TYPES.SPEC.YAML — Spec Formal dos Tipos de Extração
+# ============================================================================
+# Versão: 1.0.0
+# Data: 2026-03-25
+#
+# O QUE É ESTE ARQUIVO:
+#   Especificação machine-readable de todos os tipos de extração suportados
+#   pela engine render-context. Cada tipo define: trigger, input, output,
+#   edge cases e exemplos.
+#
+# PRA QUE SERVE:
+#   1. Implementar extraction-engine.cjs (contrato de comportamento)
+#   2. Escrever testes unitários (edge cases documentados)
+#   3. Validar manifests (tipos válidos registrados aqui)
+#   4. Onboarding (como cada tipo funciona)
+#
+# RELAÇÃO COM OUTROS ARQUIVOS:
+#   render-context.md → task que descreve o workflow de extração
+#   extraction-engine.cjs → implementação desta spec
+#   variable-registry.yaml → catálogo de variáveis que usam estes tipos
+#   manifests/*.manifest.yaml → manifests que referenciam estes tipos
+# ============================================================================
+
+schema_version: "1.0.0"
+last_updated: "2026-03-25"
+total_types: 13
+
+# ============================================================================
+# PLACEHOLDER SPEC
+# ============================================================================
+# Valores considerados "não preenchidos" — aplicável a TODOS os tipos.
+
+placeholders:
+  exact_values:
+    - null
+    - ""
+    - "~"
+    - "null"
+    - "FILL_THIS"
+    - "TBD"
+    - "TODO"
+    - "INCOMPLETE"
+    - "PREENCHER"
+    - "N/A"
+
+  patterns:
+    - regex: "^FILL[_ ]?"
+      flags: "i"
+      example: "FILL_THIS, FILL THIS, Fill_here"
+    - regex: "^TODO:"
+      flags: "i"
+      example: "TODO: definir valor"
+    - regex: "^TBD:"
+      flags: "i"
+      example: "TBD: aguardando confirmação"
+
+  empty_structures:
+    - "[]"    # array vazio
+    - "{}"    # objeto vazio
+
+  NOT_placeholder:
+    values:
+      - 0
+      - false
+      - "0"
+      - "false"
+    note: "Zeros e false são dados reais, NÃO placeholders"
+
+# ============================================================================
+# STATUS CLASSIFICATION
+# ============================================================================
+status_values:
+  PRESENT: "Valor existe e é real (não placeholder)"
+  PLACEHOLDER: "Valor existe mas é placeholder (FILL_THIS, TBD, etc.)"
+  MISSING: "Arquivo não existe, campo não encontrado, ou path intermediário ausente"
+
+# ============================================================================
+# EXTRACTION TYPES
+# ============================================================================
+
+types:
+
+  # ──────────────────────────────────────────────────────────────
+  # 1. _exists
+  # ──────────────────────────────────────────────────────────────
+  _exists:
+    id: 1
+    trigger:
+      field: "_exists"
+    description: "Verifica se o arquivo source existe no filesystem"
+    input:
+      source: "path relativo ao business root (ex: company/icp.yaml)"
+    output:
+      type: boolean
+      value_when_exists: true
+      value_when_missing: false
+      status_when_exists: "PRESENT"
+      status_when_missing: "MISSING"
+    edge_cases:
+      - condition: "source contém {product} mas --product não fornecido"
+        result: "false, status MISSING"
+      - condition: "arquivo existe mas está vazio"
+        result: "true (existência é suficiente)"
+      - condition: "path é diretório, não arquivo"
+        result: "true (existência é suficiente)"
+    example:
+      manifest_entry:
+        id: icp_exists
+        source: "company/icp.yaml"
+        field: _exists
+        type: boolean
+      result_exists: { value: true, status: "PRESENT" }
+      result_missing: { value: false, status: "MISSING" }
+
+  # ──────────────────────────────────────────────────────────────
+  # 2. _exists_any
+  # ──────────────────────────────────────────────────────────────
+  _exists_any:
+    id: 2
+    trigger:
+      field: "_exists_any"
+      source_contains: "*"
+    description: "Verifica se pelo menos 1 arquivo matching o glob existe"
+    input:
+      source: "glob pattern com wildcard (ex: products/*/offerbook.yaml)"
+    output:
+      type: boolean
+      value_when_any_exists: true
+      value_when_none_exist: false
+      status_when_any_exists: "PRESENT"
+      status_when_none_exist: "MISSING"
+    edge_cases:
+      - condition: "zero matches no glob"
+        result: "false, status MISSING"
+      - condition: "wildcard dir não existe"
+        result: "false, status MISSING"
+      - condition: "1 de 3 existe"
+        result: "true (any = pelo menos 1)"
+    example:
+      manifest_entry:
+        id: offerbook_exists
+        source: "products/*/offerbook.yaml"
+        field: _exists_any
+        type: boolean
+      result_one_exists: { value: true, status: "PRESENT" }
+      result_none_exist: { value: false, status: "MISSING" }
+
+  # ──────────────────────────────────────────────────────────────
+  # 3. _dir_count
+  # ──────────────────────────────────────────────────────────────
+  _dir_count:
+    id: 3
+    trigger:
+      field: "_dir_count"
+    description: "Conta subdiretórios dentro do path source"
+    input:
+      source: "path de diretório (ex: products/)"
+    output:
+      type: integer
+      value_when_dir_missing: 0
+      status_when_dir_missing: "MISSING"
+      status_when_zero: "PRESENT"
+      status_when_positive: "PRESENT"
+    edge_cases:
+      - condition: "diretório não existe"
+        result: "0, status MISSING"
+      - condition: "diretório existe mas vazio"
+        result: "0, status PRESENT"
+      - condition: "hidden dirs (começando com .)"
+        result: "excluídos da contagem"
+      - condition: "arquivos no diretório (não subdiretórios)"
+        result: "não contados (apenas dirs)"
+    example:
+      manifest_entry:
+        id: products_count
+        source: "products/"
+        field: _dir_count
+        type: integer
+      result_3_products: { value: 3, status: "PRESENT" }
+      result_empty_dir: { value: 0, status: "PRESENT" }
+      result_no_dir: { value: 0, status: "MISSING" }
+
+  # ──────────────────────────────────────────────────────────────
+  # 4. _count
+  # ──────────────────────────────────────────────────────────────
+  _count:
+    id: 4
+    trigger:
+      field: "_count"
+    description: "Conta arquivos matching o glob pattern"
+    input:
+      source: "glob pattern (ex: products/*/marketing/*.yaml)"
+    output:
+      type: integer
+      value_when_zero_matches: 0
+      status_when_zero_matches: "MISSING"
+      status_when_positive: "PRESENT"
+    edge_cases:
+      - condition: "zero matches"
+        result: "0, status MISSING"
+      - condition: "wildcard dir não existe"
+        result: "0, status MISSING"
+    example:
+      manifest_entry:
+        id: marketing_files_count
+        source: "products/*/marketing/*.yaml"
+        field: _count
+        type: integer
+
+  # ──────────────────────────────────────────────────────────────
+  # 5. _completeness
+  # ──────────────────────────────────────────────────────────────
+  _completeness:
+    id: 5
+    trigger:
+      field: "_completeness"
+    description: "Percentual de campos preenchidos (não-placeholder) no arquivo inteiro"
+    input:
+      source: "arquivo YAML"
+    output:
+      type: percentage
+      range: "0-100"
+      formula: "round(preenchidos / total * 100)"
+      status_rules:
+        - condition: "arquivo não existe"
+          result: "0, status MISSING"
+        - condition: "arquivo vazio"
+          result: "0, status PRESENT"
+        - condition: "todos placeholder"
+          result: "0, status PLACEHOLDER"
+        - condition: "parcialmente preenchido"
+          result: "N%, status PRESENT"
+    edge_cases:
+      - condition: "valor é 0 ou false"
+        result: "contado como PRESENT (dado real)"
+      - condition: "campo é array vazio []"
+        result: "contado como placeholder"
+      - condition: "campo é objeto vazio {}"
+        result: "contado como placeholder"
+      - condition: "campo nested (objeto com sub-campos)"
+        result: "flatten recursivo, contar leaf values"
+    example:
+      manifest_entry:
+        id: icp_completeness
+        source: "company/icp.yaml"
+        field: _completeness
+        type: percentage
+
+  # ──────────────────────────────────────────────────────────────
+  # 6. field.path (dot-separated)
+  # ──────────────────────────────────────────────────────────────
+  field_path:
+    id: 6
+    trigger:
+      field: "dot-separated path sem prefixo especial (ex: core_icp.icp_name)"
+    description: "Navega até um campo específico no YAML via dot-path"
+    input:
+      source: "arquivo YAML"
+      field: "dot-separated path (ex: company_essence.legal_name)"
+    output:
+      type: "conforme type definido no manifest (string, integer, object, array, etc.)"
+      status_rules:
+        - condition: "arquivo não existe"
+          result: "null, status MISSING"
+        - condition: "caminho intermediário não existe"
+          result: "null, status MISSING"
+        - condition: "campo final é null/undefined"
+          result: "null, status MISSING"
+        - condition: "campo final é placeholder"
+          result: "valor, status PLACEHOLDER"
+        - condition: "campo final tem valor real"
+          result: "valor, status PRESENT"
+    edge_cases:
+      - condition: "path intermediário (ex: a.b.c) onde 'a.b' não existe"
+        result: "null, status MISSING (não crash)"
+      - condition: "path leva a array"
+        result: "retorna o array inteiro"
+      - condition: "path leva a objeto"
+        result: "retorna o objeto inteiro"
+      - condition: "campo é 0 ou false"
+        result: "valor 0/false, status PRESENT"
+    example:
+      manifest_entry:
+        id: icp_name
+        source: "company/icp.yaml"
+        field: core_icp.icp_name
+        type: string
+      result_present: { value: "Empreendedor digital 30-45", status: "PRESENT" }
+      result_placeholder: { value: "FILL_THIS", status: "PLACEHOLDER" }
+      result_missing: { value: null, status: "MISSING" }
+
+  # ──────────────────────────────────────────────────────────────
+  # 7. array_length
+  # ──────────────────────────────────────────────────────────────
+  array_length:
+    id: 7
+    trigger:
+      type: "array_length"
+    description: "Retorna o tamanho de um array no YAML"
+    input:
+      source: "arquivo YAML"
+      field: "dot-path que leva a um array"
+    output:
+      type: integer
+      status_rules:
+        - condition: "campo é array com items"
+          result: "length, status PRESENT"
+        - condition: "campo é array vazio []"
+          result: "0, status PRESENT"
+        - condition: "campo é null"
+          result: "0, status MISSING"
+        - condition: "campo não existe"
+          result: "0, status MISSING"
+        - condition: "campo não é array"
+          result: "0, status MISSING"
+    edge_cases:
+      - condition: "valor é null"
+        result: "0, status MISSING"
+      - condition: "valor é [] (array vazio)"
+        result: "0, status PRESENT"
+      - condition: "valor não é array (string, object)"
+        result: "0, status MISSING"
+    example:
+      manifest_entry:
+        id: icp_archetypes_count
+        source: "company/icp.yaml"
+        field: archetypes
+        type: array_length
+      result_5_items: { value: 5, status: "PRESENT" }
+      result_empty: { value: 0, status: "PRESENT" }
+      result_null: { value: 0, status: "MISSING" }
+
+  # ──────────────────────────────────────────────────────────────
+  # 8. array_length_sum
+  # ──────────────────────────────────────────────────────────────
+  array_length_sum:
+    id: 8
+    trigger:
+      type: "array_length_sum"
+      source_contains: "*"
+    description: "Soma tamanhos de arrays do mesmo field em múltiplos arquivos (wildcard)"
+    input:
+      source: "glob pattern com wildcard (ex: products/*/proof.yaml)"
+      field: "dot-path que leva a um array em cada arquivo"
+    output:
+      type: integer
+      status_rules:
+        - condition: "nenhum arquivo encontrado"
+          result: "0, status MISSING"
+        - condition: "arquivos encontrados, todos arrays vazios"
+          result: "0, status PRESENT"
+        - condition: "soma > 0"
+          result: "soma, status PRESENT"
+    edge_cases:
+      - condition: "todos os arquivos missing"
+        result: "0, status MISSING"
+      - condition: "1 de 3 tem array com items, outros missing"
+        result: "soma dos encontrados, status PRESENT"
+      - condition: "campo não é array em algum arquivo"
+        result: "pular arquivo, somar os outros"
+    example:
+      manifest_entry:
+        id: testimonials_count
+        source: "products/*/testimonials.yaml"
+        field: testimonials_database
+        type: array_length_sum
+
+  # ──────────────────────────────────────────────────────────────
+  # 9. score_block
+  # ──────────────────────────────────────────────────────────────
+  score_block:
+    id: 9
+    trigger:
+      type: "score_block"
+    description: "Extrai bloco de scoring (múltiplas dimensões numéricas 1-10)"
+    input:
+      source: "arquivo YAML"
+      field: "dot-path que leva a um objeto com dimensões numéricas"
+    output:
+      type: object
+      structure: "{ dim1: number, dim2: number, ..., _average: number }"
+      status_rules:
+        - condition: "campo não existe"
+          result: "null, status MISSING"
+        - condition: "campo existe, todas dimensões são placeholder/FILL"
+          result: "objeto, status PLACEHOLDER"
+        - condition: "campo existe, parcialmente preenchido"
+          result: "objeto com _average dos preenchidos, status PRESENT"
+        - condition: "campo existe, todas dimensões preenchidas"
+          result: "objeto com _average, status PRESENT"
+    edge_cases:
+      - condition: "todas as dimensões são placeholder (FILL_THIS, TBD)"
+        result: "status PLACEHOLDER, _average null"
+      - condition: "mix de preenchidos e placeholder"
+        result: "status PRESENT, _average calculada apenas dos preenchidos"
+      - condition: "campo não é objeto"
+        result: "null, status MISSING"
+    example:
+      manifest_entry:
+        id: team_strength_score
+        source: "operations/team-structure.yaml"
+        field: team_strength_score
+        type: score_block
+      result_full:
+        value: { expertise: 7, bandwidth: 5, culture: 8, retention: 6, _average: 6.5 }
+        status: "PRESENT"
+
+  # ──────────────────────────────────────────────────────────────
+  # 10. completeness (sub-section)
+  # ──────────────────────────────────────────────────────────────
+  completeness:
+    id: 10
+    trigger:
+      type: "completeness"
+    description: "Percentual de sub-campos preenchidos dentro de uma seção específica"
+    input:
+      source: "arquivo YAML"
+      field: "dot-path que leva a uma seção/objeto"
+    output:
+      type: percentage
+      range: "0-100"
+      formula: "round(preenchidos / total * 100)"
+      status_rules:
+        - condition: "seção não existe"
+          result: "0, status MISSING"
+        - condition: "seção existe, todos placeholder"
+          result: "0, status PLACEHOLDER"
+        - condition: "seção existe, parcialmente preenchida"
+          result: "N%, status PRESENT"
+    edge_cases:
+      - condition: "sub-seção não existe"
+        result: "0, status MISSING"
+      - condition: "sub-seção é valor escalar (não objeto)"
+        result: "100 se preenchido, 0 se placeholder, status accordingly"
+    example:
+      manifest_entry:
+        id: icp_completeness
+        source: "company/icp.yaml"
+        field: validation.completeness
+        type: completeness
+
+  # ──────────────────────────────────────────────────────────────
+  # 11. boolean_any
+  # ──────────────────────────────────────────────────────────────
+  boolean_any:
+    id: 11
+    trigger:
+      type: "boolean_any"
+    description: "true se qualquer item do array/campo avaliado é truthy"
+    input:
+      source: "arquivo YAML ou glob"
+      field: "dot-path que leva a um array ou campo boolean"
+    output:
+      type: boolean
+      status_rules:
+        - condition: "campo não existe"
+          result: "false, status MISSING"
+        - condition: "array vazio"
+          result: "false, status PRESENT"
+        - condition: "pelo menos 1 truthy"
+          result: "true, status PRESENT"
+    edge_cases:
+      - condition: "array vazio"
+        result: "false, status PRESENT"
+      - condition: "campo não é array"
+        result: "avaliar como truthy/falsy direto"
+    example:
+      manifest_entry:
+        id: has_video_testimonials
+        source: "products/{product}/testimonials.yaml"
+        field: video_testimonial_format
+        type: boolean_any
+
+  # ──────────────────────────────────────────────────────────────
+  # 12. _stages
+  # ──────────────────────────────────────────────────────────────
+  _stages:
+    id: 12
+    trigger:
+      field: "_stages"
+    description: "Conta keys que começam com 'stage_' no nível top do arquivo"
+    input:
+      source: "arquivo YAML"
+    output:
+      type: integer
+      status_rules:
+        - condition: "arquivo não existe"
+          result: "0, status MISSING"
+        - condition: "nenhuma key stage_*"
+          result: "0, status PRESENT"
+        - condition: "N keys stage_*"
+          result: "N, status PRESENT"
+    edge_cases:
+      - condition: "arquivo não existe"
+        result: "0, status MISSING"
+      - condition: "keys stage_ em nível nested"
+        result: "não contadas (apenas top-level)"
+    example:
+      manifest_entry:
+        id: funnel_stages
+        source: "products/{product}/marketing/conversion-funnel.yaml"
+        field: _stages
+        type: integer
+      result_4_stages: { value: 4, status: "PRESENT" }
+
+  # ──────────────────────────────────────────────────────────────
+  # 13. *.subfield (wildcard field)
+  # ──────────────────────────────────────────────────────────────
+  wildcard_subfield:
+    id: 13
+    trigger:
+      field: "começa com *. (ex: *.bottleneck_diagnostic)"
+    description: "Extrai um sub-campo de todas as top-level keys do arquivo"
+    input:
+      source: "arquivo YAML"
+      field: "*.subfield_name"
+    output:
+      type: array
+      content: "lista de valores do subfield encontrados"
+      status_rules:
+        - condition: "arquivo não existe"
+          result: "[], status MISSING"
+        - condition: "nenhuma key tem o subfield"
+          result: "[], status MISSING"
+        - condition: "pelo menos 1 key tem o subfield"
+          result: "array de valores, status PRESENT"
+    edge_cases:
+      - condition: "nenhum match"
+        result: "[], status MISSING"
+      - condition: "top-level keys que não são objetos"
+        result: "pular (só processar objetos)"
+      - condition: "subfield existe mas é placeholder"
+        result: "incluir no array, status PRESENT (individual classification em cada item)"
+    example:
+      manifest_entry:
+        id: funnel_bottlenecks
+        source: "products/{product}/marketing/conversion-funnel.yaml"
+        field: "*.bottleneck_diagnostic"
+        type: array
+      result_found:
+        value: ["Low conversion rate", "High drop-off at checkout"]
+        status: "PRESENT"
+      result_empty: { value: [], status: "MISSING" }
+
+# ============================================================================
+# VALID TYPES (para validação de manifest)
+# ============================================================================
+valid_manifest_types:
+  - string
+  - integer
+  - number
+  - boolean
+  - percentage
+  - array
+  - object
+  - array_length
+  - array_length_sum
+  - score_block
+  - completeness
+  - boolean_any
+
+# Nota: _exists, _exists_any, _dir_count, _count, _completeness, _stages
+# são detectados pelo valor do campo `field`, não pelo `type`.
+# O `type` no manifest indica o tipo de OUTPUT esperado.
+
+valid_field_triggers:
+  - _exists
+  - _exists_any
+  - _dir_count
+  - _count
+  - _completeness
+  - _stages

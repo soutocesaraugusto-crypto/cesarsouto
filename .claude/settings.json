@@ -1,0 +1,15 @@
+{
+  "hooks": {
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "AGENT_FILE=\"$(git rev-parse --show-toplevel 2>/dev/null || echo '.')/.aiox/active-agent.txt\"; if [ -f \"$AGENT_FILE\" ]; then AGENT_INFO=$(cat \"$AGENT_FILE\"); echo \"{\\\"systemMessage\\\": \\\"AGENTE ATIVO: $AGENT_INFO — Mantenha este persona em toda resposta.\\\"}\" ; fi",
+            "timeout": 5
+          }
+        ]
+      }
+    ]
+  }
+}

@@ -1,0 +1,347 @@
+# Context Manifest: exec-marketing
+# Execution variables for marketing and communication tasks
+# Covers: campaign strategy, copy, traffic, email, landing pages
+#
+# Difference from exec-content-production:
+#   content-production → focus on PRODUCING pieces (voice, format, compliance)
+#   marketing → focus on STRATEGY and FUNNEL (channels, conversion, audience, proof)
+
+manifest:
+  id: exec-marketing
+  version: "1.0.0"
+  description: >
+    Execution context for marketing tasks.
+    Pulls positioning, full ICP, funnel, proof, offer and channels.
+    Used by cmo-architect, traffic squad, and copy squad.
+  total_variables: 46
+  agent: cmo-architect
+  category: execution
+
+params:
+  required:
+    - slug     # business slug
+    - product  # product slug
+  optional: []
+
+variables:
+
+  # === BLOCK 1: POSITIONING (how we position ourselves) ===
+
+  - id: brand_name
+    source: "brand/brandbook.yaml"
+    field: identity.brand_name
+    type: string
+    block: positioning
+
+  - id: brand_purpose
+    source: "brand/brandbook.yaml"
+    field: core.purpose
+    type: string
+    block: positioning
+
+  - id: positioning_statement
+    source: "brand/brandbook.yaml"
+    field: positioning.positioning_statement
+    type: string
+    block: positioning
+
+  - id: message_hierarchy
+    source: "brand/brandbook.yaml"
+    field: positioning.message_hierarchy
+    type: object
+    block: positioning
+
+  - id: onlyness
+    source: "brand/brandbook.yaml"
+    field: positioning.onlyness
+    type: string
+    block: positioning
+
+  - id: competitive_positioning
+    source: "brand/brandbook.yaml"
+    field: competitive_positioning
+    type: object
+    block: positioning
+
+  - id: social_proof_summary
+    source: "brand/brandbook.yaml"
+    field: social_proof_summary
+    type: object
+    block: positioning
+
+  # === BLOCK 2: FULL ICP (who is the target) ===
+
+  - id: icp_name
+    source: "company/icp.yaml"
+    field: core_icp.icp_name
+    type: string
+    block: audience
+
+  - id: icp_one_sentence
+    source: "company/icp.yaml"
+    field: core_icp.one_sentence_definition
+    type: string
+    block: audience
+
+  - id: icp_demographics
+    source: "company/icp.yaml"
+    field: demographics
+    type: object
+    block: audience
+
+  - id: icp_central_pain
+    source: "company/icp.yaml"
+    field: psychographics.central_pain
+    type: object
+    block: audience
+
+  - id: icp_beliefs
+    source: "company/icp.yaml"
+    field: psychographics.beliefs
+    type: array
+    block: audience
+
+  - id: icp_mental_state
+    source: "company/icp.yaml"
+    field: psychographics.mental_state
+    type: object
+    block: audience
+
+  - id: icp_consumption
+    source: "company/icp.yaml"
+    field: psychographics.consumption
+    type: object
+    block: audience
+
+  - id: icp_pain_stack
+    source: "company/icp.yaml"
+    field: pain_stack_hidden
+    type: array
+    block: audience
+
+  - id: icp_motivations
+    source: "company/icp.yaml"
+    field: motivations_action_triggers
+    type: array
+    block: audience
+
+  - id: icp_acquisition_channels
+    source: "company/icp.yaml"
+    field: acquisition_channels
+    type: object
+    block: audience
+
+  - id: awareness_level
+    source: "company/diagnosis.yaml"
+    field: market_awareness_level.identified_level
+    type: string
+    block: audience
+
+  - id: sophistication_stage
+    source: "company/diagnosis.yaml"
+    field: market_sophistication_stage.identified_stage
+    type: string
+    block: audience
+
+  # === BLOCK 3: OFFER (what we're selling) ===
+
+  - id: offer_name
+    source: "products/{product}/offerbook.yaml"
+    field: positioning.offer_name
+    type: string
+    block: offer
+
+  - id: offer_promise
+    source: "products/{product}/offerbook.yaml"
+    field: positioning.promessa
+    type: string
+    block: offer
+
+  - id: unique_mechanism
+    source: "products/{product}/offerbook.yaml"
+    field: positioning.unique_mechanism
+    type: string
+    block: offer
+
+  - id: offer_usp
+    source: "products/{product}/offerbook.yaml"
+    field: positioning.unique_selling_proposition
+    type: string
+    block: offer
+
+  - id: offer_price
+    source: "products/{product}/offerbook.yaml"
+    field: offer_architecture.grand_slam_offer.price
+    type: number
+    block: offer
+
+  - id: offer_guarantee
+    source: "products/{product}/offerbook.yaml"
+    field: offer_architecture.grand_slam_offer.guarantee
+    type: string
+    block: offer
+
+  - id: offer_bonuses
+    source: "products/{product}/offerbook.yaml"
+    field: offer_architecture.bonuses
+    type: array
+    block: offer
+
+  - id: offer_objections
+    source: "products/{product}/offerbook.yaml"
+    field: objections_responses
+    type: array
+    block: offer
+
+  # === BLOCK 4: PROOF (what backs up claims) ===
+
+  - id: case_studies
+    source: "products/{product}/proof.yaml"
+    field: case_studies
+    type: array
+    block: proof
+
+  - id: statistics
+    source: "products/{product}/proof.yaml"
+    field: statistics
+    type: array
+    block: proof
+
+  - id: before_after
+    source: "products/{product}/proof.yaml"
+    field: before_after_comparisons
+    type: array
+    block: proof
+
+  - id: testimonials
+    source: "products/{product}/testimonials.yaml"
+    field: testimonials_database
+    type: array
+    block: proof
+
+  - id: testimonials_by_result
+    source: "products/{product}/testimonials.yaml"
+    field: testimonials_by_result
+    type: array
+    block: proof
+
+  - id: credential_summary
+    source: "company/credentials.yaml"
+    field: credential_summary
+    type: string
+    block: proof
+
+  # === BLOCK 5: FUNNEL (funnel state) ===
+
+  - id: buyer_journey_stages
+    source: "products/{product}/marketing/buyer-journey.yaml"
+    field: buyer_journey
+    type: array
+    block: funnel
+
+  - id: funnel_math
+    source: "products/{product}/marketing/conversion-funnel.yaml"
+    field: funnel_math
+    type: object
+    block: funnel
+
+  - id: funnel_health_score
+    source: "products/{product}/marketing/conversion-funnel.yaml"
+    field: funnel_health_score
+    type: score_block
+    block: funnel
+
+  - id: funnel_bottlenecks
+    source: "products/{product}/marketing/conversion-funnel.yaml"
+    field: "*.bottleneck_diagnostic"
+    type: array
+    block: funnel
+
+  - id: email_sequences_count
+    source: "products/{product}/marketing/email-sequences.yaml"
+    field: sequences
+    type: array_length
+    block: funnel
+
+  # === BLOCK 6: CAMPAIGN (active campaign context) ===
+
+  - id: campaign_objective
+    source: "products/{product}/marketing/campaign-brief.yaml"
+    field: objective.primary_outcome
+    type: string
+    block: campaign
+
+  - id: campaign_awareness_stage
+    source: "products/{product}/marketing/campaign-brief.yaml"
+    field: audience.awareness_stage
+    type: string
+    block: campaign
+
+  - id: campaign_traffic_temp
+    source: "products/{product}/marketing/campaign-brief.yaml"
+    field: audience.traffic_temperature
+    type: string
+    block: campaign
+
+  - id: campaign_channels
+    source: "products/{product}/marketing/campaign-brief.yaml"
+    field: channels.in_scope
+    type: array
+    block: campaign
+
+  - id: campaign_proof_sources
+    source: "products/{product}/marketing/campaign-brief.yaml"
+    field: proof.proof_sources
+    type: array
+    block: campaign
+
+  # === BLOCK 7: CREATIVE (existing hooks and headlines) ===
+
+  - id: hooks
+    source: "products/{product}/marketing/hooks.yaml"
+    field: hooks
+    type: array
+    block: creative
+
+  - id: headlines
+    source: "products/{product}/marketing/headlines.yaml"
+    field: headlines
+    type: array
+    block: creative
+
+  # === BLOCK 8: NARRATIVE ===
+
+  - id: brandscript_exists
+    source: "products/{product}/narrative/brandscript.yaml"
+    field: _exists
+    type: boolean
+    block: narrative
+
+research_dimensions:
+  - id: competitor_ads
+    description: "Competitor ads and creative"
+    resolved_from: "products/{product}/competitor-analysis.yaml#competitive_landscape"
+    research_query_template: "{competitor_name} ads creative {year}"
+
+  - id: channel_benchmarks
+    description: "Traffic channel benchmarks"
+    resolved_from: "campaign_channels"
+    research_query_template: "{channel} advertising benchmarks CPM CPA {year}"
+
+  - id: audience_insights
+    description: "Audience behavior data"
+    resolved_from: "company/icp.yaml#acquisition_channels"
+    research_query_template: "{icp_demographics} online behavior {channel} {year}"
+
+veto_conditions:
+  - condition: "icp_name == MISSING AND icp_central_pain == MISSING"
+    action: "VETO — Without defined ICP, marketing campaign is a shot in the dark"
+
+  - condition: "offer_name == MISSING AND offer_promise == MISSING"
+    action: "VETO — Without defined offer, nothing to promote"
+
+  - condition: "awareness_level == MISSING"
+    action: "VETO — Without awareness level, cannot calibrate the message"
+
+  - condition: "coverage < 35%"
+    action: "VETO — Insufficient marketing context. Fill workspace first."

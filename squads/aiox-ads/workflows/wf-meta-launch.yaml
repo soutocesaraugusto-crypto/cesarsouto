@@ -1,0 +1,802 @@
+# Workflow: Meta Campaign Launch (End-to-End)
+# Orquestra o lancamento completo de uma campanha Meta — da pesquisa a ativacao.
+# ADAPTADO de: squads/media-buyer-squad/workflows/wf-launch-campaign.yaml
+#
+# Story: SAIOX-ADS-V5-5.1
+# Created: 2026-03-18
+# Version: 1.0.0
+# Sources:
+#   - wf-launch-campaign.yaml (media-buyer-squad, 6 phases)
+#   - config/autonomy-tiers.yaml (tier definitions, 56 actions)
+#   - config/safety-rules.yaml (paused_by_default, budget thresholds, WAL)
+#   - checklists/launch-dod.md (8 hard gates)
+#   - checklists/ban-prevention.md (16 pre-automation checks)
+#   - templates/action-ledger.yaml (append-only log)
+
+workflow:
+  id: wf-meta-launch
+  name: "Meta Campaign Launch (End-to-End)"
+  version: "1.0.0"
+  purpose: |
+    Orquestrar lancamento completo de campanha Meta — da pesquisa inicial
+    ate a ativacao humana. Cada fase executa via skills, registra no action
+    ledger, e respeita autonomy tiers. Nenhuma campanha vai ao ar sem
+    passar por TODOS os 6 phases sequencialmente.
+  description: |
+    Workflow operacional com 6 fases sequenciais. Cada fase define agente,
+    skills, tier de autonomia, inputs/outputs, e error handling.
+    PAUSED-by-default e action ledger sao NON-NEGOTIABLE em todo o fluxo.
+  orchestrator: ad-midas
+  type: operational
+  platform: meta
+
+  best_for:
+    - Lancamento de campanha nova no Meta Ads
+    - Reativacao de campanha pausada com nova estrategia
+    - Campanha para novo produto/oferta no Meta
+
+  # =================================================================
+  # PREREQUISITES
+  # =================================================================
+  # Condicoes que DEVEM ser verdadeiras antes de iniciar este workflow.
+  # Se qualquer prerequisite falhar: HALT e reportar para humano.
+
+  prerequisites:
+    business_profile:
+      description: "Business profile completo em workspace/businesses/{slug}/ads/"
+      validation: "Verificar existencia de business-profile.yaml, product-card.yaml, icp-profile.yaml"
+      required: true
+      created_by: "tasks/setup-business-profile.md"
+
+    mcp_configured:
+      description: "MCP validado e Meta token ativo"
+      validation: "Rodar tasks/configure-mcp.md — output: platform-status.yaml com meta.status = active"
+      required: true
+      created_by: "tasks/configure-mcp.md"
+
+    ban_prevention_passed:
+      description: "Checklist ban-prevention.md Secao 1 (Pre-Automacao) completa"
+      validation: "@fiscal valida todos os 5 checks pre-automacao de checklists/ban-prevention.md"
+      required: true
+      enforced_by: fiscal
+
+    account_age_verified:
+      description: "Idade da conta verificada para aplicar restricoes corretas"
+      validation: "Verificar account_age_tiers em safety-rules.yaml (new/young/mature)"
+      required: true
+      affects: "Phase 5 (Build) — restricoes de criacao por idade da conta"
+
+    workspace_initialized:
+      description: "Diretorios de campanha criados em workspace/businesses/{slug}/ads/meta/"
+      validation: "Existem: briefing/, creatives/, audiences/, reports/daily/, reports/weekly/"
+      required: true
+      created_by: "scripts/bootstrap.sh ou manual"
+
+  # =================================================================
+  # SEQUENCE (6 Phases)
+  # =================================================================
+
+  sequence:
+
+    # ---------------------------------------------------------------
+    # PHASE 1: RESEARCH
+    # ---------------------------------------------------------------
+    - phase: research
+      id: PH_RESEARCH
+      name: "Pesquisa e Inteligencia Competitiva"
+      agent: ad-midas
+      autonomy_tier: auto
+      action: creates
+      description: |
+        Executar o 5-Phase Research Protocol completo para gerar o
+        research-brief.md. Inclui analise de marca, competidores,
+        mapa de diferenciacao, e inteligencia de ads.
+
+      skills_used:
+        - id: research-protocol
+          path: "skills/strategic/research-protocol/SKILL.md"
+          description: "5-Phase Research Protocol (brand, competitors, differentiation, ad intel)"
+        - id: competitive-intel
+          path: "skills/strategic/competitive-intel/SKILL.md"
+          description: "Facebook Ad Library analysis (embedded in research-protocol Phase 3)"
+
+      input:
+        from: prerequisites
+        files:
+          - "workspace/businesses/{slug}/ads/business-profile.yaml"
+          - "workspace/businesses/{slug}/ads/product-card.yaml"
+          - "workspace/businesses/{slug}/ads/icp-profile.yaml"
+        context: "Business DNA completo — empresa, produto, ICP"
+
+      output:
+        to: PH_BRIEFING
+        files:
+          - path: "workspace/businesses/{slug}/ads/meta/briefing/research-brief.md"
+            template: "templates/research-brief.md"
+            description: "5-Phase research output: brand analysis, competitive landscape, differentiation map, ad intelligence"
+          - path: "workspace/businesses/{slug}/ads/meta/STRATEGY.md"
+            template: "templates/strategy.md"
+            description: "Initial STRATEGY.md with PREFER/AVOID/CONSTRAINT directives (auto-initialized if not exists)"
+
+      action_ledger:
+        entries:
+          - action: "design-campaign-structure"
+            tier: auto
+            description: "Research protocol execution — brand crawl, competitive analysis, differentiation map"
+
+      error_handling:
+        on_failure: |
+          1. Log error in action-ledger with result: "failed:{reason}"
+          2. Notify human via @ad-midas: "Research phase failed: {reason}"
+          3. HALT — do NOT proceed to Phase 2
+        retries: 0
+        common_errors:
+          - error: "WebFetch timeout on brand site"
+            action: "Retry once with increased timeout. If still fails, proceed with available data and flag gap."
+          - error: "< 2 competitors found"
+            action: "Log warning but do NOT halt. Research-protocol handles this gracefully (decision #64)."
+
+      rollback:
+        action: "Delete generated research-brief.md and STRATEGY.md. No external state to revert."
+
+    # ---------------------------------------------------------------
+    # PHASE 2: BRIEFING
+    # ---------------------------------------------------------------
+    - phase: briefing
+      id: PH_BRIEFING
+      name: "Geracao do Campaign Briefing"
+      agent: ad-midas
+      autonomy_tier: hitl
+      description: |
+        Gerar campaign-briefing.yaml com campos "agent decides" preenchidos
+        automaticamente a partir do research-brief.md. Humano confirma
+        as decisoes do agente antes de prosseguir.
+
+      skills_used:
+        - id: funnel-selection
+          path: "skills/strategic/funnel-selection/SKILL.md"
+          description: "Selecionar tipo de funil ideal baseado no research brief"
+        - id: campaign-structure
+          path: "skills/strategic/campaign-structure/SKILL.md"
+          description: "Definir estrutura CBO/ABO, naming convention, budget allocation"
+        - id: bidding-strategy
+          path: "skills/strategic/bidding-strategy/SKILL.md"
+          description: "Decision tree para estrategia de bid (Lowest Cost -> Cost Cap -> ROAS Goal)"
+
+      input:
+        from: PH_RESEARCH
+        files:
+          - "workspace/businesses/{slug}/ads/meta/briefing/research-brief.md"
+          - "workspace/businesses/{slug}/ads/meta/STRATEGY.md"
+          - "workspace/businesses/{slug}/ads/business-profile.yaml"
+          - "workspace/businesses/{slug}/ads/product-card.yaml"
+          - "workspace/businesses/{slug}/ads/icp-profile.yaml"
+
+      output:
+        to: PH_TRACKING
+        files:
+          - path: "workspace/businesses/{slug}/ads/meta/briefing/campaign-briefing.yaml"
+            template: "templates/campaign-briefing.yaml"
+            description: |
+              Campaign briefing with fase_1 (human input) and fase_2 (agent decides).
+              Agent fills 11 auto_decide fields: objetivo_meta, tipo_campanha,
+              estrutura_adsets, orcamento_diario, estrategia_bid, placements,
+              janela_atribuicao, otimizacao_entrega, publicos, formatos_ad, hooks.
+              Human reviews and confirms with 'APROVADO'.
+
+      checkpoint:
+        id: CP_BRIEFING
+        decision: APPROVE_OR_REVISE
+        human_review: true
+        approval_format: "Agent presents briefing -> human confirms with 'APROVADO' -> proceed"
+        timeout_minutes: 60
+        criteria:
+          - "Objetivo Meta alinhado com meta do negocio"
+          - "Funil selecionado com justificativa do research brief"
+          - "Estrutura CBO/ABO definida com naming convention"
+          - "Budget diario dentro dos limites de safety-rules.yaml"
+          - "Bid strategy justificada via decision tree"
+          - "Compliance @fiscal: fase_research.compliance validada"
+
+      action_ledger:
+        entries:
+          - action: "select-funnel"
+            tier: auto
+            description: "Funnel selection based on research brief"
+          - action: "design-campaign-structure"
+            tier: auto
+            description: "Campaign structure definition (CBO/ABO, naming)"
+          - action: "campaign-briefing-generated"
+            tier: hitl
+            description: "Campaign briefing generated and presented for human approval"
+
+      error_handling:
+        on_failure: |
+          1. Log error in action-ledger with result: "failed:{reason}"
+          2. Notify human via @ad-midas: "Briefing phase failed: {reason}"
+          3. HALT — do NOT proceed to Phase 3
+        retries: 0
+        on_revise: |
+          Human requests revision -> @ad-midas adjusts specific fields ->
+          re-present for approval. Max 3 revision cycles before escalation.
+
+      rollback:
+        action: "Delete generated campaign-briefing.yaml. No external state to revert."
+
+    # ---------------------------------------------------------------
+    # PHASE 3: TRACKING
+    # ---------------------------------------------------------------
+    - phase: tracking
+      id: PH_TRACKING
+      name: "Validacao de Tracking (Pixel + CAPI + Landing Page)"
+      agent: pixel-specialist
+      autonomy_tier: auto
+      action: validates
+      description: |
+        Validar infraestrutura de tracking: pixel ativo, CAPI configurado,
+        eventos do funil disparando, e landing page com EMQ >= 6.0.
+        Este e o gate tecnico — se tracking estiver quebrado, todo budget
+        investido sera desperdicado.
+
+      skills_used:
+        - id: tracking-audit
+          path: "skills/diagnostic/tracking-audit/SKILL.md"
+          description: "Audit pixel + CAPI (browser 40% + server 40% + match 20% scoring)"
+        - id: page-analyzer
+          path: "skills/diagnostic/page-analyzer/SKILL.md"
+          description: "Landing page analysis via WebFetch (6 dimensions, EMQ score 1-10)"
+
+      input:
+        from: PH_BRIEFING
+        files:
+          - "workspace/businesses/{slug}/ads/meta/briefing/campaign-briefing.yaml"
+        context: "Landing page URL from briefing, Pixel ID from .env"
+
+      output:
+        to: PH_CREATIVE
+        files:
+          - path: "workspace/businesses/{slug}/ads/meta/briefing/tracking-validation.yaml"
+            description: |
+              Tracking validation results: pixel_status, capi_status, event_status,
+              emq_score, match_rate, issues_found[]
+        gates:
+          - gate: "EMQ >= 6.0"
+            enforcement: "NON-NEGOTIABLE. EMQ < 6.0 = BLOCK launch, report to @fiscal."
+            reference: "skills/diagnostic/page-analyzer/SKILL.md — emq_minimum: 6.0"
+          - gate: "Pixel firing"
+            enforcement: "Pixel must be active and firing events. Zero events = BLOCK."
+          - gate: "CAPI configured"
+            enforcement: "CAPI should be configured. Pixel-only = WARNING (max score 60/100)."
+
+      action_ledger:
+        entries:
+          - action: "collect-pixel-events"
+            tier: auto
+            description: "Pixel event collection and CAPI status check"
+          - action: "detect-tracking-issues"
+            tier: auto
+            description: "Tracking issue detection (match rate, event gaps)"
+          - action: "audit-campaign-pre-launch"
+            tier: auto
+            description: "Page analysis EMQ scoring"
+
+      error_handling:
+        on_failure: |
+          1. Log error in action-ledger with result: "failed:{reason}"
+          2. If EMQ < 6.0: report to @fiscal, BLOCK launch
+          3. Notify human: "Tracking validation failed: {issues}"
+          4. HALT — do NOT proceed to Phase 4
+        retries: 2
+        on_retry: |
+          @pixel-specialist identifies issues -> presents fix recommendations ->
+          human/developer fixes -> re-validate. Max 2 retry cycles.
+        common_errors:
+          - error: "EMQ < 6.0"
+            action: "BLOCK. Report to @fiscal. Do NOT proceed. LP must be fixed first."
+          - error: "Pixel not firing"
+            action: "BLOCK. Pixel installation required before campaign can proceed."
+          - error: "CAPI not configured"
+            action: "WARNING. Recommend CAPI setup. Score capped at 60/100. May proceed with human approval."
+
+      rollback:
+        action: "No external state created. Delete tracking-validation.yaml."
+
+    # ---------------------------------------------------------------
+    # PHASE 4: CREATIVE
+    # ---------------------------------------------------------------
+    - phase: creative
+      id: PH_CREATIVE
+      name: "Producao e Avaliacao de Criativos"
+      agent: creative-analyst
+      action: creates
+      agent_chain:
+        - agent: creative-analyst
+          role: "Generate hooks, copy, creative briefs"
+          autonomy_tier: auto
+        - agent: performance-analyst
+          role: "Evaluate creative numbers (scoring, benchmarks)"
+          autonomy_tier: auto
+        - agent: fiscal
+          role: "Compliance check on all creative assets"
+          autonomy_tier: auto
+      description: |
+        Pipeline de 3 agentes:
+        1. @creative-analyst gera hooks (10+ variacoes, 6 categorias), copy,
+           e creative briefs usando frameworks (PAS, AIDA, BAB, Story).
+        2. @performance-analyst avalia numeros — scoring via creative-evaluator
+           (100-point scale), compara com benchmarks do industry template.
+        3. @fiscal faz compliance check — ad-compliance-gate para cada criativo.
+
+      skills_used:
+        - id: hook-generator
+          path: "skills/creative/hook-generator/SKILL.md"
+          agent: creative-analyst
+          description: "Generate 10+ hook variations across 6 categories"
+        - id: copy-generator
+          path: "skills/creative/copy-generator/SKILL.md"
+          agent: creative-analyst
+          description: "Generate ad copy using PAS, AIDA, BAB, Story frameworks"
+        - id: creative-brief
+          path: "skills/creative/creative-brief/SKILL.md"
+          agent: creative-analyst
+          description: "Generate complete creative brief for designers"
+        - id: creative-evaluator
+          path: "skills/diagnostic/creative-evaluator/SKILL.md"
+          agent: performance-analyst
+          description: "Numbers-only evaluation (100-point scoring, CTR/CVR/CPA/hook weights)"
+        - id: ad-compliance-gate
+          path: "skills/operational/ad-compliance-gate/SKILL.md"
+          agent: fiscal
+          description: "Policy compliance verification for all creative assets"
+
+      input:
+        from: PH_TRACKING
+        files:
+          - "workspace/businesses/{slug}/ads/meta/briefing/campaign-briefing.yaml"
+          - "workspace/businesses/{slug}/ads/meta/briefing/research-brief.md"
+          - "workspace/businesses/{slug}/ads/meta/STRATEGY.md"
+          - "workspace/businesses/{slug}/ads/icp-profile.yaml"
+
+      output:
+        to: PH_BUILD
+        files:
+          - path: "workspace/businesses/{slug}/ads/meta/creatives/"
+            description: |
+              Creative assets: hooks.yaml, copy-variants.yaml, creative-brief.md,
+              compliance-report.yaml (from @fiscal)
+        criteria:
+          - "Minimo 3 variacoes de ad"
+          - "Hooks em pelo menos 3 categorias diferentes"
+          - "Copy com framework aplicado (PAS, AIDA, etc)"
+          - "All creatives passed @fiscal compliance gate"
+
+      action_ledger:
+        entries:
+          - action: "generate-hooks"
+            tier: auto
+            agent: "@creative-analyst"
+            description: "Hook generation (10+ variations, 6 categories)"
+          - action: "generate-copy"
+            tier: auto
+            agent: "@creative-analyst"
+            description: "Copy generation using frameworks"
+          - action: "generate-creative-brief"
+            tier: auto
+            agent: "@creative-analyst"
+            description: "Creative brief generation"
+          - action: "evaluate-creatives-numbers"
+            tier: auto
+            agent: "@performance-analyst"
+            description: "Creative scoring (100-point scale) against benchmarks"
+          - action: "audit-ad-compliance"
+            tier: auto
+            agent: "@fiscal"
+            description: "Compliance gate for all creative assets"
+
+      error_handling:
+        on_failure: |
+          1. Log error in action-ledger with result: "failed:{reason}"
+          2. Identify which agent in the chain failed
+          3. If @creative-analyst: regenerate with adjusted parameters
+          4. If @fiscal compliance fail: @creative-analyst adjusts flagged copy/claims
+          5. If unresolvable: notify human and HALT
+        retries: 2
+        on_compliance_fail: |
+          @fiscal flags non-compliant creative -> @creative-analyst revises ->
+          @fiscal re-checks. Max 2 cycles. If still failing, HALT.
+
+      rollback:
+        action: "Delete generated creative files. No external state created."
+
+    # ---------------------------------------------------------------
+    # PHASE 5: BUILD
+    # ---------------------------------------------------------------
+    - phase: build
+      id: PH_BUILD
+      name: "Criacao de Campanha via API (PAUSED)"
+      agent: campaign-manager
+      autonomy_tier: hitl
+      description: |
+        Criar campanha, adsets, e ads via MCP (Meta API). TODA entidade
+        criada com status PAUSED. WAL pattern obrigatorio. Post-create
+        validation obrigatoria. @fiscal faz DoD check antes de liberar
+        para Phase 6.
+
+      skills_used:
+        - id: campaign-creation
+          path: "agent: campaign-manager (18-step execution protocol)"
+          description: "Create campaign + adsets + ads via MCP with WAL, idempotency, PAUSED enforcement"
+        - id: ad-compliance-gate
+          path: "skills/operational/ad-compliance-gate/SKILL.md"
+          agent: fiscal
+          description: "DoD check — 8 hard gates from checklists/launch-dod.md"
+
+      input:
+        from: PH_CREATIVE
+        files:
+          - "workspace/businesses/{slug}/ads/meta/briefing/campaign-briefing.yaml"
+          - "workspace/businesses/{slug}/ads/meta/creatives/*"
+          - "workspace/businesses/{slug}/ads/meta/briefing/tracking-validation.yaml"
+          - "workspace/businesses/{slug}/ads/meta/STRATEGY.md"
+
+      output:
+        to: PH_ACTIVATE
+        files:
+          - path: "workspace/businesses/{slug}/ads/meta/{campaign_slug}/campaign-state.yaml"
+            template: "templates/campaign-state.yaml"
+            description: "Campaign state with IDs, status: PAUSED, initial metrics placeholder"
+          - path: "workspace/businesses/{slug}/ads/meta/{campaign_slug}/ledger-YYYY-MM.yaml"
+            template: "templates/action-ledger.yaml"
+            description: "Action ledger initialized with creation entries"
+          - path: "workspace/businesses/{slug}/ads/meta/wal/YYYY-MM-wal.yaml"
+            description: "WAL entries for all create operations"
+        entities_created:
+          - campaign_id: "Created PAUSED via MCP"
+          - adset_ids: "Created with audiences, budget, targeting from briefing"
+          - ad_ids: "Created with approved creatives from Phase 4"
+
+      safety_enforcement:
+        paused_by_default:
+          rule: "EVERY campaign created with status: PAUSED"
+          source: "config/safety-rules.yaml — paused_by_default: true"
+          enforcement: "NON-NEGOTIABLE. campaign-manager MUST set effective_status: PAUSED"
+          post_create_check: "GET campaign after creation. If status != PAUSED: HALT immediately."
+
+        budget_thresholds:
+          max_daily_new_account: 50
+          max_daily_increase_pct: 20
+          source: "config/safety-rules.yaml — budget_thresholds"
+
+        ban_prevention:
+          max_campaigns_per_day_new: 5
+          source: "config/safety-rules.yaml — max_campaigns_per_day_new_account: 5"
+          check: "@fiscal validates checklists/ban-prevention.md Secao 2 (Operacao)"
+
+        wal_pattern:
+          required: true
+          description: "Every write logged in WAL BEFORE execution"
+          path: "workspace/businesses/{slug}/ads/meta/wal/YYYY-MM-wal.yaml"
+          source: "config/safety-rules.yaml — write_ahead_log: required"
+
+        idempotency:
+          required: true
+          format: "{entity_type}-{slug}-{timestamp}-{random}"
+          source: "config/safety-rules.yaml — additional_rules.idempotency"
+
+        post_create_validation:
+          required: true
+          checks:
+            - "Entity created successfully (HTTP 200/201)"
+            - "Status is PAUSED (not ACTIVE)"
+            - "Parameters match request (budget, targeting, creative)"
+            - "No platform warnings generated"
+          source: "config/safety-rules.yaml — post_create_validation: true"
+
+        concurrent_mcp:
+          rule: "Pipeboard is PRIMARY for Meta writes. ads-mcp only if Pipeboard DOWN."
+          source: "config/safety-rules.yaml — concurrent_mcp_write: forbidden"
+
+      dod_check:
+        agent: fiscal
+        checklist: "checklists/launch-dod.md"
+        gates: 8
+        all_must_pass: true
+        description: |
+          @fiscal validates ALL 8 hard gates from launch-dod.md:
+          1. Campaign structure matches briefing
+          2. All ads compliance-checked
+          3. Tracking validated (EMQ >= 6.0)
+          4. Budget within safety thresholds
+          5. PAUSED status confirmed via API read-back
+          6. WAL entries complete for all entities
+          7. Ban prevention checks current
+          8. Action ledger up to date
+        on_fail: "HALT. @fiscal reports specific gate failures. Fix required before Phase 6."
+
+      checkpoint:
+        id: CP_BUILD
+        decision: APPROVE_BUILD
+        human_review: true
+        approval_format: |
+          @campaign-manager presents:
+          - Campaign ID + Adset IDs + Ad IDs
+          - Status: all PAUSED (confirmed via read-back)
+          - Budget: within safety limits
+          - WAL: all entries logged
+          - DoD: @fiscal verdict (PASS/FAIL + details)
+          Human confirms with 'APROVADO' -> proceed to Phase 6
+        criteria:
+          - "Campaign created with valid IDs"
+          - "All entities status: PAUSED"
+          - "Budget matches briefing and safety limits"
+          - "Tracking linked (pixel + events)"
+          - "WAL complete"
+          - "@fiscal DoD: PASS"
+
+      action_ledger:
+        entries:
+          - action: "check-metastatus"
+            tier: auto
+            description: "Platform health check before writes"
+          - action: "write-wal-entry"
+            tier: auto
+            description: "WAL entries for campaign + adsets + ads creation"
+          - action: "create-campaign-api"
+            tier: hitl
+            description: "Campaign creation via MCP (PAUSED)"
+          - action: "create-adset-api"
+            tier: hitl
+            description: "Adset creation via MCP"
+          - action: "create-ad-api"
+            tier: hitl
+            description: "Ad creation via MCP (compliance-checked)"
+          - action: "audit-campaign-pre-launch"
+            tier: auto
+            agent: "@fiscal"
+            description: "DoD 8-gate check"
+
+      error_handling:
+        on_failure: |
+          1. Log error in action-ledger with result: "failed:{reason}"
+          2. If API error: check WAL for last successful state
+          3. If rate limit (429): wait per rate-limits.yaml backoff schedule
+          4. If entity created but validation failed: log inconsistency, HALT
+          5. Notify human: "Build phase failed: {reason}"
+          6. HALT — do NOT proceed to Phase 6
+        retries: 3
+        retry_with_backoff: true
+        common_errors:
+          - error: "HTTP 429 (rate limit)"
+            action: "Backoff per data/rate-limits.yaml. Wait and retry."
+          - error: "HTTP 5xx (platform outage)"
+            action: "Check metastatus. If outage: HALT all writes per safety-rules.yaml on_5xx_response."
+          - error: "Post-create validation mismatch"
+            action: "HALT. Log WAL entry with status: validation_failed. Do NOT retry — investigate."
+          - error: "PAUSED status not confirmed"
+            action: "CRITICAL. HALT immediately. Campaign may be ACTIVE. Investigate before ANY action."
+
+      rollback:
+        action: |
+          1. Check WAL for all entities created
+          2. For each entity: attempt pause via API (if somehow ACTIVE)
+          3. Log rollback in action-ledger
+          4. Notify human with full rollback report
+
+    # ---------------------------------------------------------------
+    # PHASE 6: ACTIVATE
+    # ---------------------------------------------------------------
+    - phase: activate
+      id: PH_ACTIVATE
+      name: "Ativacao Humana (PAUSED -> ACTIVE)"
+      agent: ad-midas
+      autonomy_tier: human
+      elicit: true
+      action: validates
+      description: |
+        Fase EXCLUSIVAMENTE humana. O humano revisa TUDO — briefing, tracking,
+        criativos, campanha criada, DoD do @fiscal — e decide ativar.
+        Nenhum agente pode executar esta fase. Agentes podem RECOMENDAR
+        e APRESENTAR dados, mas a ativacao e acao humana.
+
+      skills_used:
+        - id: activate-campaign
+          path: "autonomy-tiers.yaml — human tier: activate-first-campaign (new accounts) or hitl: activate-campaign (mature accounts)"
+          agent: human
+          description: "Human activates PAUSED -> ACTIVE in Meta Ads Manager or via @campaign-manager HITL delegation"
+
+      input:
+        from: PH_BUILD
+        files:
+          - "workspace/businesses/{slug}/ads/meta/{campaign_slug}/campaign-state.yaml"
+          - "workspace/businesses/{slug}/ads/meta/{campaign_slug}/ledger-YYYY-MM.yaml"
+          - "workspace/businesses/{slug}/ads/meta/briefing/campaign-briefing.yaml"
+          - "workspace/businesses/{slug}/ads/meta/briefing/tracking-validation.yaml"
+          - "workspace/businesses/{slug}/ads/meta/creatives/compliance-report.yaml"
+        context: |
+          Human receives comprehensive review package:
+          - Campaign IDs and structure
+          - All creatives with compliance status
+          - Tracking validation (EMQ score)
+          - @fiscal DoD verdict
+          - Budget and safety thresholds summary
+          - Action ledger with full audit trail
+
+      output:
+        files:
+          - path: "workspace/businesses/{slug}/ads/meta/{campaign_slug}/campaign-state.yaml"
+            description: "Updated with status: ACTIVE, activation timestamp, activated_by: human"
+          - path: "workspace/businesses/{slug}/ads/meta/{campaign_slug}/ledger-YYYY-MM.yaml"
+            description: "Action ledger entry: activate-campaign, tier: human"
+
+      activation_protocol:
+        new_account_rule:
+          condition: "Account age < 30 days"
+          tier: human
+          description: "First campaign activation on new accounts is HUMAN ONLY (decision #19)"
+          source: "autonomy-tiers.yaml — activate-first-campaign"
+
+        mature_account_rule:
+          condition: "Account age >= 30 days"
+          tier: hitl
+          description: |
+            Mature accounts: activation via @campaign-manager with human 'APROVADO'.
+            @campaign-manager presents activation plan -> human confirms -> execute.
+          source: "autonomy-tiers.yaml — activate-campaign"
+
+        rampagem:
+          required: true
+          schedule:
+            day1: "25% of target budget"
+            day3: "50% of target budget (if stable)"
+            day7: "100% of target budget (if maintained)"
+          abort_conditions:
+            - "CPA > 3x target em qualquer dia"
+            - "Conversoes zeradas por 6h+"
+            - "Tracking broken (match rate < 40%)"
+            - "Conta recebe warning/restriction"
+          source: "config/safety-rules.yaml — rampagem"
+
+      action_ledger:
+        entries:
+          - action: "activate-campaign"
+            tier: human
+            description: "Human activates campaign PAUSED -> ACTIVE"
+            approved_by: "human (mandatory)"
+
+      error_handling:
+        on_failure: |
+          1. Log error in action-ledger with result: "failed:{reason}"
+          2. If activation fails: campaign remains PAUSED (safe state)
+          3. Notify human with error details
+          4. HALT — investigate before retry
+        retries: 0
+        note: "Human tier — human decides whether to retry"
+
+      rollback:
+        action: |
+          If campaign was activated and needs rollback:
+          1. Human pauses campaign in Meta Ads Manager
+          2. @campaign-manager logs pause in action-ledger and WAL
+          3. Investigate root cause before any re-activation
+
+  # =================================================================
+  # COMPLETION SIGNALS
+  # =================================================================
+
+  completion_signals:
+    success:
+      - "Campaign ACTIVE and delivering impressions"
+      - "Tracking confirmed post-activation (events firing)"
+      - "Rampagem Day 1 check: CPA within 1.5x target"
+      - "Action ledger complete for all 6 phases"
+    failure:
+      - "EMQ < 6.0 after 2 retry cycles (Phase 3)"
+      - "All creatives rejected by @fiscal compliance (Phase 4)"
+      - "API creation failed after 3 retries (Phase 5)"
+      - "@fiscal DoD verdict: FAIL with unresolvable gates (Phase 5)"
+      - "Human decides not to activate (Phase 6)"
+
+  # =================================================================
+  # OUTPUTS
+  # =================================================================
+
+  outputs:
+    - campaign_id
+    - adset_ids
+    - ad_ids
+    - research_brief
+    - campaign_briefing
+    - tracking_validation
+    - creative_assets
+    - compliance_report
+    - campaign_state
+    - action_ledger
+    - wal_entries
+
+  # =================================================================
+  # AGENTS BY PHASE
+  # =================================================================
+
+  handoff_prompts:
+    ad-midas_to_pixel-specialist: >-
+      Campaign briefing aprovado pelo humano. Entregar para @pixel-specialist
+      validar tracking (pixel, CAPI, EMQ) antes de produzir criativos.
+    pixel-specialist_to_creative-analyst: >-
+      Tracking validado (EMQ >= 6.0). Entregar para @creative-analyst gerar
+      hooks, copy e creative briefs para a campanha.
+    creative-analyst_to_campaign-manager: >-
+      Criativos aprovados por @fiscal (compliance). Entregar para
+      @campaign-manager criar campanha via API (PAUSED).
+
+  agents_by_phase:
+    research: ad-midas
+    briefing: ad-midas
+    tracking: pixel-specialist
+    creative: [creative-analyst, performance-analyst, fiscal]
+    build: [campaign-manager, fiscal]
+    activate: ad-midas
+
+  # =================================================================
+  # KNOWLEDGE DOCS (loaded on-demand per phase)
+  # =================================================================
+
+  knowledge_docs:
+    phase_research:
+      - path: "data/knowledge/meta/core_concepts.md"
+        load_when: "Setting up campaign objectives and Advantage+ options"
+      - path: "data/knowledge/meta/bid_strategies.md"
+        load_when: "Evaluating bid strategy for campaign briefing"
+
+    phase_tracking:
+      - path: "data/knowledge/meta/core_concepts.md"
+        load_when: "Validating pixel events and CAPI configuration"
+
+    phase_build:
+      - path: "data/knowledge/meta/learning_phase.md"
+        load_when: "Setting initial budget (must be >= 5x target CPA for learning)"
+      - path: "data/knowledge/meta/pacing.md"
+        load_when: "Configuring delivery optimization and pacing"
+
+    phase_activate:
+      - path: "data/knowledge/meta/performance_fluctuations.md"
+        load_when: "Setting expectations for Day 1-7 performance during rampagem"
+
+  # =================================================================
+  # CROSS-REFERENCES
+  # =================================================================
+
+  references:
+    safety_rules: "config/safety-rules.yaml"
+    autonomy_tiers: "config/autonomy-tiers.yaml"
+    ban_prevention: "checklists/ban-prevention.md"
+    launch_dod: "checklists/launch-dod.md"
+    rate_limits: "data/rate-limits.yaml"
+    mcp_config: "mcp/mcp-config.json"
+    progressive_disclosure: "config/progressive-disclosure.yaml"
+
+  # =================================================================
+  # METADATA
+  # =================================================================
+
+  metadata:
+    created: "2026-03-18"
+    story: "SAIOX-ADS-V5-5.1"
+    adapted_from: "squads/media-buyer-squad/workflows/wf-launch-campaign.yaml"
+    total_phases: 6
+    estimated_duration: "2-5 dias (depending on human approval speed)"
+    requires_approval: true
+    approval_points: [CP_BRIEFING, CP_BUILD]
+    human_gates: [PH_ACTIVATE]
+    agents_involved: 5
+    skills_referenced: 11
+    safety_integrations:
+      - "paused_by_default (every entity)"
+      - "WAL pattern (every write)"
+      - "action ledger (every phase)"
+      - "autonomy tiers (every action)"
+      - "ban prevention (pre-flight + build)"
+      - "launch DoD (8 hard gates at build)"
+      - "EMQ hard gate (>= 6.0 at tracking)"
+      - "post-create validation (every API entity)"
+      - "idempotency UUID (every create)"
+      - "rampagem protocol (activation)"
