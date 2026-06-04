@@ -1,17 +1,17 @@
 {
-  "_doc": "A voz do dono do app e gravada no onboarding (passo de voz). 'requireUserVoice' ativa esse passo na primeira vez.",
-  "default": "minha-voz",
-  "requireUserVoice": true,
+  "_doc": "Vozes disponíveis. Perfis apontam para referências combinadas ricas (150s hipnose, 60s motivacional, 60s normal).",
+  "default": "lauriane",
+  "requireUserVoice": false,
   "vozes": {
-    "minha-voz": {
-      "rotulo": "Dra.Lauriane",
+    "lauriane": {
+      "rotulo": "Dra. Lauriane",
       "perfis": {
-        "hipnose": "data/voices/minha-voz-hipnose.ogg",
-        "normal": "data/voices/minha-voz-normal.ogg",
-        "motivacional": "data/voices/minha-voz-motivacional.ogg"
+        "hipnose":      "data/voices/samples/lauriane-hipnose-combined.ogg",
+        "normal":       "data/voices/samples/lauriane-normal-combined.ogg",
+        "motivacional": "data/voices/samples/lauriane-motivacional-combined.ogg"
       },
-      "fallback": "data/voices/minha-voz-hipnose.ogg"
+      "fallback": "data/voices/samples/lauriane-hipnose-combined.ogg"
     }
   },
-  "userVoice": "minha-voz"
+  "userVoice": "lauriane"
 }
