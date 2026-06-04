@@ -55,8 +55,8 @@ jobs:
           git remote add upstream https://x-access-token:$GH_TOKEN@github.com/gringoles777/mastermind.git
           git fetch upstream
 
-          # Tentar merge automatico
-          if git merge upstream/master --no-edit -m "sync: atualizacao do mastermind base"; then
+          # Tentar merge automatico (allow-unrelated por repos terem origem independente)
+          if git merge upstream/master --allow-unrelated-histories --no-edit -m "sync: atualizacao do mastermind base"; then
             git push origin master
             echo "OK $STUDENT sincronizado"
           else
@@ -64,7 +64,7 @@ jobs:
             git merge --abort
             BRANCH="sync/mastermind-${{ github.run_number }}"
             git checkout -b $BRANCH
-            git merge upstream/master --no-edit -m "sync: atualizacao do mastermind base"
+            git merge upstream/master --allow-unrelated-histories --no-edit -m "sync: atualizacao do mastermind base"
             git push origin $BRANCH
             gh pr create \
               --repo $REPO \
