@@ -17,6 +17,27 @@ const { INTRO, APROFUNDAMENTO, PONTE, EMERSAO, FECHAMENTO } = require("./fixed-b
 // Override: HIPNOSE_PROVIDER = openrouter | gemini | anthropic
 const MODEL = process.env.HIPNOSE_MODEL || "auto";
 
+// ── Escala Hawkins — Mapa da Consciência ──────────────────────────────────────
+const HAWKINS_MAP = {
+  vergonha:     { valor: 20,  emocao: "Vergonha",      padrao: "humilhação, auto-punição e auto-destruição",   binaural: "delta" },
+  culpa:        { valor: 30,  emocao: "Culpa",          padrao: "punição, ressentimento e projeção",            binaural: "delta" },
+  apatia:       { valor: 50,  emocao: "Apatia",         padrao: "desespero, resignação e paralisia",            binaural: "delta" },
+  tristeza:     { valor: 75,  emocao: "Tristeza",       padrao: "perda, luto e arrependimento",                 binaural: "delta" },
+  medo:         { valor: 100, emocao: "Medo",           padrao: "ansiedade, contração e evitação",              binaural: "delta" },
+  desejo:       { valor: 125, emocao: "Desejo",         padrao: "querer compulsivo e dependência",              binaural: "theta" },
+  raiva:        { valor: 150, emocao: "Raiva",          padrao: "agressão, ódio e ressentimento",               binaural: "theta" },
+  orgulho:      { valor: 175, emocao: "Orgulho",        padrao: "negação, fragilidade do ego e arrogância",     binaural: "theta" },
+  coragem:      { valor: 200, emocao: "Coragem",        padrao: "afirmação, determinação e empoderamento",      binaural: "alpha" },
+  neutralidade: { valor: 250, emocao: "Neutralidade",   padrao: "confiança, desapego e equilíbrio interno",     binaural: "alpha" },
+  disposicao:   { valor: 310, emocao: "Disposição",     padrao: "otimismo, intenção e abertura para o novo",    binaural: "alpha" },
+  aceitacao:    { valor: 350, emocao: "Aceitação",      padrao: "perdão, harmonia e rendição positiva",         binaural: "alpha" },
+  razao:        { valor: 400, emocao: "Razão",          padrao: "compreensão, discernimento e clareza mental",  binaural: "alpha" },
+  amor:         { valor: 500, emocao: "Amor",           padrao: "reverência, incondicionalidade e unidade",     binaural: "alpha" },
+  alegria:      { valor: 540, emocao: "Alegria",        padrao: "serenidade, bem-estar e leveza profunda",      binaural: "alpha" },
+  paz:          { valor: 600, emocao: "Paz",            padrao: "beatitude, presença total e silêncio interior",binaural: "alpha" },
+  iluminacao:   { valor: 700, emocao: "Iluminação",     padrao: "consciência pura e transcendência",            binaural: "alpha" },
+};
+
 // Alvo de palavras do miolo por duração (fixos somam ~300 palavras / ~2 min)
 const DURACAO = {
   curta:    { palavras: 230,  rotulo: "curta (~3 min)" },
@@ -189,7 +210,7 @@ async function chamarLLM(system, user) {
   throw new Error(`Todos os providers falharam — ${erros.join(" | ")}`);
 }
 
-async function gerarMiolo(tema, duracao, modo, nomeCliente = "", doresCliente = "") {
+async function gerarMiolo(tema, duracao, modo, nomeCliente = "", doresCliente = "", hawkinsAtual = "", hawkinsAlvo = "") {
   const cfg = DURACAO[duracao] || DURACAO.media;
   const system = modo === "tratamento" ? SYSTEM_TRATAMENTO : SYSTEM_MOTIVACIONAL;
 
@@ -199,16 +220,36 @@ async function gerarMiolo(tema, duracao, modo, nomeCliente = "", doresCliente = 
 
   const linhasContexto = [];
   if (modo === "tratamento") {
-    linhasContexto.push(`TEMA DE TRATAMENTO: ${tema}`);
-    if (nomeCliente) linhasContexto.push(`NOME DO CLIENTE: ${nomeCliente}`);
+    linhasContexto.push(`TEMA DE TRATAMENTO: ${tema || "elevação de consciência"}`);
+    if (nomeCliente)  linhasContexto.push(`NOME DO CLIENTE: ${nomeCliente}`);
     if (doresCliente) linhasContexto.push(`DORES E CONTEXTO ESPECÍFICO:\n${doresCliente}`);
+
+    // Contexto Hawkins
+    const hAtual = HAWKINS_MAP[hawkinsAtual];
+    const hAlvo  = HAWKINS_MAP[hawkinsAlvo];
+    if (hAtual && hAlvo) {
+      const delta = hAlvo.valor - hAtual.valor;
+      const cruzaLimiar = hAtual.valor < 200 && hAlvo.valor >= 200;
+      linhasContexto.push(
+        `\nESCALA HAWKINS — ARCO DE ELEVAÇÃO DE CONSCIÊNCIA:\n` +
+        `- Nível atual: ${hAtual.emocao} (${hAtual.valor}) · padrão: ${hAtual.padrao}\n` +
+        `- Nível alvo:  ${hAlvo.emocao} (${hAlvo.valor}) · padrão: ${hAlvo.padrao}\n` +
+        `- Distância: +${delta} pontos` +
+        (cruzaLimiar ? " · ⚡ CRUZANDO O LIMIAR DA FORÇA (linha 200) — transição de padrões que enfraquecem para padrões que fortalecem" : "") + "\n" +
+        `\nO roteiro DEVE seguir este arco terapêutico:\n` +
+        `1. Reconheça com compaixão o padrão atual (${hAtual.emocao}) — sem julgamento, acolhendo o que foi\n` +
+        `2. Crie dissociação desse padrão — o cliente o observa de longe, como algo que já pertence ao passado\n` +
+        `3. Instale energeticamente o novo padrão (${hAlvo.emocao}) como nova identidade, nova vibração, novo ponto de atração\n` +
+        `4. Ancore o estado ${hAlvo.emocao} com uma frase ou gesto que o cliente pode usar fora da sessão`
+      );
+    }
   } else {
     linhasContexto.push(`TEMA: ${tema}`);
     if (nomeCliente) linhasContexto.push(`NOME DO OUVINTE: ${nomeCliente}`);
   }
 
   const instrucaoNome = nomeCliente
-    ? `Use o nome "${nomeCliente}" naturalmente ao longo do áudio (ex.: "${nomeCliente}, quero que você perceba..."). Não use o nome em excesso — de 3 a 5 vezes ao longo do roteiro. `
+    ? `Use o nome "${nomeCliente}" naturalmente ao longo do áudio (ex.: "${nomeCliente}, quero que você perceba..."). Não use o nome em excesso — de 3 a 5 vezes. `
     : "";
 
   const instrucaoDores = (modo === "tratamento" && doresCliente)
@@ -224,7 +265,10 @@ async function gerarMiolo(tema, duracao, modo, nomeCliente = "", doresCliente = 
     `Responda só o JSON.`;
 
   const { texto, provider } = await chamarLLM(system, userMsg);
-  if (process.env.NODE_ENV !== "production") console.log(`[script-generator] provider=${provider} modo=${modo} cliente=${nomeCliente || "-"}`);
+  if (process.env.NODE_ENV !== "production") {
+    const hLog = hawkinsAtual && hawkinsAlvo ? ` hawkins=${hawkinsAtual}→${hawkinsAlvo}` : "";
+    console.log(`[script-generator] provider=${provider} modo=${modo} cliente=${nomeCliente || "-"}${hLog}`);
+  }
   const match = texto.match(/\[[\s\S]*\]/);
   if (!match) throw new Error(`LLM não retornou JSON válido:\n${texto.slice(0, 400)}`);
 
@@ -246,7 +290,7 @@ async function gerarMiolo(tema, duracao, modo, nomeCliente = "", doresCliente = 
  * @param {string} [roteiroCustom] — texto livre quando modo="proprio"
  * @returns {Promise<Array<{tom,texto,fixed}>>}
  */
-async function gerarRoteiro(tema, duracao, modo = "motivacional", roteiroCustom = "", nomeCliente = "", doresCliente = "") {
+async function gerarRoteiro(tema, duracao, modo = "motivacional", roteiroCustom = "", nomeCliente = "", doresCliente = "", hawkinsAtual = "", hawkinsAlvo = "") {
   const fixo = (b) => ({ ...b, fixed: true });
   const dyn  = (s) => ({ ...s, fixed: false });
 
@@ -263,7 +307,7 @@ async function gerarRoteiro(tema, duracao, modo = "motivacional", roteiroCustom 
     ];
   }
 
-  const miolo = await gerarMiolo(tema, duracao, modo, nomeCliente, doresCliente);
+  const miolo = await gerarMiolo(tema, duracao, modo, nomeCliente, doresCliente, hawkinsAtual, hawkinsAlvo);
   return [
     fixo(INTRO),
     fixo(APROFUNDAMENTO),
@@ -273,4 +317,4 @@ async function gerarRoteiro(tema, duracao, modo = "motivacional", roteiroCustom 
   ];
 }
 
-module.exports = { gerarRoteiro, gerarMiolo, DURACAO, MODEL };
+module.exports = { gerarRoteiro, gerarMiolo, DURACAO, MODEL, HAWKINS_MAP };

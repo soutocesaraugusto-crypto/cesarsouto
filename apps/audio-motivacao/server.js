@@ -17,7 +17,7 @@ if (fs.existsSync(rootEnv)) require("dotenv").config({ path: rootEnv });
 if (fs.existsSync(envPath)) require("dotenv").config({ path: envPath, override: true });
 
 const express = require("express");
-const { gerarRoteiro, DURACAO } = require("./lib/script-generator");
+const { gerarRoteiro, DURACAO, HAWKINS_MAP } = require("./lib/script-generator");
 const { sintetizar, listVoices } = require("./lib/tts");
 const { getStatus, upsertEnv, saveUserVoice, validarChave, TONS } = require("./lib/setup-status");
 
@@ -50,7 +50,7 @@ function publicJob(job) {
 async function processar(job) {
   try {
     job.status = "roteiro"; saveJob(job);
-    const segments = await gerarRoteiro(job.tema, job.duracao, job.modo, job.roteiroCustom, job.nomeCliente, job.doresCliente);
+    const segments = await gerarRoteiro(job.tema, job.duracao, job.modo, job.roteiroCustom, job.nomeCliente, job.doresCliente, job.hawkinsAtual, job.hawkinsAlvo);
 
     const roteiroTxt = segments.map((s) => s.texto).join("\n\n");
     fs.writeFileSync(path.join(JOBS_DIR, `${job.id}.txt`), roteiroTxt);
@@ -74,14 +74,21 @@ async function processar(job) {
 }
 
 app.post("/api/generate", (req, res) => {
-  const { tema, duracao, voz, modo, roteiroCustom, fundo, binaural, volumeFundo, nomeCliente, doresCliente } = req.body || {};
+  const { tema, duracao, voz, modo, roteiroCustom, fundo, binaural, volumeFundo, nomeCliente, doresCliente, hawkinsAtual, hawkinsAlvo } = req.body || {};
 
   const modoValido = ["motivacional", "tratamento", "proprio"].includes(modo) ? modo : "motivacional";
+  const hAtualValido = HAWKINS_MAP[hawkinsAtual] ? hawkinsAtual : "";
+  const hAlvoValido  = HAWKINS_MAP[hawkinsAlvo]  ? hawkinsAlvo  : "";
 
+  // Binaural automático: mapeado pelo nível alvo Hawkins (se não informado explicitamente)
+  const binauralAutoHawkins = hAlvoValido ? HAWKINS_MAP[hAlvoValido].binaural : null;
+
+  // Tema obrigatório só quando não há arco Hawkins completo
+  const temHawkinsCompleto = hAtualValido && hAlvoValido;
   if (modoValido === "proprio") {
     if (!roteiroCustom || !roteiroCustom.trim())
       return res.status(400).json({ erro: "No modo 'Roteiro Próprio', escreva o roteiro no campo de texto." });
-  } else {
+  } else if (modoValido !== "tratamento" || !temHawkinsCompleto) {
     if (!tema || !tema.trim()) return res.status(400).json({ erro: "Informe um tema." });
   }
 
@@ -106,11 +113,13 @@ app.post("/api/generate", (req, res) => {
     voz: vozId,
     modo: modoValido,
     roteiroCustom: modoValido === "proprio" ? roteiroCustom.trim().slice(0, 50000) : "",
-    fundo: ["silencio","natureza","relaxante","binaural"].includes(fundo) ? fundo : "silencio",
-    binaural: ["delta","theta","alpha"].includes(binaural) ? binaural : "theta",
+    fundo: ["silencio","natureza","relaxante","binaural"].includes(fundo) ? fundo : (temHawkinsCompleto ? "binaural" : "silencio"),
+    binaural: ["delta","theta","alpha"].includes(binaural) ? binaural : (binauralAutoHawkins || "theta"),
     volumeFundo: ["suave","medio","intenso"].includes(volumeFundo) ? volumeFundo : "medio",
-    nomeCliente: typeof nomeCliente === "string" ? nomeCliente.trim().slice(0, 80)  : "",
+    nomeCliente:  typeof nomeCliente  === "string" ? nomeCliente.trim().slice(0, 80)   : "",
     doresCliente: typeof doresCliente === "string" ? doresCliente.trim().slice(0, 2000) : "",
+    hawkinsAtual: hAtualValido,
+    hawkinsAlvo:  hAlvoValido,
     status: "fila",
     progresso: null,
     erro: null,

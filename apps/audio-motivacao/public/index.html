@@ -167,6 +167,31 @@
   .fones-hint{font-size:11.5px;color:var(--cream-muted);margin:8px 0 0;line-height:1.5;
     padding:8px 12px;background:rgba(221,215,202,.07);border-radius:7px;border:1px solid var(--line)}
 
+  /* Hawkins */
+  #hawkinsBox{display:none}
+  #hawkinsBox.show{display:block}
+  .hawkins-wrap{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px}
+  .hawkins-list{max-height:210px;overflow-y:auto;border:1px solid var(--line);border-radius:9px;
+    background:rgba(63,24,23,.4)}
+  .hawkins-list::-webkit-scrollbar{width:4px}
+  .hawkins-list::-webkit-scrollbar-thumb{background:var(--line-strong);border-radius:2px}
+  .h-item{padding:8px 12px;font-size:12.5px;cursor:pointer;transition:.12s;
+    display:flex;align-items:center;gap:8px;border-bottom:1px solid rgba(221,215,202,.06)}
+  .h-item:last-child{border-bottom:none}
+  .h-item:hover{background:rgba(221,215,202,.08)}
+  .h-item.active{background:rgba(221,215,202,.15);border-left:2px solid var(--cream)}
+  .h-item .hv{font-size:10px;color:var(--cream-muted);min-width:28px;font-weight:600}
+  .h-item .hn{color:var(--cream)}
+  .h-sep{padding:4px 12px;font-size:9px;letter-spacing:.16em;text-transform:uppercase;
+    color:var(--cream-muted);opacity:.5;background:rgba(0,0,0,.18)}
+  .h-sep.limiar{border-top:1px solid rgba(221,215,202,.25);color:var(--cream);opacity:.7}
+  .hawkins-arco{padding:11px 14px;border-radius:9px;background:rgba(221,215,202,.07);
+    border:1px solid var(--line-strong);font-size:12.5px;color:var(--cream);line-height:1.7}
+  .arco-seta{color:var(--cream-muted);margin:0 6px}
+  .arco-delta{font-size:11px;color:var(--cream-muted);margin-left:8px}
+  .arco-limiar{font-size:11px;color:#d4a855;margin-top:3px}
+  .arco-binaural{font-size:11px;color:var(--cream-muted);margin-top:2px}
+
   /* Footer */
   .foot{text-align:center;color:rgba(221,215,202,.3);font-size:10.5px;
     margin-top:22px;letter-spacing:.14em;text-transform:uppercase}
@@ -318,6 +343,22 @@
       <p class="roteiro-hint" id="nomeHint" style="display:none">Escreva <b>[NOME]</b> no roteiro onde quiser que o nome apareça — ele será substituído automaticamente.</p>
     </div>
 
+    <!-- Escala Hawkins (apenas no modo Tratamento) -->
+    <div class="field" id="hawkinsBox">
+      <label>Escala Hawkins — arco de elevação <span style="opacity:.5;font-size:9px;letter-spacing:.1em">(OPCIONAL)</span></label>
+      <div class="hawkins-wrap">
+        <div>
+          <div style="font-size:10.5px;color:var(--cream-muted);margin-bottom:6px;letter-spacing:.06em">Onde está agora</div>
+          <div class="hawkins-list" id="hawkinsAtualList"></div>
+        </div>
+        <div>
+          <div style="font-size:10.5px;color:var(--cream-muted);margin-bottom:6px;letter-spacing:.06em">Para onde vai</div>
+          <div class="hawkins-list" id="hawkinsAlvoList"></div>
+        </div>
+      </div>
+      <div class="hawkins-arco" id="hawkinsArco" hidden></div>
+    </div>
+
     <!-- Fundo sonoro -->
     <div class="field">
       <label>Som de fundo</label>
@@ -454,17 +495,94 @@
     el.classList.add("active"); volumeFundo = el.dataset.v;
   });
 
+  // ── Escala Hawkins ────────────────────────────────────────────────────────
+  const HAWKINS = [
+    { sep: "Padrões que enfraquecem", limiar: false },
+    { id:"vergonha",     v:20,  label:"Vergonha",     binaural:"delta" },
+    { id:"culpa",        v:30,  label:"Culpa",         binaural:"delta" },
+    { id:"apatia",       v:50,  label:"Apatia",        binaural:"delta" },
+    { id:"tristeza",     v:75,  label:"Tristeza",      binaural:"delta" },
+    { id:"medo",         v:100, label:"Medo",          binaural:"delta" },
+    { id:"desejo",       v:125, label:"Desejo",        binaural:"theta" },
+    { id:"raiva",        v:150, label:"Raiva",         binaural:"theta" },
+    { id:"orgulho",      v:175, label:"Orgulho",       binaural:"theta" },
+    { sep: "⚡ Limiar da Força", limiar: true },
+    { id:"coragem",      v:200, label:"Coragem",       binaural:"alpha" },
+    { id:"neutralidade", v:250, label:"Neutralidade",  binaural:"alpha" },
+    { id:"disposicao",   v:310, label:"Disposição",    binaural:"alpha" },
+    { id:"aceitacao",    v:350, label:"Aceitação",     binaural:"alpha" },
+    { id:"razao",        v:400, label:"Razão",         binaural:"alpha" },
+    { sep: "Amor e além", limiar: false },
+    { id:"amor",         v:500, label:"Amor",          binaural:"alpha" },
+    { id:"alegria",      v:540, label:"Alegria",       binaural:"alpha" },
+    { id:"paz",          v:600, label:"Paz",           binaural:"alpha" },
+    { id:"iluminacao",   v:700, label:"Iluminação",    binaural:"alpha" },
+  ];
+
+  let hawkinsAtual = "", hawkinsAlvo = "";
+
+  function buildHawkinsList(containerId, onSelect) {
+    const el = document.getElementById(containerId);
+    el.innerHTML = HAWKINS.map(h => {
+      if (h.sep) return `<div class="h-sep${h.limiar ? " limiar" : ""}">${h.sep}</div>`;
+      return `<div class="h-item" data-id="${h.id}" data-v="${h.v}" data-b="${h.binaural}">
+        <span class="hv">${h.v}</span><span class="hn">${h.label}</span>
+      </div>`;
+    }).join("");
+    el.querySelectorAll(".h-item").forEach(item => {
+      item.addEventListener("click", () => {
+        el.querySelectorAll(".h-item").forEach(i => i.classList.remove("active"));
+        item.classList.add("active");
+        onSelect(item.dataset.id, parseInt(item.dataset.v), item.dataset.b);
+      });
+    });
+  }
+
+  function atualizarArco() {
+    const arcoEl = document.getElementById("hawkinsArco");
+    const hA = HAWKINS.find(h => h.id === hawkinsAtual);
+    const hB = HAWKINS.find(h => h.id === hawkinsAlvo);
+    if (!hA || !hB) { arcoEl.hidden = true; return; }
+
+    const delta = hB.v - hA.v;
+    const cruzaLimiar = hA.v < 200 && hB.v >= 200;
+    const sinal = delta >= 0 ? "+" : "";
+
+    arcoEl.hidden = false;
+    arcoEl.innerHTML =
+      `<div><b>${hA.label} (${hA.v})</b><span class="arco-seta">──▶</span><b>${hB.label} (${hB.v})</b>` +
+      `<span class="arco-delta">${sinal}${delta} pontos</span></div>` +
+      (cruzaLimiar ? `<div class="arco-limiar">⚡ Cruzando o Limiar da Força — transição de padrões que enfraquecem para padrões que fortalecem</div>` : "") +
+      `<div class="arco-binaural">Binaural sugerido: ${hB.binaural.toUpperCase()} · auto-aplicado ao gerar</div>`;
+
+    // Auto-seleciona binaural e fundo
+    binaural = hB.binaural;
+    document.querySelectorAll("#binauralFreqs .chip").forEach(c => {
+      c.classList.toggle("active", c.dataset.b === binaural);
+    });
+    fundo = "binaural";
+    document.querySelectorAll("#fundos .chip").forEach(c => {
+      c.classList.toggle("active", c.dataset.f === "binaural");
+    });
+    atualizarFundoUI();
+  }
+
+  buildHawkinsList("hawkinsAtualList", (id) => { hawkinsAtual = id; atualizarArco(); });
+  buildHawkinsList("hawkinsAlvoList",  (id) => { hawkinsAlvo  = id; atualizarArco(); });
+
   // ── Personalização do cliente ─────────────────────────────────────────────
   function atualizarClienteUI(m) {
-    const doresEl = document.getElementById("doresCliente");
+    const doresEl   = document.getElementById("doresCliente");
     const doresHint = document.getElementById("doresHint");
     const nomeHint  = document.getElementById("nomeHint");
+    const hawkinsEl = document.getElementById("hawkinsBox");
     const isTratamento = m === "tratamento";
     const isProprio    = m === "proprio";
 
     doresEl.style.display    = isTratamento ? "" : "none";
     doresHint.style.display  = isTratamento ? "" : "none";
     nomeHint.style.display   = isProprio    ? "" : "none";
+    hawkinsEl.classList.toggle("show", isTratamento);
 
     document.getElementById("nomeCliente").placeholder = isTratamento
       ? "Nome do cliente (ex.: Maria Silva)"
@@ -520,7 +638,7 @@
     try {
       const nomeCliente  = document.getElementById("nomeCliente").value.trim();
       const doresCliente = document.getElementById("doresCliente").value.trim();
-      const body = { tema, duracao, voz, modo, roteiroCustom: roteiroProprio, fundo, binaural, volumeFundo, nomeCliente, doresCliente };
+      const body = { tema, duracao, voz, modo, roteiroCustom: roteiroProprio, fundo, binaural, volumeFundo, nomeCliente, doresCliente, hawkinsAtual, hawkinsAlvo };
       const r = await fetch("api/generate", {
         method:"POST", headers:{"Content-Type":"application/json"},
         body: JSON.stringify(body)
