@@ -308,6 +308,16 @@
       </div>
     </div>
 
+    <!-- Personalização do cliente -->
+    <div class="field" id="clienteBox">
+      <label>Personalização do cliente <span style="opacity:.5;font-size:9px;letter-spacing:.1em">(OPCIONAL)</span></label>
+      <input id="nomeCliente" type="text" placeholder="Nome do cliente (ex.: Maria Silva)" style="margin-bottom:10px" />
+      <textarea id="doresCliente" id="doresCliente" style="min-height:80px;display:none"
+        placeholder="Dores e contexto específico do cliente&#10;ex.: ansiedade antes de apresentações, medo de julgamento, sensação de não merecer sucesso, bloqueio criativo há 3 meses"></textarea>
+      <p class="roteiro-hint" id="doresHint" style="display:none">A IA vai personalizar o roteiro com base nessas informações — quanto mais específico, mais preciso o tratamento.</p>
+      <p class="roteiro-hint" id="nomeHint" style="display:none">Escreva <b>[NOME]</b> no roteiro onde quiser que o nome apareça — ele será substituído automaticamente.</p>
+    </div>
+
     <!-- Fundo sonoro -->
     <div class="field">
       <label>Som de fundo</label>
@@ -366,6 +376,7 @@
     el.classList.add("active");
     modo = el.dataset.m;
     fundoPadraoPorModo(modo);
+    atualizarClienteUI(modo);
     if(modo === "proprio"){
       temaBox.style.display = "none";
       roteiroBox.classList.add("show");
@@ -443,6 +454,26 @@
     el.classList.add("active"); volumeFundo = el.dataset.v;
   });
 
+  // ── Personalização do cliente ─────────────────────────────────────────────
+  function atualizarClienteUI(m) {
+    const doresEl = document.getElementById("doresCliente");
+    const doresHint = document.getElementById("doresHint");
+    const nomeHint  = document.getElementById("nomeHint");
+    const isTratamento = m === "tratamento";
+    const isProprio    = m === "proprio";
+
+    doresEl.style.display    = isTratamento ? "" : "none";
+    doresHint.style.display  = isTratamento ? "" : "none";
+    nomeHint.style.display   = isProprio    ? "" : "none";
+
+    document.getElementById("nomeCliente").placeholder = isTratamento
+      ? "Nome do cliente (ex.: Maria Silva)"
+      : isProprio
+        ? "Nome do cliente — será substituído onde escrever [NOME]"
+        : "Nome do ouvinte (opcional)";
+  }
+  atualizarClienteUI("motivacional");
+
   // Ajusta fundo padrão conforme o modo selecionado
   function fundoPadraoPorModo(m) {
     const defaults = { motivacional: "relaxante", tratamento: "binaural", proprio: "silencio" };
@@ -487,7 +518,9 @@
 
     let id;
     try {
-      const body = { tema, duracao, voz, modo, roteiroCustom: roteiroProprio, fundo, binaural, volumeFundo };
+      const nomeCliente  = document.getElementById("nomeCliente").value.trim();
+      const doresCliente = document.getElementById("doresCliente").value.trim();
+      const body = { tema, duracao, voz, modo, roteiroCustom: roteiroProprio, fundo, binaural, volumeFundo, nomeCliente, doresCliente };
       const r = await fetch("api/generate", {
         method:"POST", headers:{"Content-Type":"application/json"},
         body: JSON.stringify(body)

@@ -189,7 +189,7 @@ async function chamarLLM(system, user) {
   throw new Error(`Todos os providers falharam — ${erros.join(" | ")}`);
 }
 
-async function gerarMiolo(tema, duracao, modo) {
+async function gerarMiolo(tema, duracao, modo, nomeCliente = "", doresCliente = "") {
   const cfg = DURACAO[duracao] || DURACAO.media;
   const system = modo === "tratamento" ? SYSTEM_TRATAMENTO : SYSTEM_MOTIVACIONAL;
 
@@ -197,14 +197,34 @@ async function gerarMiolo(tema, duracao, modo) {
     ? `Lembre: comece a ressignificação com "Quero que você perceba que em algum lugar dentro de você...".`
     : `Lembre: comece a visualização com "Eu quero que você imagine agora que você está numa sala...".`;
 
+  const linhasContexto = [];
+  if (modo === "tratamento") {
+    linhasContexto.push(`TEMA DE TRATAMENTO: ${tema}`);
+    if (nomeCliente) linhasContexto.push(`NOME DO CLIENTE: ${nomeCliente}`);
+    if (doresCliente) linhasContexto.push(`DORES E CONTEXTO ESPECÍFICO:\n${doresCliente}`);
+  } else {
+    linhasContexto.push(`TEMA: ${tema}`);
+    if (nomeCliente) linhasContexto.push(`NOME DO OUVINTE: ${nomeCliente}`);
+  }
+
+  const instrucaoNome = nomeCliente
+    ? `Use o nome "${nomeCliente}" naturalmente ao longo do áudio (ex.: "${nomeCliente}, quero que você perceba..."). Não use o nome em excesso — de 3 a 5 vezes ao longo do roteiro. `
+    : "";
+
+  const instrucaoDores = (modo === "tratamento" && doresCliente)
+    ? `Personalize o trabalho terapêutico especificamente para as dores listadas — vá além do tema geral e trate o que o cliente descreveu. `
+    : "";
+
   const userMsg =
-    `TEMA: ${tema}\n\n` +
+    linhasContexto.join("\n") + "\n\n" +
+    instrucaoNome +
+    instrucaoDores +
     `Escreva o miolo com aproximadamente ${cfg.palavras} palavras no total ` +
     `(versão ${cfg.rotulo}). ${instrucaoInicio} ` +
     `Responda só o JSON.`;
 
   const { texto, provider } = await chamarLLM(system, userMsg);
-  if (process.env.NODE_ENV !== "production") console.log(`[script-generator] provider=${provider} modo=${modo}`);
+  if (process.env.NODE_ENV !== "production") console.log(`[script-generator] provider=${provider} modo=${modo} cliente=${nomeCliente || "-"}`);
   const match = texto.match(/\[[\s\S]*\]/);
   if (!match) throw new Error(`LLM não retornou JSON válido:\n${texto.slice(0, 400)}`);
 
@@ -226,21 +246,24 @@ async function gerarMiolo(tema, duracao, modo) {
  * @param {string} [roteiroCustom] — texto livre quando modo="proprio"
  * @returns {Promise<Array<{tom,texto,fixed}>>}
  */
-async function gerarRoteiro(tema, duracao, modo = "motivacional", roteiroCustom = "") {
+async function gerarRoteiro(tema, duracao, modo = "motivacional", roteiroCustom = "", nomeCliente = "", doresCliente = "") {
   const fixo = (b) => ({ ...b, fixed: true });
-  const dyn = (s) => ({ ...s, fixed: false });
+  const dyn  = (s) => ({ ...s, fixed: false });
 
   if (modo === "proprio") {
     if (!roteiroCustom || !roteiroCustom.trim()) throw new Error("Roteiro próprio vazio.");
-    // Usa o texto exatamente como escrito, com tom normal (voz neutra da Dra.)
+    // Substitui placeholder [NOME] pelo nome real do cliente, se informado
+    const texto = nomeCliente
+      ? roteiroCustom.trim().replace(/\[NOME\]/gi, nomeCliente)
+      : roteiroCustom.trim();
     return [
       fixo(INTRO),
-      dyn({ tom: "normal", texto: roteiroCustom.trim() }),
+      dyn({ tom: "normal", texto }),
       fixo(EMERSAO),
     ];
   }
 
-  const miolo = await gerarMiolo(tema, duracao, modo);
+  const miolo = await gerarMiolo(tema, duracao, modo, nomeCliente, doresCliente);
   return [
     fixo(INTRO),
     fixo(APROFUNDAMENTO),

@@ -50,7 +50,7 @@ function publicJob(job) {
 async function processar(job) {
   try {
     job.status = "roteiro"; saveJob(job);
-    const segments = await gerarRoteiro(job.tema, job.duracao, job.modo, job.roteiroCustom);
+    const segments = await gerarRoteiro(job.tema, job.duracao, job.modo, job.roteiroCustom, job.nomeCliente, job.doresCliente);
 
     const roteiroTxt = segments.map((s) => s.texto).join("\n\n");
     fs.writeFileSync(path.join(JOBS_DIR, `${job.id}.txt`), roteiroTxt);
@@ -74,7 +74,7 @@ async function processar(job) {
 }
 
 app.post("/api/generate", (req, res) => {
-  const { tema, duracao, voz, modo, roteiroCustom, fundo, binaural, volumeFundo } = req.body || {};
+  const { tema, duracao, voz, modo, roteiroCustom, fundo, binaural, volumeFundo, nomeCliente, doresCliente } = req.body || {};
 
   const modoValido = ["motivacional", "tratamento", "proprio"].includes(modo) ? modo : "motivacional";
 
@@ -109,6 +109,8 @@ app.post("/api/generate", (req, res) => {
     fundo: ["silencio","natureza","relaxante","binaural"].includes(fundo) ? fundo : "silencio",
     binaural: ["delta","theta","alpha"].includes(binaural) ? binaural : "theta",
     volumeFundo: ["suave","medio","intenso"].includes(volumeFundo) ? volumeFundo : "medio",
+    nomeCliente: typeof nomeCliente === "string" ? nomeCliente.trim().slice(0, 80)  : "",
+    doresCliente: typeof doresCliente === "string" ? doresCliente.trim().slice(0, 2000) : "",
     status: "fila",
     progresso: null,
     erro: null,
