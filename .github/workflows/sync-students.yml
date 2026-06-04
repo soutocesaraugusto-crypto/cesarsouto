@@ -18,12 +18,16 @@ jobs:
           - gabi-artz
           - galbiatti
           - henrique
+          - italo
           - jeferson
+          - joana
           - lauriane
           - matheus
           - raphael
+          - sarita
           - simone-carneiro
           - thiago-kiss
+          - yasmin
       fail-fast: false
 
     steps:
@@ -51,22 +55,22 @@ jobs:
           git remote add upstream https://x-access-token:$GH_TOKEN@github.com/gringoles777/mastermind.git
           git fetch upstream
 
-          # Tentar merge automático
-          if git merge upstream/master --no-edit -m "sync: atualização do mastermind base"; then
+          # Tentar merge automatico
+          if git merge upstream/master --no-edit -m "sync: atualizacao do mastermind base"; then
             git push origin master
-            echo "✅ $STUDENT sincronizado"
+            echo "OK $STUDENT sincronizado"
           else
-            # Conflito — criar PR
+            # Conflito - criar PR
             git merge --abort
             BRANCH="sync/mastermind-${{ github.run_number }}"
             git checkout -b $BRANCH
-            git merge upstream/master --no-edit -m "sync: atualização do mastermind base"
+            git merge upstream/master --no-edit -m "sync: atualizacao do mastermind base"
             git push origin $BRANCH
             gh pr create \
               --repo $REPO \
-              --title "Atualização do Mastermind" \
-              --body "Novidades do repositório base disponíveis. Revise e faça merge para atualizar." \
+              --title "Atualizacao do Mastermind" \
+              --body "Novidades do repositorio base disponiveis. Revise e faca merge para atualizar." \
               --base master \
               --head $BRANCH
-            echo "⚠️ $STUDENT tem conflitos — PR criado"
+            echo "CONFLITO $STUDENT - PR criado"
           fi
