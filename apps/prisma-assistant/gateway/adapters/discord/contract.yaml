@@ -1,0 +1,35 @@
+adapter:
+  name: discord
+  version: "1.0"
+  quality: BETA
+  required_scripts:
+    - name: "start.sh"
+      exit_codes: [0]
+      timeout_seconds: 30
+    - name: "health.sh"
+      exit_codes: [0, 1, 2]
+      timeout_seconds: 10
+    - name: "stop.sh"
+      exit_codes: [0]
+      timeout_seconds: 15
+  required_bus_scripts:
+    - "core/bus/send-{channel}.sh"
+    - "core/bus/check-{channel}.sh"
+    - "core/bus/hook-permission-{channel}.sh"
+  optional_bus_scripts:
+    - "core/bus/hook-ask-{channel}.sh"
+    - "core/bus/hook-planmode-{channel}.sh"
+  message_schema: "core/schemas/adapter-message.schema.json"
+  outbound_features:
+    - chunking         # 2000 char limit
+    - embed            # rich embeds (title, color, footer)
+    - thread           # thread replies
+    - photo            # image upload
+    - typing           # typing indicator
+  config_fields:
+    - name: "DISCORD_TOKEN"
+      required: true
+      env_only: true
+    - name: "DISCORD_CHANNEL_ID"
+      required: true
+      env_only: true

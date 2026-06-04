@@ -1,0 +1,94 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "adapter-message.schema.json",
+  "title": "Adapter Message",
+  "description": "Normalized message format for the channel-inbox. All adapters (Telegram, Discord, Web, Webhook) write messages in this format. Inspired by Hermes MessageEvent.",
+  "type": "object",
+  "required": ["_source", "_type", "_timestamp", "platform", "chat_id", "from", "text"],
+  "properties": {
+    "_source": {
+      "type": "string",
+      "description": "Adapter that produced this message",
+      "enum": ["telegram", "discord", "web", "webhook", "agent"]
+    },
+    "_type": {
+      "type": "string",
+      "description": "Message type",
+      "enum": ["message", "callback", "photo", "command", "voice", "document"]
+    },
+    "_timestamp": {
+      "type": "string",
+      "description": "ISO 8601 UTC timestamp when the message was received by the adapter",
+      "format": "date-time"
+    },
+    "_message_id": {
+      "type": "string",
+      "description": "Platform-native message ID (for reply_to, edit, reactions)"
+    },
+    "platform": {
+      "type": "string",
+      "description": "Platform identifier (matches _source for direct messages)",
+      "enum": ["telegram", "discord", "web", "webhook"]
+    },
+    "chat_id": {
+      "type": "string",
+      "description": "Chat/channel/conversation ID on the platform"
+    },
+    "thread_id": {
+      "type": ["string", "null"],
+      "description": "Forum topic ID (Telegram), thread ID (Discord/Slack), null if flat chat",
+      "default": null
+    },
+    "from": {
+      "type": "string",
+      "description": "Sender display name (sanitized: alphanumeric + space + hyphen + underscore only)"
+    },
+    "user_id": {
+      "type": ["string", "null"],
+      "description": "Sender's platform-native user ID",
+      "default": null
+    },
+    "text": {
+      "type": "string",
+      "description": "Message text content"
+    },
+    "media": {
+      "type": ["object", "null"],
+      "description": "Attached media (photo, voice, document)",
+      "default": null,
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": ["photo", "voice", "video", "document", "animation"]
+        },
+        "local_path": {
+          "type": "string",
+          "description": "Absolute path to cached local file"
+        },
+        "caption": {
+          "type": "string",
+          "description": "Media caption text"
+        },
+        "mime_type": {
+          "type": "string"
+        }
+      }
+    },
+    "callback_data": {
+      "type": ["string", "null"],
+      "description": "Inline button callback data (for interactive responses)",
+      "default": null
+    },
+    "callback_query_id": {
+      "type": ["string", "null"],
+      "description": "Telegram callback query ID (for answering callbacks)",
+      "default": null
+    },
+    "reply_to_message_id": {
+      "type": ["string", "null"],
+      "description": "ID of the message this is a reply to",
+      "default": null
+    }
+  },
+  "additionalProperties": false
+}

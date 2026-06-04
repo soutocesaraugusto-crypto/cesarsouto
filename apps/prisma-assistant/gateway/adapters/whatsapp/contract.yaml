@@ -1,0 +1,31 @@
+adapter:
+  name: whatsapp
+  version: "1.0"
+  quality: STUB
+  required_scripts:
+    - name: "start.sh"
+      exit_codes: [0]
+      timeout_seconds: 30
+    - name: "health.sh"
+      exit_codes: [0, 1, 2]
+      timeout_seconds: 10
+    - name: "stop.sh"
+      exit_codes: [0]
+      timeout_seconds: 15
+  required_bus_scripts:
+    - "core/bus/send-{channel}.sh"
+    - "core/bus/check-{channel}.sh"
+    - "core/bus/hook-permission-{channel}.sh"
+  optional_bus_scripts: []
+  message_schema: "core/schemas/adapter-message.schema.json"
+  outbound_features:
+    - chunking         # 4096 char limit
+    - photo            # image via bridge
+  extra_scripts:
+    - name: "whatsapp-bridge.js"
+      description: "Baileys-based bridge HTTP server"
+      required: true
+  config_fields:
+    - name: "WHATSAPP_BRIDGE_PORT"
+      required: false
+      default: 8445

@@ -1,0 +1,59 @@
+# =============================================================================
+#  .gitignore — Pacote da assistente Prisma
+#  NUNCA commitar segredos, estado de runtime, logs ou dependências.
+# =============================================================================
+
+# --- Segredos (tokens, chaves) ---
+.env
+*.env
+!**/.env.example
+**/.env
+**/secrets.*
+*.key
+*.pem
+
+# --- Agentes gerados pelo instalar.sh ---
+# Só o agent-template é versionado; o agente do aluno é gerado localmente.
+gateway/agents/*
+!gateway/agents/.gitignore
+!gateway/agents/agent-template/
+!gateway/agents/agent-template/**
+
+# --- Estado de runtime / sessões ---
+.claude-remote/
+**/state/
+**/inbox/
+**/outbox/
+**/processed/
+**/inflight/
+**/channel-inbox/
+**/*.db
+**/*.db-wal
+**/*.db-shm
+**/.pid-*
+**/.crash_count_today
+**/.merged-settings.json
+**/.local-prompt
+**/.launch.sh
+**/.continue-launch.sh
+
+# --- WhatsApp (auth do Baileys = sessão logada, é segredo) ---
+**/baileys_auth*/
+**/auth_info*/
+**/wa-auth*/
+
+# --- Logs ---
+*.log
+**/logs/
+
+# --- Dependências ---
+node_modules/
+**/node_modules/
+
+# --- Sistema operacional / editores ---
+.DS_Store
+Thumbs.db
+*.swp
+*~
+.idea/
+.vscode/

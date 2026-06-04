@@ -1,0 +1,146 @@
+#!/usr/bin/env bash
+# custom.sh.template — Template for creating new runtime drivers
+#
+# To add a new runtime (e.g., "my-agent"):
+#   1. Copy this file to: core/runtimes/my-agent.sh
+#   2. Implement ALL 12 functions below
+#   3. Set in agent config.json: "runtime": "my-agent"
+#   4. Test: start agent, verify launch/continue/detect work
+#
+# Contract: ALL 12 functions are MANDATORY. The runtime.sh facade validates
+# at source time and exits with error if any function is missing.
+#
+# Reference drivers:
+#   - claude-code.sh (Claude Code CLI — reference implementation)
+#   - codex.sh (OpenAI Codex CLI — Story 114.2)
+#
+# Epic 114 / Story 114.1
+
+# --- 1. runtime_launch ---
+# Start a fresh interactive session. Must work inside tmux (PTY required).
+# Args: <startup_prompt> [extra_flags...]
+# The function should start the CLI in interactive mode.
+runtime_launch() {
+    local prompt="$1"; shift
+    echo "TODO: Implement runtime_launch for your CLI" >&2
+    exit 1
+}
+
+# --- 2. runtime_continue ---
+# Resume a previous session (preserve conversation history if supported).
+# Args: <continue_prompt> [extra_flags...]
+# If your runtime doesn't support session continuation, start fresh.
+runtime_continue() {
+    local prompt="$1"; shift
+    echo "TODO: Implement runtime_continue for your CLI" >&2
+    exit 1
+}
+
+# --- 3. runtime_print ---
+# One-shot prompt: send prompt, get response, exit. No interactive session.
+# Used for: isolated crons, quick-reply, one-off queries.
+# Args: <prompt> [--model <model_override>]
+# Must print response to stdout.
+runtime_print() {
+    local prompt="$1"; shift
+    echo "TODO: Implement runtime_print for your CLI" >&2
+    exit 1
+}
+
+# --- 4. runtime_model_flag ---
+# Return the CLI flag for model selection (e.g., "--model gpt-4o").
+# Reads RUNTIME_MODEL from environment.
+# Return empty string if no model override needed.
+runtime_model_flag() {
+    if [[ -n "${RUNTIME_MODEL:-}" ]]; then
+        echo "--model ${RUNTIME_MODEL}"
+    fi
+}
+
+# --- 5. runtime_system_prompt_flag ---
+# Return the CLI flag for injecting system prompt / bootstrap file.
+# Reads RUNTIME_BOOTSTRAP_FILE from environment.
+# Return empty string if not applicable.
+runtime_system_prompt_flag() {
+    local bootstrap="${RUNTIME_BOOTSTRAP_FILE:-}"
+    if [[ -n "${bootstrap}" && -f "${bootstrap}" ]]; then
+        echo "--system-prompt-file ${bootstrap}"
+    fi
+}
+
+# --- 6. runtime_settings_path ---
+# Return the relative path pattern for runtime-specific settings (hooks, etc.).
+# Examples: ".claude/settings.json", ".codex/settings.json"
+runtime_settings_path() {
+    echo ".my-runtime/settings.json"
+}
+
+# --- 7. runtime_detect_busy ---
+# Detect if the runtime is actively processing in a tmux session.
+# Args: <tmux_session_name>
+# Return 0 if busy, 1 if not busy.
+# Check for progress indicators, spinners, or "processing" text.
+runtime_detect_busy() {
+    local session="$1"
+    local content
+    content=$(tmux capture-pane -t "${session}:0.0" -p 2>/dev/null | tail -5)
+    [[ -z "$content" ]] && return 1
+    # TODO: Check for your runtime's busy indicators
+    if echo "$content" | grep -qE 'Processing|Running|Loading'; then
+        return 0
+    fi
+    if runtime_detect_idle "$session"; then
+        return 1
+    fi
+    return 0  # Safe default: assume busy
+}
+
+# --- 8. runtime_detect_idle ---
+# Detect if the runtime is waiting for input (idle).
+# Args: <tmux_session_name>
+# Return 0 if idle, 1 if not idle.
+runtime_detect_idle() {
+    local session="$1"
+    local last_line
+    last_line=$(tmux capture-pane -t "${session}:0.0" -p 2>/dev/null | tail -1)
+    # TODO: Check for your runtime's idle prompt
+    if echo "$last_line" | grep -qE '^\s*>|^\s*\$|my-runtime>'; then
+        return 0
+    fi
+    return 1
+}
+
+# --- 9. runtime_builtin_commands ---
+# Return space-separated list of built-in slash commands the runtime supports.
+# These are injected directly into tmux (not as chat messages).
+# Example: "help status clear exit"
+runtime_builtin_commands() {
+    echo "help status"
+}
+
+# --- 10. runtime_cron_command ---
+# Return the command to create a recurring task in the runtime.
+# Args: <interval> <prompt>
+# Return "__EXTERNAL_CRON__" if your runtime has no native cron support
+# (the gateway will use cron-executor.sh instead).
+runtime_cron_command() {
+    local interval="$1"
+    local prompt="$2"
+    echo "__EXTERNAL_CRON__"
+}
+
+# --- 11. runtime_permissions_flag ---
+# Return the CLI flag that enables headless/unattended permission mode.
+# This flag must allow the runtime to execute without user confirmation prompts.
+runtime_permissions_flag() {
+    echo "--auto-approve"
+}
+
+# --- 12. runtime_conversation_dir ---
+# Return the directory where the runtime stores conversation/session state.
+# Args: <launch_dir> (the working directory of the agent)
+# Return empty string if your runtime doesn't persist conversations locally.
+runtime_conversation_dir() {
+    local launch_dir="$1"
+    echo ""
+}

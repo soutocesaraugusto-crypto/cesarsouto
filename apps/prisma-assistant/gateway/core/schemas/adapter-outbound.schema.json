@@ -1,0 +1,63 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Adapter Outbound Payload",
+  "description": "Schema for outbound message payloads sent via send-channel.sh to any adapter",
+  "type": "object",
+  "required": ["platform", "recipient", "text"],
+  "properties": {
+    "platform": {
+      "type": "string",
+      "enum": ["telegram", "discord", "web", "whatsapp", "slack"],
+      "description": "Target platform"
+    },
+    "recipient": {
+      "type": "string",
+      "description": "Platform-specific recipient (chat_id, channel_id, phone number)"
+    },
+    "text": {
+      "type": "string",
+      "description": "Message text content (markdown, will be sanitized per platform)"
+    },
+    "flags": {
+      "type": "object",
+      "properties": {
+        "topic": {
+          "type": "string",
+          "description": "Forum topic name (telegram, discord)"
+        },
+        "image": {
+          "type": "string",
+          "description": "Local file path for image attachment"
+        },
+        "progressive": {
+          "type": "boolean",
+          "description": "Edit-in-place mode (telegram, discord)"
+        },
+        "edit_message_id": {
+          "type": "string",
+          "description": "Message ID to edit (telegram, discord)"
+        },
+        "reply_to": {
+          "type": "string",
+          "description": "Message ID to reply to (discord)"
+        },
+        "thread_id": {
+          "type": "string",
+          "description": "Thread ID (discord, slack)"
+        },
+        "keyboard": {
+          "type": "object",
+          "description": "Inline keyboard JSON (telegram, discord)"
+        },
+        "embed_title": {
+          "type": "string",
+          "description": "Embed title (discord)"
+        },
+        "embed_color": {
+          "type": "integer",
+          "description": "Embed color hex (discord)"
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,176 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "config.schema.json",
+  "title": "Agent Config",
+  "description": "Configuration schema for the Universal Agent Gateway. Supports 3 runtimes: claude-code (default), codex, api-openrouter.",
+  "type": "object",
+  "required": ["agent_name"],
+  "properties": {
+    "agent_name": {
+      "type": "string",
+      "description": "Unique agent identifier (lowercase, alphanumeric with hyphens)",
+      "pattern": "^[a-z0-9][a-z0-9-]*$"
+    },
+    "runtime": {
+      "type": "string",
+      "description": "Runtime driver to use. Must match a file in core/runtimes/{runtime}.sh",
+      "enum": ["claude-code", "codex", "api-openrouter"],
+      "default": "claude-code"
+    },
+    "enabled": {
+      "type": "boolean",
+      "default": true
+    },
+    "startup_delay": {
+      "type": "integer",
+      "description": "Seconds to wait before launching (stagger multiple agents)",
+      "minimum": 0,
+      "default": 0
+    },
+    "max_session_seconds": {
+      "type": "integer",
+      "description": "Session duration before auto-restart with --continue (default: 71h)",
+      "minimum": 60,
+      "default": 255600
+    },
+    "working_directory": {
+      "type": "string",
+      "description": "Working directory for the agent. If set, agent launches in this dir but identity stays in agent_dir"
+    },
+    "model": {
+      "type": "string",
+      "description": "Primary model identifier. Runtime-specific format.",
+      "examples": ["claude-opus-4-6", "o4-mini", "anthropic/claude-3.5-haiku", "meta-llama/llama-3.3-70b"]
+    },
+    "adapter_mode": {
+      "type": "boolean",
+      "description": "Enable adapter mode (channel-inbox based, no direct Telegram polling)",
+      "default": false
+    },
+    "channels": {
+      "type": "array",
+      "description": "Channel configurations for adapter mode",
+      "items": {
+        "type": "object",
+        "required": ["type", "enabled"],
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": ["telegram", "discord", "web", "whatsapp", "slack"]
+          },
+          "enabled": {
+            "type": "boolean"
+          },
+          "webhook": {
+            "type": "boolean",
+            "description": "Use webhook instead of polling (Telegram only)",
+            "default": false
+          },
+          "webhook_port": {
+            "type": "integer",
+            "default": 8443
+          },
+          "port": {
+            "type": "integer",
+            "description": "Server port (web channel)"
+          },
+          "channel_id": {
+            "type": "string",
+            "description": "Channel ID (Discord)"
+          },
+          "token_env": {
+            "type": "string",
+            "description": "Env var name for channel token (Discord)"
+          },
+          "bridge_port": {
+            "type": "integer",
+            "description": "Local bridge HTTP port (WhatsApp)",
+            "default": 8445
+          }
+        }
+      }
+    },
+    "crons": {
+      "type": "array",
+      "description": "Scheduled tasks",
+      "items": {
+        "type": "object",
+        "required": ["name", "interval", "prompt"],
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "interval": {
+            "type": "string",
+            "description": "Interval (e.g., 5m, 1h, 24h, 168h)",
+            "pattern": "^[0-9]+[smhd]$"
+          },
+          "prompt": {
+            "type": "string"
+          },
+          "isolated": {
+            "type": "boolean",
+            "description": "Run in isolated subprocess (no context pollution). Requires runtime_print support.",
+            "default": false
+          },
+          "model": {
+            "type": "string",
+            "description": "Model override for isolated crons (cheaper model for routine tasks)"
+          }
+        }
+      }
+    },
+    "smart_routing": {
+      "type": "object",
+      "description": "Smart model routing (Story 114.5). Route simple turns to cheaper models.",
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "default": false
+        },
+        "tiers": {
+          "type": "object",
+          "properties": {
+            "quick": {
+              "type": "object",
+              "properties": {
+                "model": { "type": "string" },
+                "max_words": { "type": "integer", "default": 20 },
+                "patterns": {
+                  "type": "array",
+                  "items": { "type": "string" }
+                }
+              }
+            },
+            "standard": {
+              "type": "object",
+              "properties": {
+                "model": { "type": "string" }
+              }
+            },
+            "deep": {
+              "type": "object",
+              "properties": {
+                "model": { "type": "string" },
+                "triggers": {
+                  "type": "array",
+                  "items": { "type": "string" }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": { "runtime": { "const": "api-openrouter" } }
+      },
+      "then": {
+        "description": "API runtime is CHAT-ONLY: no file read/write, no bash, no tools, no hooks. Agent can only respond with text."
+      }
+    }
+  ]
+}

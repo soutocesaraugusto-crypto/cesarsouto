@@ -1,0 +1,22 @@
+# Prisma Assistant roda em Linux/Mac/WSL.
+# Scripts e código DEVEM ter final de linha LF — com CRLF (Windows) o shell quebra
+# ("bad interpreter: /usr/bin/env bash^M"). Forçamos LF no checkout em qualquer plataforma.
+
+*.sh        text eol=lf
+*.py        text eol=lf
+*.js        text eol=lf
+*.json      text eol=lf
+*.md        text eol=lf
+*.yaml      text eol=lf
+*.yml       text eol=lf
+*.template  text eol=lf
+*.env*      text eol=lf
+
+# Binários — nunca converter
+*.png   binary
+*.jpg   binary
+*.jpeg  binary
+*.gif   binary
+*.ogg   binary
+*.mp3   binary
+*.mp4   binary

@@ -1,0 +1,32 @@
+{
+  "_comment": "Gerado pelo instalar.sh. Runtime: claude-code. Canais: telegram + whatsapp configuráveis.",
+  "agent_name": "{{ASSISTENTE_SLUG}}",
+  "runtime": "claude-code",
+  "enabled": true,
+  "startup_delay": 0,
+  "max_session_seconds": 255600,
+  "working_directory": "${PRISMA_HOME}",
+  "model": "claude-sonnet-4-6",
+  "channels": [
+    {"type": "telegram", "enabled": {{TELEGRAM_ON}}, "webhook": false, "webhook_port": 8443},
+    {"type": "whatsapp", "enabled": {{WHATSAPP_ON}}, "bridge_port": 8445}
+  ],
+  "outbound_pipeline": {
+    "write_ahead_queue": true,
+    "transcript_log": true,
+    "transcript_mirror_channel": null,
+    "pre_send_hook": null
+  },
+  "crons": [
+    {
+      "name": "delivery-queue-retry",
+      "interval": "5m",
+      "prompt": "Run: bash ../../core/bus/delivery-queue.sh retry {{ASSISTENTE_SLUG}}. Se algo foi reenviado ou falhou, reporte. Senão, fique em silêncio."
+    },
+    {
+      "name": "lembretes-pontuais",
+      "interval": "1m",
+      "prompt": "Rode: bash ../../core/scripts/reminder-check.sh check. Se a saída estiver vazia, fique em SILÊNCIO (não responda nada). Se aparecerem linhas 'ENTREGAR id=... canal=... chat_id=... texto=...', para CADA linha entregue o lembrete pelo canal indicado: telegram -> bash ../../core/bus/send-telegram.sh <chat_id> \"⏰ Lembrete: <texto>\"; whatsapp -> bash ../../core/bus/send-whatsapp.sh <chat_id> \"⏰ Lembrete: <texto>\". O script já marcou como disparado, então não rode de novo."
+    }
+  ]
+}

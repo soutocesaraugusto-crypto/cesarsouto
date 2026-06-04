@@ -19,7 +19,7 @@ if (fs.existsSync(envPath)) require("dotenv").config({ path: envPath, override: 
 const express = require("express");
 const { gerarRoteiro, DURACAO } = require("./lib/script-generator");
 const { sintetizar, listVoices } = require("./lib/tts");
-const { getStatus, upsertEnv, saveUserVoice, TONS } = require("./lib/setup-status");
+const { getStatus, upsertEnv, saveUserVoice, validarChave, TONS } = require("./lib/setup-status");
 
 const PORT = parseInt(process.env.PORT || "7791", 10);
 const BIND = "127.0.0.1";
@@ -130,22 +130,35 @@ app.get("/api/setup/status", (_req, res) => {
   catch (e) { res.status(500).json({ erro: e.message }); }
 });
 
-app.post("/api/setup/save", (req, res) => {
+app.post("/api/setup/save", async (req, res) => {
   const b = req.body || {};
-  const updates = {};
+  const candidatas = {};
   // Aceita só as chaves conhecidas; ignora o resto.
   for (const k of ["MISTRAL_API_KEY", "GOOGLE_AI_STUDIO_API_KEY", "OPENROUTER_API_KEY", "ANTHROPIC_API_KEY"]) {
-    if (typeof b[k] === "string" && b[k].trim()) updates[k] = b[k].trim();
+    if (typeof b[k] === "string" && b[k].trim()) candidatas[k] = b[k].trim();
   }
-  if (Object.keys(updates).length === 0) {
+  if (Object.keys(candidatas).length === 0) {
     return res.status(400).json({ erro: "Nenhuma chave informada." });
   }
-  try {
-    upsertEnv(updates);
-    res.json({ ok: true, status: getStatus() });
-  } catch (e) {
-    res.status(500).json({ erro: "Não foi possível salvar: " + e.message });
+  // Testa cada chave de verdade antes de gravar. Só grava as válidas.
+  const validas = {};
+  const invalidas = []; // chave inválida (rejeitada pela API)
+  const semRede = [];   // não deu pra testar (offline)
+  for (const [k, v] of Object.entries(candidatas)) {
+    const r = await validarChave(k, v);
+    if (r.ok) validas[k] = v;
+    else if (r.motivo === "rede") semRede.push(k);
+    else invalidas.push(k);
   }
+  try {
+    if (Object.keys(validas).length) upsertEnv(validas);
+  } catch (e) {
+    return res.status(500).json({ erro: "Não foi possível salvar: " + e.message });
+  }
+  if (invalidas.length || semRede.length) {
+    return res.status(422).json({ erro: "Algumas chaves não passaram no teste.", invalidas, semRede, status: getStatus() });
+  }
+  res.json({ ok: true, status: getStatus() });
 });
 
 // Recebe uma amostra de voz (corpo binário) para um tom. ?tom=hipnose&nome=Fulano

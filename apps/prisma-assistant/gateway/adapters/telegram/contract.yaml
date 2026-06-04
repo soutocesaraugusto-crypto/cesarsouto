@@ -1,0 +1,42 @@
+adapter:
+  name: telegram
+  version: "1.0"
+  quality: PRODUCTION
+  required_scripts:
+    - name: "start.sh"
+      exit_codes: [0]
+      timeout_seconds: 30
+    - name: "health.sh"
+      exit_codes: [0, 1, 2]  # 0=healthy, 1=degraded, 2=dead
+      timeout_seconds: 10
+    - name: "stop.sh"
+      exit_codes: [0]
+      timeout_seconds: 15
+  required_bus_scripts:
+    - "core/bus/send-{channel}.sh"
+    - "core/bus/check-{channel}.sh"
+    - "core/bus/hook-permission-{channel}.sh"
+  optional_bus_scripts:
+    - "core/bus/hook-ask-{channel}.sh"
+    - "core/bus/hook-planmode-{channel}.sh"
+  message_schema: "core/schemas/adapter-message.schema.json"
+  outbound_features:
+    - chunking         # 4096 char limit
+    - html_formatting  # parse_mode=HTML with fallback
+    - keyboard         # inline keyboard buttons
+    - progressive      # edit-in-place streaming
+    - topics           # forum topic routing
+    - photo            # image upload
+    - edit             # edit existing message
+    - typing           # persistent typing indicator
+    - delivery_queue   # write-ahead queue integration
+  config_fields:
+    - name: "BOT_TOKEN"
+      required: true
+      env_only: true
+    - name: "CHAT_ID"
+      required: true
+      env_only: true
+    - name: "ALLOWED_USER"
+      required: true
+      env_only: true

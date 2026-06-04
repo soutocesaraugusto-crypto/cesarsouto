@@ -10,6 +10,7 @@
 const fs = require("fs");
 const os = require("os");
 const path = require("path");
+const https = require("https");
 const crypto = require("crypto");
 const { spawnSync, execFileSync } = require("child_process");
 
@@ -55,6 +56,44 @@ function claudeCliOk() {
   } catch (e) {
     return false;
   }
+}
+
+// ── Validação de chaves (chamada real, leve, à API de cada provedor) ──────────
+
+function httpsGetStatus(hostname, reqPath, headers) {
+  return new Promise((resolve) => {
+    const req = https.request(
+      { hostname, path: reqPath, method: "GET", headers, timeout: 12000 },
+      (res) => { res.on("data", () => {}); res.on("end", () => resolve(res.statusCode || 0)); }
+    );
+    req.on("error", () => resolve(0));
+    req.on("timeout", () => { req.destroy(); resolve(0); });
+    req.end();
+  });
+}
+
+/**
+ * Testa se uma chave funciona de verdade. Retorna { ok, motivo }.
+ * motivo: "ok" | "invalida" | "rede" (erro de conexão/timeout, não dá pra afirmar).
+ */
+async function validarChave(nome, valor) {
+  const v = (valor || "").trim();
+  if (!v) return { ok: false, motivo: "invalida" };
+  let status = 0;
+  if (nome === "MISTRAL_API_KEY") {
+    status = await httpsGetStatus("api.mistral.ai", "/v1/models", { Authorization: `Bearer ${v}` });
+  } else if (nome === "GOOGLE_AI_STUDIO_API_KEY") {
+    status = await httpsGetStatus("generativelanguage.googleapis.com", `/v1beta/models?key=${encodeURIComponent(v)}`, {});
+  } else if (nome === "OPENROUTER_API_KEY") {
+    status = await httpsGetStatus("openrouter.ai", "/api/v1/key", { Authorization: `Bearer ${v}` });
+  } else if (nome === "ANTHROPIC_API_KEY") {
+    status = await httpsGetStatus("api.anthropic.com", "/v1/models", { "x-api-key": v, "anthropic-version": "2023-06-01" });
+  } else {
+    return { ok: false, motivo: "invalida" };
+  }
+  if (status === 200) return { ok: true, motivo: "ok" };
+  if (status === 0) return { ok: false, motivo: "rede" }; // não conseguiu testar (offline?)
+  return { ok: false, motivo: "invalida" }; // 401/403/400 etc.
 }
 
 // ── .env: leitura e escrita preservando o que já existe ───────────────────────
@@ -196,7 +235,10 @@ function getStatus() {
   const ffmpeg = ffmpegOk();
   const voice = getVoiceStatus();
 
-  const roteiroOk = gemini || openrouter || anthropic || cli;
+  // No app do aluno (requireUserVoice), o CLI NÃO conta como garantia de roteiro:
+  // ele é imprevisível na máquina de cada um, então exigimos uma chave validada.
+  // No app OMNI, o CLI (assinatura) continua valendo.
+  const roteiroOk = gemini || openrouter || anthropic || (!voice.required && cli);
   const ready = ffmpeg && mistral && roteiroOk && voice.ok;
 
   return {
@@ -210,6 +252,6 @@ function getStatus() {
 }
 
 module.exports = {
-  getStatus, upsertEnv, readEnvFile, effectiveKey, ffmpegOk,
+  getStatus, upsertEnv, readEnvFile, effectiveKey, ffmpegOk, validarChave,
   getVoiceStatus, saveUserVoice, TONS, KEYS, ENV_FILE,
 };
