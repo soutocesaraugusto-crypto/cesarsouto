@@ -63,7 +63,7 @@ async function processar(job) {
     await sintetizar(segments, outFile, (p) => {
       job.progresso = { i: p.i, total: p.total };
       saveJob(job);
-    }, job.voz);
+    }, job.voz, { fundo: job.fundo, binaural: job.binaural, volumeFundo: job.volumeFundo });
 
     job.status = "pronto"; saveJob(job);
   } catch (err) {
@@ -74,7 +74,7 @@ async function processar(job) {
 }
 
 app.post("/api/generate", (req, res) => {
-  const { tema, duracao, voz, modo, roteiroCustom } = req.body || {};
+  const { tema, duracao, voz, modo, roteiroCustom, fundo, binaural, volumeFundo } = req.body || {};
 
   const modoValido = ["motivacional", "tratamento", "proprio"].includes(modo) ? modo : "motivacional";
 
@@ -106,6 +106,9 @@ app.post("/api/generate", (req, res) => {
     voz: vozId,
     modo: modoValido,
     roteiroCustom: modoValido === "proprio" ? roteiroCustom.trim().slice(0, 50000) : "",
+    fundo: ["silencio","natureza","relaxante","binaural"].includes(fundo) ? fundo : "silencio",
+    binaural: ["delta","theta","alpha"].includes(binaural) ? binaural : "theta",
+    volumeFundo: ["suave","medio","intenso"].includes(volumeFundo) ? volumeFundo : "medio",
     status: "fila",
     progresso: null,
     erro: null,

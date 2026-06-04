@@ -159,6 +159,14 @@
   #roteiroBox.show{display:block}
   .roteiro-hint{font-size:12px;color:var(--cream-muted);margin:-4px 0 14px;line-height:1.55}
 
+  /* Fundo sonoro */
+  #binauralFreqBox{display:none}
+  #binauralFreqBox.show{display:block}
+  #volumeBox{display:none}
+  #volumeBox.show{display:block}
+  .fones-hint{font-size:11.5px;color:var(--cream-muted);margin:8px 0 0;line-height:1.5;
+    padding:8px 12px;background:rgba(221,215,202,.07);border-radius:7px;border:1px solid var(--line)}
+
   /* Footer */
   .foot{text-align:center;color:rgba(221,215,202,.3);font-size:10.5px;
     margin-top:22px;letter-spacing:.14em;text-transform:uppercase}
@@ -300,6 +308,38 @@
       </div>
     </div>
 
+    <!-- Fundo sonoro -->
+    <div class="field">
+      <label>Som de fundo</label>
+      <div class="chips" id="fundos">
+        <div class="chip active" data-f="silencio"><b>Sem música</b><small>só a voz</small></div>
+        <div class="chip" data-f="natureza"><b>Natureza</b><small>chuva suave</small></div>
+        <div class="chip" data-f="relaxante"><b>Relaxante</b><small>drone + binaural</small></div>
+        <div class="chip" data-f="binaural"><b>Binaural puro</b><small>fones obrigatório</small></div>
+      </div>
+    </div>
+
+    <!-- Frequência binaural (mostrado quando fundo ≠ silencio e ≠ natureza) -->
+    <div class="field" id="binauralFreqBox">
+      <label>Frequência binaural</label>
+      <div class="chips" id="binauralFreqs">
+        <div class="chip" data-b="delta"><b>Delta · 2 Hz</b><small>sono profundo</small></div>
+        <div class="chip active" data-b="theta"><b>Theta · 6 Hz</b><small>meditação</small></div>
+        <div class="chip" data-b="alpha"><b>Alpha · 10 Hz</b><small>relaxamento</small></div>
+      </div>
+      <p class="fones-hint" id="fonesHint" hidden>🎧 Binaural puro requer fones de ouvido — o efeito só ocorre quando cada ouvido recebe uma frequência diferente.</p>
+    </div>
+
+    <!-- Volume do fundo -->
+    <div class="field" id="volumeBox">
+      <label>Volume do fundo</label>
+      <div class="chips" id="volumes">
+        <div class="chip" data-v="suave"><b>Suave</b><small>discreto</small></div>
+        <div class="chip active" data-v="medio"><b>Médio</b><small>equilibrado</small></div>
+        <div class="chip" data-v="intenso"><b>Intenso</b><small>imersivo</small></div>
+      </div>
+    </div>
+
     <button class="go" id="go">Gerar áudio</button>
 
     <div class="status" id="status">
@@ -325,6 +365,7 @@
     [...modosBox.children].forEach(c => c.classList.remove("active"));
     el.classList.add("active");
     modo = el.dataset.m;
+    fundoPadraoPorModo(modo);
     if(modo === "proprio"){
       temaBox.style.display = "none";
       roteiroBox.classList.add("show");
@@ -365,6 +406,54 @@
     voz = "lauriane";
   });
 
+  // ── Fundo sonoro ──────────────────────────────────────────────────────────
+  let fundo = "silencio";
+  let binaural = "theta";
+  let volumeFundo = "medio";
+
+  const fundosBox       = document.getElementById("fundos");
+  const binauralFreqBox = document.getElementById("binauralFreqBox");
+  const binauralFreqs   = document.getElementById("binauralFreqs");
+  const volumeBox       = document.getElementById("volumeBox");
+  const fonesHint       = document.getElementById("fonesHint");
+
+  function atualizarFundoUI() {
+    const temBinaural = fundo === "binaural" || fundo === "relaxante";
+    binauralFreqBox.classList.toggle("show", temBinaural);
+    volumeBox.classList.toggle("show", fundo !== "silencio");
+    fonesHint.hidden = fundo !== "binaural";
+  }
+
+  fundosBox.addEventListener("click", e => {
+    const el = e.target.closest(".chip"); if(!el) return;
+    [...fundosBox.children].forEach(c => c.classList.remove("active"));
+    el.classList.add("active"); fundo = el.dataset.f;
+    atualizarFundoUI();
+  });
+
+  binauralFreqs.addEventListener("click", e => {
+    const el = e.target.closest(".chip"); if(!el) return;
+    [...binauralFreqs.children].forEach(c => c.classList.remove("active"));
+    el.classList.add("active"); binaural = el.dataset.b;
+  });
+
+  document.getElementById("volumes").addEventListener("click", e => {
+    const el = e.target.closest(".chip"); if(!el) return;
+    [...document.getElementById("volumes").children].forEach(c => c.classList.remove("active"));
+    el.classList.add("active"); volumeFundo = el.dataset.v;
+  });
+
+  // Ajusta fundo padrão conforme o modo selecionado
+  function fundoPadraoPorModo(m) {
+    const defaults = { motivacional: "relaxante", tratamento: "binaural", proprio: "silencio" };
+    const novoFundo = defaults[m] || "silencio";
+    fundo = novoFundo;
+    [...fundosBox.children].forEach(c => {
+      c.classList.toggle("active", c.dataset.f === novoFundo);
+    });
+    atualizarFundoUI();
+  }
+
   // ── Gerador ───────────────────────────────────────────────────────────────
   const go       = document.getElementById("go");
   const statusBox = document.getElementById("status");
@@ -398,7 +487,7 @@
 
     let id;
     try {
-      const body = { tema, duracao, voz, modo, roteiroCustom: roteiroProprio };
+      const body = { tema, duracao, voz, modo, roteiroCustom: roteiroProprio, fundo, binaural, volumeFundo };
       const r = await fetch("api/generate", {
         method:"POST", headers:{"Content-Type":"application/json"},
         body: JSON.stringify(body)

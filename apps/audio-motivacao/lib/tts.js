@@ -15,6 +15,7 @@ const os = require("os");
 const crypto = require("crypto");
 const https = require("https");
 const { execFileSync, spawnSync } = require("child_process");
+const { gerarFundoPCM, VOLUME_FUNDO } = require("./background-audio");
 
 const APP_ROOT = path.join(__dirname, "..");
 // Config de voz LOCAL do app (Rafa). Não usa o voxtral-voices.json compartilhado (Michael).
@@ -154,11 +155,36 @@ function silencePCM(seconds) {
   return Buffer.alloc(Math.round(24000 * seconds) * 4);
 }
 
-function pcmToMp3(pcm, outputFile) {
-  const r = spawnSync("ffmpeg",
-    ["-f", "f32le", "-ar", "24000", "-ac", "1", "-i", "pipe:0", "-q:a", "2", "-y", outputFile],
-    { input: pcm, stdio: ["pipe", "ignore", "pipe"], maxBuffer: 1024 * 1024 * 512 });
-  if (r.status !== 0) throw new Error(`ffmpeg PCM->MP3 falhou: ${r.stderr?.toString().slice(-300)}`);
+function pcmToMp3(pcm, outputFile, fundoFile = null, volFundo = 0.6) {
+  if (!fundoFile) {
+    const r = spawnSync("ffmpeg",
+      ["-f", "f32le", "-ar", "24000", "-ac", "1", "-i", "pipe:0", "-q:a", "2", "-y", outputFile],
+      { input: pcm, stdio: ["pipe", "ignore", "pipe"], maxBuffer: 1024 * 1024 * 512 });
+    if (r.status !== 0) throw new Error(`ffmpeg PCM->MP3 falhou: ${r.stderr?.toString().slice(-300)}`);
+    return;
+  }
+
+  // Escreve voz mono em arquivo temporário para mixagem
+  const voiceTmp = path.join(os.tmpdir(), `voice-${Date.now()}.pcm`);
+  try {
+    fs.writeFileSync(voiceTmp, pcm);
+    const voiceDurSec = pcm.length / 4 / 24000;
+
+    const r = spawnSync("ffmpeg", [
+      "-f", "f32le", "-ar", "24000", "-ac", "1", "-i", voiceTmp,
+      "-f", "f32le", "-ar", "24000", "-ac", "2", "-i", fundoFile,
+      "-filter_complex",
+      `[0:a]pan=stereo|c0=c0|c1=c0,volume=0.90[v];` +
+      `[1:a]volume=${volFundo},atrim=duration=${voiceDurSec}[bg];` +
+      `[v][bg]amix=inputs=2:normalize=0[out]`,
+      "-map", "[out]",
+      "-q:a", "2", "-y", outputFile,
+    ], { stdio: ["ignore", "ignore", "pipe"], maxBuffer: 1024 * 1024 * 512 });
+
+    if (r.status !== 0) throw new Error(`ffmpeg mix falhou: ${r.stderr?.toString().slice(-300)}`);
+  } finally {
+    try { fs.unlinkSync(voiceTmp); } catch (e) {}
+  }
 }
 
 /**
@@ -168,7 +194,7 @@ function pcmToMp3(pcm, outputFile) {
  * @param {(p:{i:number,total:number,tom:string,cached:boolean})=>void} onProgress
  * @param {string} [voz] id da voz (ex: "rafa" | "michael"); cai pro default se omitido
  */
-async function sintetizar(segments, outputFile, onProgress, voz) {
+async function sintetizar(segments, outputFile, onProgress, voz, opcoesFundo = {}) {
   const apiKey = process.env.MISTRAL_API_KEY;
   if (!apiKey) throw new Error("MISTRAL_API_KEY não encontrada no ambiente");
   const vozObj = getVoz(loadConfig(), voz);
@@ -191,7 +217,23 @@ async function sintetizar(segments, outputFile, onProgress, voz) {
     parts.push(normalizePCM(pcmBuffers[i], targetRMS));
     if (i < pcmBuffers.length - 1) parts.push(gap);
   }
-  pcmToMp3(Buffer.concat(parts), outputFile);
+  const voicePCM = Buffer.concat(parts);
+
+  // Gera e mixa fundo se solicitado
+  const { fundo, binaural, volumeFundo } = opcoesFundo;
+  let fundoFile = null;
+  if (fundo && fundo !== "silencio") {
+    const durationSec = voicePCM.length / 4 / 24000;
+    console.log(`[tts] gerando fundo: ${fundo} (${binaural || "theta"}) para ${Math.round(durationSec)}s`);
+    fundoFile = gerarFundoPCM(fundo, binaural || "theta", durationSec);
+  }
+
+  const volNum = VOLUME_FUNDO[volumeFundo] ?? VOLUME_FUNDO.medio;
+  try {
+    pcmToMp3(voicePCM, outputFile, fundoFile, volNum);
+  } finally {
+    if (fundoFile) { try { fs.unlinkSync(fundoFile); } catch (e) {} }
+  }
   return outputFile;
 }
 
