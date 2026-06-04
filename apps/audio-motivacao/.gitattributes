@@ -1,0 +1,4 @@
+# Scripts shell precisam de fim de linha LF, senão quebram no Mac/Linux
+# (shebang com \r vira "bad interpreter").
+*.sh text eol=lf
+*.command text eol=lf

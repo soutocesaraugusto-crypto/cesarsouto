@@ -1,24 +1,6 @@
 {
-  "_doc": "Vozes do app. Caminhos relativos à raiz do app. 'rafa' = recortes dos 14 áudios de hipnose dela. 'michael' = amostras registradas (substituir por recortes de áudios reais se enviados).",
-  "default": "rafa",
-  "vozes": {
-    "rafa": {
-      "rotulo": "Rafa",
-      "perfis": {
-        "normal": "data/voices/rafa-normal.ogg",
-        "hipnose": "data/voices/rafa-hipnose.ogg",
-        "motivacional": "data/voices/rafa-motivacional.ogg"
-      },
-      "fallback": "data/voices/rafa-hipnose.ogg"
-    },
-    "michael": {
-      "rotulo": "Michael",
-      "perfis": {
-        "normal": "data/voices/michael-normal.ogg",
-        "hipnose": "data/voices/michael-hipnose.ogg",
-        "motivacional": "data/voices/michael-motivacional.ogg"
-      },
-      "fallback": "data/voices/michael-hipnose.ogg"
-    }
-  }
+  "_doc": "A voz do dono do app e gravada no onboarding (passo de voz). 'requireUserVoice' ativa esse passo na primeira vez.",
+  "default": null,
+  "requireUserVoice": true,
+  "vozes": {}
 }

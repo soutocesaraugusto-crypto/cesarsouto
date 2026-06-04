@@ -58,6 +58,41 @@
   .brand svg{height:22px;width:auto;display:block}
   .brand span{font-family:'IBM Plex Mono',monospace;font-size:13px;letter-spacing:.34em;
     text-transform:uppercase;color:var(--gold);font-weight:500}
+  /* Onboarding */
+  .checklist{list-style:none;padding:0;margin:0 0 22px}
+  .checklist li{display:flex;align-items:flex-start;gap:10px;padding:10px 0;border-bottom:1px solid var(--line);
+    font-size:14px;color:var(--cream)}
+  .checklist li:last-child{border-bottom:none}
+  .checklist .ic{flex:0 0 18px;font-size:15px;line-height:1.4}
+  .checklist .ok .ic{color:#7bbf6a}
+  .checklist .no .ic{color:#e0826a}
+  .checklist small{display:block;color:var(--muted);font-size:12px;margin-top:2px;line-height:1.45}
+  .hint{font-size:12px;color:var(--muted);margin:-4px 0 14px;line-height:1.5}
+  .hint a{color:var(--gold-light);text-decoration:none}
+  .adv-toggle{background:none;border:none;color:var(--gold-light);font-family:'IBM Plex Mono',monospace;
+    font-size:12px;letter-spacing:.06em;cursor:pointer;padding:6px 0;margin-bottom:4px}
+  .adv{display:none}
+  .adv.show{display:block}
+  .okmsg{color:#7bbf6a;font-size:13px;margin-top:12px;font-family:'IBM Plex Mono',monospace}
+  /* Gravação de voz */
+  .vblock{border:1px solid var(--line);border-radius:12px;padding:14px;margin-bottom:12px;background:#0a0908}
+  .vblock.done{border-color:var(--gold-deep);background:rgba(200,168,75,.06)}
+  .vhead{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+  .vhead b{font-size:14px}
+  .vstate{font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.06em;color:var(--muted)}
+  .vstate.ok{color:#7bbf6a}
+  .vstate.rec{color:#e0826a}
+  .vtext{font-size:13px;color:var(--cream);opacity:.85;line-height:1.5;margin:0 0 12px;font-style:italic}
+  .vctrls{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+  .vbtn{border:1px solid var(--line);background:#141312;color:var(--cream);border-radius:9px;
+    padding:9px 14px;font-size:13px;font-family:Inter,sans-serif;cursor:pointer;transition:.15s}
+  .vbtn:hover{border-color:var(--gold-deep)}
+  .vbtn.rec{border-color:#e0826a;color:#e8a48f}
+  .vupload{border:1px solid var(--line);background:#141312;color:var(--muted);border-radius:9px;
+    padding:9px 14px;font-size:13px;cursor:pointer}
+  .vupload:hover{border-color:var(--gold-deep);color:var(--cream)}
+  .vprev{width:100%;margin-top:10px}
+  #vBlocks + .err{margin-top:4px}
 </style>
 </head>
 <body>
@@ -71,17 +106,57 @@
     <h1>Gerador de áudios de Omniterapia</h1>
     <p class="sub">Escreva um tema. A IA cria o roteiro e gera o áudio com a voz escolhida.</p>
 
-    <!-- Tela de senha (antes do gerador) -->
-    <div id="login">
-      <div class="field">
-        <label for="senha">Senha de acesso</label>
-        <input id="senha" type="password" placeholder="senha" autocomplete="current-password" />
+    <!-- Onboarding (1ª vez / falta alguma coisa) -->
+    <div id="setup" hidden>
+      <p class="sub" style="margin-bottom:18px">Antes de começar, vamos configurar o necessário. É rápido e só na primeira vez.</p>
+
+      <ul class="checklist" id="checklist"></ul>
+
+      <!-- Passo 1: chaves -->
+      <div id="setupKeys">
+        <div class="field">
+          <label for="kMistral">Chave da Mistral (a voz) · obrigatória</label>
+          <input id="kMistral" type="password" placeholder="cole aqui a chave da Mistral" autocomplete="off" />
+          <p class="hint">Crie em <a href="https://console.mistral.ai/api-keys" target="_blank" rel="noopener">console.mistral.ai/api-keys</a></p>
+        </div>
+
+        <div class="field">
+          <label for="kGoogle">Chave do Google AI Studio (o roteiro) · recomendada</label>
+          <input id="kGoogle" type="password" placeholder="cole aqui a chave do Google (Gemini)" autocomplete="off" />
+          <p class="hint">É grátis. Crie em <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener">aistudio.google.com/apikey</a></p>
+        </div>
+
+        <button type="button" class="adv-toggle" id="advToggle">▸ Uso outro provedor de roteiro (avançado)</button>
+        <div class="adv" id="adv">
+          <div class="field">
+            <label for="kOpenRouter">OpenRouter (opcional)</label>
+            <input id="kOpenRouter" type="password" placeholder="chave do OpenRouter" autocomplete="off" />
+          </div>
+          <div class="field">
+            <label for="kAnthropic">Anthropic (opcional)</label>
+            <input id="kAnthropic" type="password" placeholder="chave da Anthropic" autocomplete="off" />
+          </div>
+        </div>
+
+        <button class="go" id="salvarSetup">Salvar e continuar</button>
+        <div class="err" id="setupErr"></div>
+        <div class="okmsg" id="setupOk" hidden></div>
       </div>
-      <button class="go" id="entrar">Entrar</button>
-      <div class="err" id="loginErr"></div>
+
+      <!-- Passo 2: voz do usuário -->
+      <div id="setupVoice" hidden>
+        <div class="field">
+          <label for="vNome">Seu nome (vira o rótulo da sua voz)</label>
+          <input id="vNome" type="text" placeholder="ex.: João Silva" autocomplete="name" />
+        </div>
+        <p class="hint">Grave os três trechos abaixo com a sua voz — um por tom. Eles servem de referência pra IA gerar os áudios com a sua voz. Fale num lugar silencioso. Também dá pra subir um áudio pronto (uns 20–30s).</p>
+        <div id="vBlocks"></div>
+        <div class="err" id="voiceErr"></div>
+        <div class="okmsg" id="voiceOk" hidden></div>
+      </div>
     </div>
 
-    <!-- Gerador (liberado após a senha) -->
+    <!-- Gerador (liberado após o onboarding) -->
     <div id="app" hidden>
       <div class="field">
         <label for="tema">Tema do áudio</label>
@@ -152,34 +227,206 @@
     sintetizando: "Gerando o áudio com a voz escolhida…",
   };
 
-  // ===== Autenticação: senha ANTES do gerador =====
-  let senha = "";
-  const senhaEl = document.getElementById("senha");
-  const loginBox = document.getElementById("login");
+  // ===== Acesso direto ao gerador (sem senha) =====
   const appBox = document.getElementById("app");
-  const entrar = document.getElementById("entrar");
-  const loginErr = document.getElementById("loginErr");
+  const setupBox = document.getElementById("setup");
+  function liberar(){ setupBox.hidden = true; appBox.hidden = false; document.getElementById("tema").focus(); }
 
-  function liberar(){ loginBox.hidden = true; appBox.hidden = false; document.getElementById("tema").focus(); }
+  // ===== Onboarding: checa o ambiente antes de liberar o gerador =====
+  const setupKeys = document.getElementById("setupKeys");
+  const setupVoice = document.getElementById("setupVoice");
 
-  async function tentarLogin(s, silencioso){
-    try {
-      const r = await fetch("api/login", {
-        method:"POST", headers:{"Content-Type":"application/json"},
-        body: JSON.stringify({ senha: s })
-      });
-      if(r.ok){ senha = s; localStorage.setItem("hip_senha", s); liberar(); return true; }
-      if(!silencioso) loginErr.textContent = "Senha incorreta.";
-    } catch(e){ if(!silencioso) loginErr.textContent = "Falha de conexão."; }
-    return false;
+  function mostrarLogin(){ liberar(); }
+
+  function linha(ok, titulo, sub){
+    return `<li class="${ok?'ok':'no'}"><span class="ic">${ok?'✓':'✕'}</span>`
+      + `<div>${titulo}${sub?`<small>${sub}</small>`:''}</div></li>`;
   }
 
-  entrar.addEventListener("click", () => { loginErr.textContent = ""; tentarLogin(senhaEl.value, false); });
-  senhaEl.addEventListener("keydown", e => { if(e.key === "Enter"){ e.preventDefault(); entrar.click(); } });
+  function renderChecklist(st){
+    const cl = document.getElementById("checklist");
+    const rotRoteiro = st.roteiro.gemini ? "Google AI Studio"
+      : st.roteiro.openrouter ? "OpenRouter"
+      : st.roteiro.anthropic ? "Anthropic"
+      : st.roteiro.cli ? "Claude CLI" : "";
+    let html =
+      linha(true, "Node.js " + (st.node || ""), null) +
+      linha(st.ffmpeg, "ffmpeg (montagem do áudio)", st.ffmpeg ? null : "Não encontrado. Rode /audio-motivacao de novo (ou o instalador).") +
+      linha(st.mistral, "Chave da Mistral (voz)", st.mistral ? null : "Falta colar abaixo.") +
+      linha(st.roteiro.ok, "Chave de roteiro (IA)", st.roteiro.ok ? rotRoteiro : "Falta uma: Google, OpenRouter ou Anthropic.");
+    if(st.voice && st.voice.required){
+      const g = st.voice.gravados.length, tot = st.voice.tons.length;
+      html += linha(st.voice.ok, "Sua voz (" + g + "/" + tot + " tons)", st.voice.ok ? null : "Grave os trechos no passo de voz.");
+    }
+    cl.innerHTML = html;
+  }
 
-  // auto-login se já houver senha salva neste navegador
-  const _salva = localStorage.getItem("hip_senha");
-  if(_salva){ senhaEl.value = _salva; tentarLogin(_salva, true); }
+  // Decide qual passo exibir conforme o que falta.
+  function mostrarPasso(st){
+    if(st.ready){ mostrarLogin(); return; }
+    setupBox.hidden = false;
+    setupKeys.hidden = true;
+    setupVoice.hidden = true;
+    renderChecklist(st);
+    const chavesFaltam = !st.mistral || !st.roteiro.ok;
+    if(chavesFaltam){ setupKeys.hidden = false; return; }
+    if(st.voice && st.voice.required && !st.voice.ok){ setupVoice.hidden = false; renderVoice(st.voice); return; }
+    // só falta ffmpeg (não dá pra resolver pela web) — mostra o checklist com o aviso
+  }
+
+  async function checarSetup(){
+    try {
+      const r = await fetch("api/setup/status");
+      const st = await r.json();
+      mostrarPasso(st);
+    } catch(e){
+      setupBox.hidden = false; setupKeys.hidden = false;
+    }
+  }
+
+  document.getElementById("advToggle").addEventListener("click", () => {
+    document.getElementById("adv").classList.toggle("show");
+  });
+
+  // ── Passo 1: salvar chaves ──
+  document.getElementById("salvarSetup").addEventListener("click", async () => {
+    const setupErr = document.getElementById("setupErr");
+    const setupOk = document.getElementById("setupOk");
+    const btn = document.getElementById("salvarSetup");
+    setupErr.textContent = ""; setupOk.hidden = true;
+
+    const payload = {
+      MISTRAL_API_KEY: document.getElementById("kMistral").value.trim(),
+      GOOGLE_AI_STUDIO_API_KEY: document.getElementById("kGoogle").value.trim(),
+      OPENROUTER_API_KEY: document.getElementById("kOpenRouter").value.trim(),
+      ANTHROPIC_API_KEY: document.getElementById("kAnthropic").value.trim(),
+    };
+    if(!Object.values(payload).some(v => v)){
+      setupErr.textContent = "Cole pelo menos a chave da Mistral e uma de roteiro."; return;
+    }
+
+    btn.disabled = true; btn.textContent = "Salvando…";
+    try {
+      const r = await fetch("api/setup/save", {
+        method:"POST", headers:{"Content-Type":"application/json"},
+        body: JSON.stringify(payload)
+      });
+      const j = await r.json();
+      if(!r.ok){ throw new Error(j.erro || "Falha ao salvar."); }
+      const st = j.status;
+      if(!st.mistral || !st.roteiro.ok){
+        renderChecklist(st);
+        const faltas = [];
+        if(!st.mistral) faltas.push("chave da Mistral");
+        if(!st.roteiro.ok) faltas.push("uma chave de roteiro");
+        setupErr.textContent = "Salvo, mas ainda falta: " + faltas.join(", ") + ".";
+      } else {
+        setupOk.textContent = "Chaves salvas!"; setupOk.hidden = false;
+        setTimeout(() => mostrarPasso(st), 500);
+      }
+    } catch(e){
+      setupErr.textContent = e.message;
+    } finally {
+      btn.disabled = false; btn.textContent = "Salvar e continuar";
+    }
+  });
+
+  // ── Passo 2: gravação de voz ──
+  const VOZ_TONS = [
+    { tom:"hipnose", rotulo:"1. Tom calmo (indução)",
+      texto:"Respira fundo, devagar... e vai soltando o ar, desacelerando o corpo e a mente. A cada respiração você se sente mais tranquilo, mais leve, mais presente." },
+    { tom:"normal", rotulo:"2. Tom normal (fala neutra)",
+      texto:"Oi! Esse é um teste da minha voz para o gerador de áudios. Estou lendo este texto no meu ritmo natural, do jeito que eu falo no dia a dia, com calma e clareza." },
+    { tom:"motivacional", rotulo:"3. Tom motivacional (energia)",
+      texto:"Hoje é o seu dia! Você acordou com força, com energia e com vontade de vencer. Respira fundo, levanta a cabeça e vai com tudo, porque você é capaz!" },
+  ];
+
+  function renderVoice(voiceSt){
+    const box = document.getElementById("vBlocks");
+    if(!box.dataset.rendered){
+      box.innerHTML = VOZ_TONS.map(t => `
+        <div class="vblock" data-tom="${t.tom}">
+          <div class="vhead"><b>${t.rotulo}</b><span class="vstate">a gravar</span></div>
+          <p class="vtext">"${t.texto}"</p>
+          <div class="vctrls">
+            <button type="button" class="vbtn vrec">● Gravar</button>
+            <label class="vupload">Subir arquivo<input type="file" accept="audio/*" hidden></label>
+          </div>
+          <audio class="vprev" controls hidden></audio>
+        </div>`).join("");
+      box.dataset.rendered = "1";
+      VOZ_TONS.forEach(t => wireVoiceBlock(box.querySelector('.vblock[data-tom="'+t.tom+'"]'), t.tom));
+    }
+    (voiceSt.gravados || []).forEach(tom => {
+      const bl = document.querySelector('.vblock[data-tom="'+tom+'"]');
+      if(bl){ bl.classList.add("done"); const s = bl.querySelector(".vstate"); s.textContent = "gravado ✓"; s.className = "vstate ok"; }
+    });
+  }
+
+  function wireVoiceBlock(bl, tom){
+    const recBtn = bl.querySelector(".vrec");
+    const fileInput = bl.querySelector('input[type=file]');
+    const prev = bl.querySelector(".vprev");
+    const state = bl.querySelector(".vstate");
+    let mediaRec = null, chunks = [], gravando = false, stream = null;
+
+    recBtn.addEventListener("click", async () => {
+      const voiceErr = document.getElementById("voiceErr");
+      if(!gravando){
+        try { stream = await navigator.mediaDevices.getUserMedia({ audio:true }); }
+        catch(e){ voiceErr.textContent = "Não consegui acessar o microfone. Use 'Subir arquivo' ou libere o microfone no navegador."; return; }
+        voiceErr.textContent = "";
+        chunks = []; mediaRec = new MediaRecorder(stream);
+        mediaRec.ondataavailable = e => { if(e.data && e.data.size) chunks.push(e.data); };
+        mediaRec.onstop = async () => {
+          stream.getTracks().forEach(t => t.stop());
+          const blob = new Blob(chunks, { type: (mediaRec && mediaRec.mimeType) || "audio/webm" });
+          prev.src = URL.createObjectURL(blob); prev.hidden = false;
+          await enviarVoz(blob, tom, bl);
+        };
+        mediaRec.start(); gravando = true;
+        recBtn.textContent = "■ Parar"; recBtn.classList.add("rec");
+        state.textContent = "gravando…"; state.className = "vstate rec";
+      } else {
+        mediaRec.stop(); gravando = false;
+        recBtn.textContent = "● Gravar"; recBtn.classList.remove("rec");
+        state.textContent = "processando…"; state.className = "vstate";
+      }
+    });
+
+    fileInput.addEventListener("change", async () => {
+      const f = fileInput.files[0]; if(!f) return;
+      prev.src = URL.createObjectURL(f); prev.hidden = false;
+      state.textContent = "processando…"; state.className = "vstate";
+      await enviarVoz(f, tom, bl);
+    });
+  }
+
+  async function enviarVoz(blobOrFile, tom, bl){
+    const state = bl.querySelector(".vstate");
+    const voiceErr = document.getElementById("voiceErr");
+    const voiceOk = document.getElementById("voiceOk");
+    voiceErr.textContent = "";
+    const nome = encodeURIComponent(document.getElementById("vNome").value.trim());
+    try {
+      const r = await fetch("api/setup/voice?tom=" + tom + "&nome=" + nome, {
+        method:"POST", headers:{ "Content-Type":"application/octet-stream" }, body: blobOrFile
+      });
+      const j = await r.json();
+      if(!r.ok) throw new Error(j.erro || "Falha ao salvar a voz.");
+      bl.classList.add("done"); state.textContent = "gravado ✓"; state.className = "vstate ok";
+      const vs = j.voice;
+      if(vs && vs.ok){
+        voiceOk.textContent = "Voz completa! Abrindo o app…"; voiceOk.hidden = false;
+        setTimeout(() => { if(j.status) mostrarPasso(j.status); else mostrarLogin(); }, 900);
+      }
+    } catch(e){
+      state.textContent = "erro"; state.className = "vstate rec";
+      voiceErr.textContent = e.message;
+    }
+  }
+
+  checarSetup();
 
   go.addEventListener("click", async () => {
     const tema = document.getElementById("tema").value.trim();
@@ -193,7 +440,7 @@
     try {
       const r = await fetch("api/generate", {
         method:"POST", headers:{"Content-Type":"application/json"},
-        body: JSON.stringify({ tema, duracao, senha, voz })
+        body: JSON.stringify({ tema, duracao, voz })
       });
       const j = await r.json();
       if(!r.ok){ throw new Error(j.erro || "Falha ao iniciar."); }
