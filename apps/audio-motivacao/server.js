@@ -176,6 +176,15 @@ app.get("/roteiro/:id.txt", (req, res) => {
 
 app.get("/api/voices", (_req, res) => res.json({ vozes: listVoices() }));
 
+app.get("/api/jobs", (_req, res) => {
+  const lista = Array.from(jobs.values())
+    .filter(j => j.status === "pronto" || j.status === "erro")
+    .sort((a, b) => new Date(b.criadoEm) - new Date(a.criadoEm))
+    .slice(0, 30)
+    .map(j => publicJob(j));
+  res.json({ jobs: lista });
+});
+
 // ── Onboarding: diagnóstico do ambiente e gravação das chaves ────────────────
 app.get("/api/setup/status", (_req, res) => {
   try { res.json(getStatus()); }

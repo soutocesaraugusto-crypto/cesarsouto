@@ -196,6 +196,20 @@
   .arco-limiar{font-size:11px;color:#d4a855;margin-top:3px}
   .arco-binaural{font-size:11px;color:var(--cream-muted);margin-top:2px}
 
+  /* Histórico */
+  .hist-item{padding:11px 0;border-bottom:1px solid var(--line);display:flex;
+    align-items:flex-start;justify-content:space-between;gap:12px}
+  .hist-item:last-child{border-bottom:none}
+  .hist-info{flex:1;min-width:0}
+  .hist-tema{font-size:13px;color:var(--cream);white-space:nowrap;overflow:hidden;
+    text-overflow:ellipsis;margin-bottom:3px}
+  .hist-meta{font-size:11px;color:var(--cream-muted)}
+  .hist-links{display:flex;gap:10px;flex-shrink:0;align-items:center}
+  .hist-links a{font-size:12px;color:var(--cream);opacity:.7;text-decoration:none;
+    white-space:nowrap}
+  .hist-links a:hover{opacity:1}
+  .hist-empty{font-size:13px;color:var(--cream-muted);text-align:center;padding:16px 0}
+
   /* Footer */
   .foot{text-align:center;color:rgba(221,215,202,.3);font-size:10.5px;
     margin-top:22px;letter-spacing:.14em;text-transform:uppercase}
@@ -439,6 +453,16 @@
       <div id="result"></div>
       <div class="err" id="err"></div>
     </div>
+  </div>
+
+  <!-- Histórico -->
+  <div id="historico" hidden>
+    <div class="divider"></div>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+      <label style="margin:0">Áudios gerados</label>
+      <button id="histRefresh" style="background:none;border:none;color:var(--cream-muted);font-size:12px;cursor:pointer;font-family:Inter,sans-serif;letter-spacing:.04em">↻ atualizar</button>
+    </div>
+    <div id="histLista"></div>
   </div>
 
   <div class="foot">Dra. Lauriane Silva · Reprogramação Mental</div>
@@ -718,7 +742,7 @@
             '<audio controls src="'+j.audioUrl+'"></audio>' +
             '<div class="links"><a href="'+j.audioUrl+'" download>⬇ Baixar áudio</a>' +
             '<a href="'+j.roteiroUrl+'" target="_blank">📄 Ver roteiro</a></div>';
-          go.disabled = false; return;
+          go.disabled = false; carregarHistorico(); return;
         }
         if(j.status === "erro"){
           clearInterval(poll);
@@ -744,7 +768,7 @@
   const setupKeys  = document.getElementById("setupKeys");
   const setupVoice = document.getElementById("setupVoice");
 
-  function liberar(){ setupBox.hidden = true; appBox.hidden = false; }
+  function liberar(){ setupBox.hidden = true; appBox.hidden = false; carregarHistorico(); }
 
   function linha(ok, titulo, sub){
     return `<li class="${ok?'ok':'no'}"><span class="ic">${ok?'✓':'✕'}</span>`
@@ -935,6 +959,45 @@
   }
 
   checarSetup();
+
+  // ── Histórico ─────────────────────────────────────────────────────────────
+  const MODO_LABEL = { motivacional:"Motivacional", tratamento:"Tratamento", proprio:"Roteiro Próprio" };
+
+  function formatarData(iso) {
+    const d = new Date(iso);
+    return d.toLocaleDateString("pt-BR") + " " + d.toLocaleTimeString("pt-BR", { hour:"2-digit", minute:"2-digit" });
+  }
+
+  async function carregarHistorico() {
+    try {
+      const r = await fetch("api/jobs");
+      const { jobs } = await r.json();
+      const el = document.getElementById("histLista");
+      const box = document.getElementById("historico");
+
+      if (!jobs || jobs.length === 0) {
+        el.innerHTML = '<div class="hist-empty">Nenhum áudio gerado ainda.</div>';
+        box.hidden = false; return;
+      }
+
+      box.hidden = false;
+      el.innerHTML = jobs.map(j => {
+        const modo = MODO_LABEL[j.modo] || j.modo || "";
+        const links = j.audioUrl
+          ? `<a href="${j.audioUrl}" download>⬇ MP3</a><a href="${j.roteiroUrl}" target="_blank">📄 Roteiro</a>`
+          : `<span style="color:#e8907a;font-size:11px">erro</span>`;
+        return `<div class="hist-item">
+          <div class="hist-info">
+            <div class="hist-tema">${j.tema || "roteiro próprio"}</div>
+            <div class="hist-meta">${modo} · ${j.duracao || ""} · ${formatarData(j.criadoEm)}</div>
+          </div>
+          <div class="hist-links">${links}</div>
+        </div>`;
+      }).join("");
+    } catch(e) { /* silencioso */ }
+  }
+
+  document.getElementById("histRefresh").addEventListener("click", carregarHistorico);
 </script>
 </body>
 </html>
