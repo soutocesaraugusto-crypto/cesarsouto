@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Gerador de Links — Inself</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,600;0,700;1,400&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--jam:#3F1817;--wine:#562120;--cream:#DDD7CA;--bg:#FAFAF8;--surface:#F2EDE4;--text:#1A1818;--muted:#857D75;--line:#E8E2D9}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;display:flex;align-items:center;justify-content:center;padding:2rem}
+h1,h2,h3{font-family:'Cormorant Garamond',serif;font-weight:700}
+.card{background:#fff;border:1px solid var(--line);border-radius:16px;padding:2.5rem;max-width:600px;width:100%;box-shadow:0 12px 40px rgba(63,24,23,.1)}
+.logo{text-align:center;margin-bottom:2rem}
+.logo img{height:44px}
+.card h2{font-size:1.8rem;color:var(--wine);text-align:center;margin-bottom:.5rem}
+.card .lead{text-align:center;color:var(--muted);font-size:.9rem;margin-bottom:1.75rem}
+.field{margin-bottom:1.1rem}
+.field label{display:block;font-weight:600;font-size:.85rem;margin-bottom:.4rem;color:var(--text)}
+.field input,.field select{width:100%;border:1.5px solid var(--line);border-radius:8px;padding:11px 14px;font-family:'Inter',sans-serif;font-size:.95rem;background:var(--bg);transition:border-color .15s}
+.field input:focus,.field select:focus{outline:none;border-color:var(--wine)}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;border:none;cursor:pointer;font-family:'Inter',sans-serif;font-weight:600;font-size:1rem;border-radius:8px;padding:13px 28px;transition:transform .15s,opacity .15s;width:100%}
+.btn-wine{background:var(--wine);color:var(--cream)}
+.btn-wine:hover{transform:translateY(-1px)}
+.btn-outline{background:transparent;border:1.5px solid var(--line);color:var(--text);font-size:.85rem}
+.pw-screen{display:block}
+.gen-screen{display:none}
+.result-box{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:1.25rem;margin-top:1.5rem}
+.result-box .rb-label{font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);margin-bottom:.5rem}
+.result-link{font-size:.82rem;word-break:break-all;color:var(--wine);background:#fff;border:1px solid var(--line);border-radius:6px;padding:.65rem .85rem;margin-bottom:.75rem;font-family:'Inter',sans-serif;line-height:1.5}
+.log-section{margin-top:2rem}
+.log-section h3{font-size:1.2rem;color:var(--wine);margin-bottom:.9rem;border-bottom:1px solid var(--line);padding-bottom:.5rem}
+.log-empty{color:var(--muted);font-size:.88rem;text-align:center;padding:1rem}
+.log-item{background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:.85rem 1rem;margin-bottom:.65rem;display:flex;align-items:center;gap:1rem;flex-wrap:wrap}
+.log-name{font-weight:600;font-size:.88rem;flex:1;min-width:120px}
+.log-date{font-size:.78rem;color:var(--muted)}
+.log-status{font-size:.72rem;font-weight:700;text-transform:uppercase;padding:3px 10px;border-radius:999px}
+.log-active{background:#EEF8F3;color:#2A6B4A}
+.log-expired{background:#F5F0EE;color:var(--muted)}
+.log-copy{background:none;border:1px solid var(--line);border-radius:6px;padding:4px 10px;font-size:.75rem;cursor:pointer;font-family:'Inter',sans-serif;color:var(--wine);font-weight:600}
+.sep{height:1px;background:var(--line);margin:1.5rem 0}
+.err{color:#8B2020;font-size:.82rem;margin-top:.4rem;display:none}
+.err.show{display:block}
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="logo">
+    <img src="logo-wine.png" alt="Inself — Dra. Lauriane Silva">
+  </div>
+
+  <!-- PASSWORD SCREEN -->
+  <div id="pwScreen" class="pw-screen">
+    <h2>Área Administrativa</h2>
+    <p class="lead">Acesso restrito — Dra. Lauriane Silva</p>
+    <div class="field">
+      <label for="pwInput">Senha de acesso</label>
+      <input type="password" id="pwInput" placeholder="Digite a senha" onkeydown="if(event.key==='Enter')checkPw()">
+    </div>
+    <div id="pwErr" class="err">Senha incorreta.</div>
+    <button class="btn btn-wine" onclick="checkPw()" style="margin-top:.5rem">Entrar</button>
+  </div>
+
+  <!-- GENERATOR SCREEN -->
+  <div id="genScreen" class="gen-screen">
+    <h2>Gerar Link Único</h2>
+    <p class="lead">Cada link permite uma única utilização. Compartilhe individualmente com cada cliente.</p>
+
+    <div class="field">
+      <label for="clientName">Nome do cliente <span style="color:var(--muted);font-weight:400">(referência interna)</span></label>
+      <input type="text" id="clientName" placeholder="Ex: Maria Souza">
+    </div>
+    <div class="field">
+      <label for="expDays">Validade do link</label>
+      <select id="expDays">
+        <option value="1">1 dia</option>
+        <option value="3">3 dias</option>
+        <option value="7" selected>7 dias</option>
+        <option value="14">14 dias</option>
+        <option value="30">30 dias</option>
+      </select>
+    </div>
+    <button class="btn btn-wine" onclick="generateLink()">Gerar Link</button>
+
+    <div id="resultBox" class="result-box" style="display:none">
+      <div class="rb-label">Link gerado — copie e envie ao cliente</div>
+      <div id="generatedLink" class="result-link"></div>
+      <button class="btn btn-outline" onclick="copyGenerated()" style="margin-bottom:.5rem">Copiar link</button>
+      <button class="btn btn-outline" onclick="openWa()" style="margin-top:.3rem">Enviar pelo WhatsApp</button>
+    </div>
+
+    <div class="sep"></div>
+
+    <div class="log-section">
+      <h3>Links Gerados</h3>
+      <div id="logList"></div>
+      <button class="btn btn-outline" onclick="clearLog()" style="margin-top:.75rem;font-size:.78rem;padding:9px 18px;width:auto">Limpar histórico</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ── Config ── */
+const ADMIN_PW = 'inself2024'; // ← altere esta senha
+const APP_URL = 'https://startling-manatee-f5f631.netlify.app'; // ← URL real do app
+const LOG_KEY = 'inself_admin_log';
+const MENTOR_WA = '5547988571458';
+
+let currentLink = '';
+let currentClientName = '';
+
+function checkPw(){
+  const pw = document.getElementById('pwInput').value;
+  if(pw === ADMIN_PW){
+    document.getElementById('pwScreen').style.display = 'none';
+    document.getElementById('genScreen').style.display = 'block';
+    renderLog();
+  } else {
+    document.getElementById('pwErr').classList.add('show');
+  }
+}
+
+function generateToken(days){
+  const rand = Math.random().toString(36).substring(2,10)+Math.random().toString(36).substring(2,6);
+  const expiry = (Date.now()+days*86400000).toString(36);
+  return `${rand}_${expiry}`;
+}
+
+function generateLink(){
+  const name = document.getElementById('clientName').value.trim() || 'Cliente';
+  const days = parseInt(document.getElementById('expDays').value);
+  const token = generateToken(days);
+  const link = `${APP_URL}?t=${token}`;
+  const expDate = new Date(Date.now()+days*86400000).toLocaleDateString('pt-BR');
+
+  currentLink = link;
+  currentClientName = name;
+
+  document.getElementById('generatedLink').textContent = link;
+  document.getElementById('resultBox').style.display = 'block';
+
+  // Save to log
+  const log = JSON.parse(localStorage.getItem(LOG_KEY)||'[]');
+  log.unshift({ name, token, link, days, expiry: Date.now()+days*86400000, generated: new Date().toLocaleDateString('pt-BR') });
+  localStorage.setItem(LOG_KEY, JSON.stringify(log.slice(0,50)));
+  renderLog();
+
+  document.getElementById('clientName').value = '';
+}
+
+function copyGenerated(){
+  navigator.clipboard.writeText(currentLink).then(()=>{ alert('Link copiado!'); }).catch(()=>{ prompt('Copie o link:', currentLink); });
+}
+
+function openWa(){
+  const msg = encodeURIComponent(`Olá ${currentClientName}! Segue seu link exclusivo para o Perfil Comportamental Inself por Dra. Lauriane Silva:\n\n${currentLink}\n\nEste link é exclusivo para você e tem uso único. Qualquer dúvida, pode me chamar.`);
+  window.open(`https://wa.me/?text=${msg}`, '_blank');
+}
+
+function copyLogLink(link){
+  navigator.clipboard.writeText(link).then(()=>{ alert('Link copiado!'); }).catch(()=>{ prompt('Copie:', link); });
+}
+
+function clearLog(){
+  if(!confirm('Limpar todo o histórico de links?')) return;
+  localStorage.removeItem(LOG_KEY);
+  renderLog();
+}
+
+function renderLog(){
+  const log = JSON.parse(localStorage.getItem(LOG_KEY)||'[]');
+  const el = document.getElementById('logList');
+  if(!log.length){ el.innerHTML = '<div class="log-empty">Nenhum link gerado ainda.</div>'; return; }
+  el.innerHTML = log.map(item=>{
+    const active = Date.now() < item.expiry;
+    const statusCls = active ? 'log-active' : 'log-expired';
+    const statusTxt = active ? 'Ativo' : 'Expirado';
+    return `<div class="log-item">
+      <span class="log-name">${item.name}</span>
+      <span class="log-date">Gerado: ${item.generated} · ${item.days}d</span>
+      <span class="log-status ${statusCls}">${statusTxt}</span>
+      ${active ? `<button class="log-copy" onclick="copyLogLink('${item.link}')">Copiar</button>` : ''}
+    </div>`;
+  }).join('');
+}
+
+document.getElementById('pwInput').addEventListener('keydown', e=>{ if(e.key==='Enter') checkPw(); });
+</script>
+</body>
+</html>

@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Análise de Perfil Comportamental GMS — Dra. Lauriane Silva</title>
+<title>Perfil Comportamental Inself — Dra. Lauriane Silva</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -40,9 +40,8 @@ img{max-width:100%}
 /* ───── LANDING ───── */
 #s-landing .hero{background:linear-gradient(160deg,var(--jam) 0%,var(--wine) 100%);color:var(--cream);padding:64px 20px 80px}
 .logo-block{text-align:center;margin-bottom:48px}
-.logo-gms{font-family:'Cormorant Garamond',serif;font-weight:700;font-size:4rem;color:var(--cream);line-height:1}
-.logo-tag{font-family:'Inter',sans-serif;font-size:.65rem;text-transform:uppercase;letter-spacing:.25em;color:rgba(221,215,202,.7);margin-top:10px}
-.logo-author{font-family:'Cormorant Garamond',serif;font-style:italic;font-size:1.1rem;color:rgba(221,215,202,.9);margin-top:14px}
+.logo-img{height:60px;width:auto;display:block;margin:0 auto}
+.logo-img-sm{height:40px;width:auto;display:block;margin:0 auto}
 .hero-title{text-align:center;font-size:2.6rem;color:var(--cream);margin-top:8px}
 .hero-sub{text-align:center;font-family:'Inter',sans-serif;font-weight:500;font-size:1.05rem;color:rgba(221,215,202,.85);margin-top:10px;max-width:680px;margin-left:auto;margin-right:auto}
 .hero-cta{text-align:center;margin-top:40px}
@@ -57,7 +56,7 @@ img{max-width:100%}
 .dims-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;max-width:920px;margin:32px auto 0}
 .dim-card{background:var(--bg);border:1px solid var(--line);border-radius:14px;padding:22px 16px;text-align:center;transition:transform .2s ease,box-shadow .2s ease}
 .dim-card:hover{transform:translateY(-4px);box-shadow:0 12px 28px rgba(63,24,23,.10)}
-.dim-emoji{font-size:1.9rem;display:block;margin-bottom:10px}
+.dim-num{font-family:'Cormorant Garamond',serif;font-size:1.3rem;font-weight:700;color:var(--wine);display:block;margin-bottom:8px;letter-spacing:.02em}
 .dim-name{font-family:'Inter',sans-serif;font-weight:600;font-size:.82rem;color:var(--text)}
 .dim-sub{font-size:.72rem;color:var(--muted);margin-top:4px}
 .stats-bar{display:flex;justify-content:center;flex-wrap:wrap;gap:10px;margin:42px auto 0;max-width:760px}
@@ -184,13 +183,27 @@ img{max-width:100%}
 .res-nav{position:fixed;bottom:0;left:0;right:0;background:rgba(250,250,248,.97);backdrop-filter:blur(8px);border-top:1px solid var(--line);padding:14px 20px;z-index:30}
 .res-nav-inner{max-width:820px;margin:0 auto;display:flex;justify-content:space-between;gap:12px}
 
+/* Financial diagnosis */
+.financial-diag{border-radius:12px;padding:1.5rem;margin-top:1.25rem;border-left:4px solid}
+.diag-aligned{background:#F0F8F4;border-color:#2A6B4A}
+.diag-aligned .fd-title{color:#2A6B4A}
+.diag-moderate{background:#FEF8EE;border-color:#B5601A}
+.diag-moderate .fd-title{color:#B5601A}
+.diag-critical{background:#FDF1F1;border-color:var(--wine)}
+.diag-critical .fd-title{color:var(--wine)}
+.fd-title{font-family:'Cormorant Garamond',serif;font-size:1.15rem;font-weight:700;margin-bottom:.75rem}
+.fd-body{font-size:.88rem;color:var(--text);line-height:1.75;margin-bottom:1rem}
+.fd-action{background:rgba(0,0,0,.04);border-radius:8px;padding:.9rem 1rem}
+.fd-action-label{font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);margin-bottom:.4rem}
+.fd-action p{font-size:.85rem;color:var(--text);line-height:1.65}
+
 /* Toast */
 .toast{position:fixed;bottom:90px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--jam);color:var(--cream);padding:13px 24px;border-radius:999px;font-size:.9rem;font-weight:500;opacity:0;pointer-events:none;transition:all .3s ease;z-index:100}
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 
 /* Responsive */
 @media(max-width:768px){
-  .logo-gms{font-size:3rem}
+  .logo-img{height:46px}
   .hero-title{font-size:2rem}
   .dims-grid{grid-template-columns:repeat(2,1fr)}
   .summary-grid{grid-template-columns:repeat(2,1fr)}
@@ -215,11 +228,9 @@ img{max-width:100%}
 <section id="s-landing" class="screen active">
   <div class="hero">
     <div class="logo-block">
-      <div class="logo-gms">GMS</div>
-      <div class="logo-tag">Gestão e Mentalidade de Sucesso</div>
-      <div class="logo-author">por Dra. Lauriane Silva</div>
+      <img src="logo-white.png" class="logo-img" alt="Inself — Dra. Lauriane Silva">
     </div>
-    <h1 class="hero-title">ANÁLISE DE PERFIL COMPORTAMENTAL</h1>
+    <h1 class="hero-title">PERFIL COMPORTAMENTAL INSELF</h1>
     <p class="hero-sub">A ferramenta mais completa e atualizada do mercado</p>
     <div class="hero-cta">
       <button class="btn btn-cream" onclick="goRegister()">Iniciar Minha Análise →</button>
@@ -228,7 +239,7 @@ img{max-width:100%}
 
   <div class="intro-section">
     <div class="intro-body">
-      <p>A <strong>Análise de Perfil Comportamental GMS®</strong> foi desenvolvida para compreender com profundidade a personalidade e as potenciais competências dos indivíduos — identificando pontos fortes e oportunidades de desenvolvimento para promover crescimento pessoal e profissional.</p>
+      <p>O <strong>Perfil Comportamental Inself®</strong> foi desenvolvido para compreender com profundidade a personalidade e as potenciais competências dos indivíduos — identificando pontos fortes e oportunidades de desenvolvimento para promover crescimento pessoal e profissional.</p>
       <p>Pesquisas na área do desenvolvimento humano mostram que os indivíduos mais eficazes são aqueles que se conhecem melhor. Nesta análise você descobrirá:</p>
       <ul>
         <li>Seu estilo <strong>NATURAL</strong> de comportamento — como você realmente é</li>
@@ -243,14 +254,14 @@ img{max-width:100%}
   <div class="dims-section">
     <h2 class="dims-title">8 Dimensões Avaliadas</h2>
     <div class="dims-grid">
-      <div class="dim-card"><span class="dim-emoji">📊</span><div class="dim-name">DISC</div><div class="dim-sub">William M. Marston</div></div>
-      <div class="dim-card"><span class="dim-emoji">🧠</span><div class="dim-name">MBTI Myers-Briggs</div><div class="dim-sub">16 Tipos</div></div>
-      <div class="dim-card"><span class="dim-emoji">💎</span><div class="dim-name">Valores Spranger</div><div class="dim-sub">O que te move</div></div>
-      <div class="dim-card"><span class="dim-emoji">👑</span><div class="dim-name">Estilo de Liderança</div><div class="dim-sub">Como você lidera</div></div>
-      <div class="dim-card"><span class="dim-emoji">🪞</span><div class="dim-name">Crenças de Identidade</div><div class="dim-sub">Quem você é</div></div>
-      <div class="dim-card"><span class="dim-emoji">⚡</span><div class="dim-name">Crenças de Capacidade</div><div class="dim-sub">O que você pode</div></div>
-      <div class="dim-card"><span class="dim-emoji">💰</span><div class="dim-name">Merecimento de Abundância</div><div class="dim-sub">O que você merece</div></div>
-      <div class="dim-card"><span class="dim-emoji">🎯</span><div class="dim-name">Plano de Ação GMS</div><div class="dim-sub">Seus próximos passos</div></div>
+      <div class="dim-card"><span class="dim-num">I.</span><div class="dim-name">Perfil DISC</div><div class="dim-sub">William M. Marston</div></div>
+      <div class="dim-card"><span class="dim-num">II.</span><div class="dim-name">MBTI Myers-Briggs</div><div class="dim-sub">16 Tipos de Personalidade</div></div>
+      <div class="dim-card"><span class="dim-num">III.</span><div class="dim-name">Hierarquia de Valores</div><div class="dim-sub">Eduard Spranger</div></div>
+      <div class="dim-card"><span class="dim-num">IV.</span><div class="dim-name">Estilos de Liderança</div><div class="dim-sub">Como você lidera</div></div>
+      <div class="dim-card"><span class="dim-num">V.</span><div class="dim-name">Crenças de Identidade</div><div class="dim-sub">Quem você é como líder</div></div>
+      <div class="dim-card"><span class="dim-num">VI.</span><div class="dim-name">Crenças de Capacidade</div><div class="dim-sub">O que você acredita conseguir</div></div>
+      <div class="dim-card"><span class="dim-num">VII.</span><div class="dim-name">Merecimento de Abundância</div><div class="dim-sub">Sua relação com prosperidade</div></div>
+      <div class="dim-card"><span class="dim-num">VIII.</span><div class="dim-name">Plano de Ação Inself</div><div class="dim-sub">Seus próximos passos</div></div>
     </div>
     <div class="stats-bar">
       <div class="stat-item">80+ <span>Questões</span></div>
@@ -272,7 +283,7 @@ img{max-width:100%}
     <p class="reg-lead">Suas informações são usadas apenas para personalizar seu relatório e são mantidas com total privacidade.</p>
 
     <div id="resumeBanner" class="resume-banner">
-      <strong>📌 Você tem um progresso salvo.</strong>
+      <strong>Você tem um progresso salvo.</strong>
       <div style="color:var(--muted);margin-top:4px">Deseja continuar de onde parou?</div>
       <button class="btn btn-wine" style="padding:9px 20px;font-size:.85rem" onclick="resumeProgress()">Continuar</button>
       <button class="btn btn-outline" style="padding:9px 20px;font-size:.85rem" onclick="discardProgress()">Começar de novo</button>
@@ -330,18 +341,27 @@ img{max-width:100%}
 <!-- ════════ SCREEN 3 — RESULTS ════════ -->
 <section id="s-results" class="screen">
   <div class="res-header">
-    <h1>Seu Relatório Comportamental GMS</h1>
+    <img src="logo-white.png" class="logo-img-sm" alt="Inself" style="margin-bottom:1.25rem">
+    <h1>Seu Perfil Comportamental Inself</h1>
     <div class="res-name" id="resName"></div>
     <div class="res-date" id="resDate"></div>
   </div>
   <div class="res-body" id="resBody"></div>
   <div class="res-nav">
     <div class="res-nav-inner">
-      <button class="btn btn-outline" onclick="restartTest()">↺ Nova Análise</button>
-      <button class="btn btn-wine" onclick="savePDF()">🖨️ Salvar PDF</button>
+      <button class="btn btn-outline" onclick="restartTest()">← Nova Análise</button>
+      <button class="btn btn-wine" onclick="savePDF()">Salvar PDF</button>
     </div>
   </div>
 </section>
+
+<!-- Blocked screen (token inválido/expirado/usado) -->
+<div id="s-blocked" style="display:none;min-height:100vh;background:var(--bg);flex-direction:column;align-items:center;justify-content:center;padding:2.5rem;text-align:center">
+  <img src="logo-wine.png" style="height:52px;margin-bottom:2rem" alt="Inself">
+  <h2 style="font-family:'Cormorant Garamond',serif;color:var(--wine);font-size:1.8rem;margin-bottom:.75rem">Acesso Restrito</h2>
+  <p id="blockedMsg" style="max-width:480px;color:var(--muted);line-height:1.8;margin-bottom:2rem;font-size:.95rem"></p>
+  <a href="https://wa.me/5547988571458?text=Olá+Dra.+Lauriane!+Gostaria+de+solicitar+meu+link+para+o+Perfil+Comportamental+Inself." target="_blank" style="display:inline-flex;align-items:center;gap:8px;background:var(--wine);color:var(--cream);padding:.9rem 2rem;border-radius:6px;text-decoration:none;font-weight:600;font-size:.9rem;font-family:'Inter',sans-serif">Solicitar meu link pelo WhatsApp</a>
+</div>
 
 <div id="toast" class="toast"></div>
 
@@ -361,9 +381,9 @@ const EMAILJS_CFG = {
 };
 
 const CFG = {
-  appName: 'Análise de Perfil Comportamental GMS',
+  appName: 'Perfil Comportamental Inself',
   mentorName: 'Dra. Lauriane Silva',
-  mentorWhatsApp: '5548988888888', // ← substitua pelo número real
+  mentorWhatsApp: '5547988571458',
   mentorEmail: 'lauriane20@gmail.com',
   appUrl: 'https://startling-manatee-f5f631.netlify.app',
   instagramUrl: 'https://www.instagram.com/dralauriane/',
@@ -834,11 +854,11 @@ function topDisc(disc){
   return sorted[0][0]+sorted[1][0];
 }
 function bLevel(s){
-  if(s>=80)return{l:'Muito Forte 🌟',c:'#1A7A4A'};
-  if(s>=65)return{l:'Forte ✅',c:'#2A9A5A'};
-  if(s>=50)return{l:'Moderado 🔄',c:'#B5601A'};
-  if(s>=35)return{l:'Em Desenvolvimento ⚠️',c:'#C07010'};
-  return{l:'Atenção Necessária 🔴',c:'#8B2020'};
+  if(s>=80)return{l:'Muito Forte',c:'#1A7A4A'};
+  if(s>=65)return{l:'Forte',c:'#2A9A5A'};
+  if(s>=50)return{l:'Moderado',c:'#B5601A'};
+  if(s>=35)return{l:'Em Desenvolvimento',c:'#C07010'};
+  return{l:'Atenção Necessária',c:'#8B2020'};
 }
 
 /* ════════ RESULTS RENDER ════════ */
@@ -863,7 +883,7 @@ function showResults(){
   document.getElementById('resDate').textContent = new Date().toLocaleDateString('pt-BR',{day:'2-digit',month:'long',year:'numeric'});
 
   const discProfileText = DA[profileKey] || `Perfil <strong>${profileKey}</strong>: combinação equilibrada dos seus fatores comportamentais, com forças que se complementam.`;
-  const waMsg = encodeURIComponent(`Olá Dra. Lauriane! Acabei de concluir minha Análise de Perfil Comportamental GMS e gostaria de agendar minha sessão gratuita de 30 minutos. Meu perfil: ${profileKey} / ${mbti.type} (${mbtiInfo.name})`);
+  const waMsg = encodeURIComponent(`Olá Dra. Lauriane! Acabei de concluir meu Perfil Comportamental Inself e gostaria de agendar minha sessão gratuita de 30 minutos. Meu perfil: ${profileKey} / ${mbti.type} (${mbtiInfo.name})`);
   const waLink = `https://wa.me/${CFG.mentorWhatsApp}?text=${waMsg}`;
 
   let html = '';
@@ -879,16 +899,16 @@ function showResults(){
   </div>`;
 
   /* 2. Share bar */
-  const shareTxt = encodeURIComponent(`Concluí minha Análise de Perfil Comportamental GMS! Perfil: ${profileKey} / ${mbti.type} — ${mbtiInfo.name}. Faça a sua: ${CFG.appUrl}`);
+  const shareTxt = encodeURIComponent(`Concluí meu Perfil Comportamental Inself! Perfil: ${profileKey} / ${mbti.type} — ${mbtiInfo.name}. Faça o seu: ${CFG.appUrl}`);
   html += `<div class="share-bar">
-    <a class="btn btn-ghost" href="https://wa.me/?text=${shareTxt}" target="_blank">💬 WhatsApp</a>
-    <a class="btn btn-ghost" href="mailto:?subject=${encodeURIComponent('Meu Perfil Comportamental GMS')}&body=${shareTxt}">✉️ E-mail</a>
-    <button class="btn btn-ghost" onclick="savePDF()">📄 PDF</button>
-    <button class="btn btn-ghost" onclick="copyLink()">🔗 Copiar link</button>
+    <a class="btn btn-ghost" href="https://wa.me/?text=${shareTxt}" target="_blank">WhatsApp</a>
+    <a class="btn btn-ghost" href="mailto:?subject=${encodeURIComponent('Meu Perfil Comportamental Inself')}&body=${shareTxt}">E-mail</a>
+    <button class="btn btn-ghost" onclick="savePDF()">PDF</button>
+    <button class="btn btn-ghost" onclick="copyLink()">Copiar link</button>
   </div>`;
 
   /* 3. DISC card */
-  html += `<div class="res-card"><h2>📊 Perfil DISC</h2>
+  html += `<div class="res-card"><h2>I. Perfil DISC</h2>
     <div class="method-intro">${METHOD.disc}</div>
     <div class="bars">
       ${discBar('Dominância (D)',disc.D)}
@@ -900,7 +920,7 @@ function showResults(){
   </div>`;
 
   /* 4. MBTI card */
-  html += `<div class="res-card"><h2>🧠 Tipo Myers-Briggs</h2>
+  html += `<div class="res-card"><h2>II. Tipo Myers-Briggs (MBTI)</h2>
     <div class="method-intro">${METHOD.mbti}</div>
     <div style="text-align:center;margin:10px 0">
       <div style="font-family:'Cormorant Garamond',serif;font-size:3rem;font-weight:700;color:var(--wine);letter-spacing:.08em">${mbti.type}</div>
@@ -919,7 +939,7 @@ function showResults(){
   /* 5. Values card */
   let valBars = '';
   vs.forEach(([k,v])=>{ valBars += discBar(VINFO[k].name,v,VINFO[k].color); });
-  html += `<div class="res-card"><h2>💎 Hierarquia de Valores</h2>
+  html += `<div class="res-card"><h2>III. Hierarquia de Valores</h2>
     <div class="method-intro">${METHOD.values}</div>
     <div class="bars">${valBars}</div>
     <div class="profile-text">Seu principal motivador é <strong>${topValueName}</strong>. Esse valor orienta suas decisões mais profundas, muitas vezes de forma inconsciente. Alinhar seu trabalho e suas metas a esse motivador é a chave para sustentar energia e propósito ao longo do tempo.</div>
@@ -928,7 +948,7 @@ function showResults(){
   /* 6. Leadership card */
   let leadBars = '';
   ls.forEach(([k,v])=>{ leadBars += discBar(LEAD_INFO[k].name,v); });
-  html += `<div class="res-card"><h2>👑 Estilo de Liderança</h2>
+  html += `<div class="res-card"><h2>IV. Estilo de Liderança</h2>
     <div class="method-intro">${METHOD.leadership}</div>
     <div class="bars">${leadBars}</div>
     <div class="profile-text"><strong>${topLeadName}:</strong> ${LEAD_INFO[ls[0][0]].desc}</div>
@@ -936,56 +956,58 @@ function showResults(){
 
   /* 7. Beliefs map */
   const il = bLevel(ident), cl = bLevel(capac), al = bLevel(abund);
-  html += `<div class="res-card"><h2>🪞 Mapa de Crenças</h2>
+  html += `<div class="res-card"><h2>V. Mapa de Crenças</h2>
     <div class="method-intro">${METHOD.beliefs}</div>
     <div class="belief-grid">
       <div class="belief-item"><div class="belief-score" style="color:${il.c}">${ident}</div><div class="belief-lbl" style="color:${il.c}">${il.l}</div><div class="belief-name">Identidade</div></div>
       <div class="belief-item"><div class="belief-score" style="color:${cl.c}">${capac}</div><div class="belief-lbl" style="color:${cl.c}">${cl.l}</div><div class="belief-name">Capacidade</div></div>
       <div class="belief-item"><div class="belief-score" style="color:${al.c}">${abund}</div><div class="belief-lbl" style="color:${al.c}">${al.l}</div><div class="belief-name">Abundância</div></div>
     </div>
-    <div class="profile-text">${beliefsNarrative(ident,capac,abund)}</div>
+    <div class="profile-text" style="margin-top:1.25rem">${beliefsNarrative(ident,capac,abund)}</div>
+    ${financialDiagnosis(abund,ident,capac)}
   </div>`;
 
   /* 8. Radar chart */
-  html += `<div class="res-card"><h2>🎯 Mapa de Competências</h2>
+  html += `<div class="res-card"><h2>VI. Mapa de Competências</h2>
     <div class="method-intro">Visão integrada das suas 16 principais competências comportamentais, derivadas dos seus resultados de DISC e do seu mapa de crenças.</div>
     <div class="chart-wrap"><canvas id="radarCanvas"></canvas></div>
   </div>`;
 
   /* 9. Development plan */
-  html += `<div class="res-card"><h2>🎯 Plano de Desenvolvimento GMS</h2>
+  html += `<div class="res-card"><h2>VII. Plano de Desenvolvimento Inself</h2>
     <div class="method-intro">Recomendações personalizadas com base no seu perfil completo. Pequenos ajustes consistentes geram grandes transformações.</div>
     <ul class="plan-list">${buildPlan(disc,mbti,ident,capac,abund,profileKey).map((p,i)=>`<li><span class="plan-n">${i+1}</span><span>${p}</span></li>`).join('')}</ul>
   </div>`;
 
   /* 10. Bonus CTA */
   html += `<div class="bonus-block">
-    <div class="bonus-emoji">🎁</div>
-    <h3>Você ganhou 30 minutos gratuitos com a Dra. Lauriane Silva!</h3>
-    <p>Este é um presente exclusivo para quem concluiu a Análise de Perfil Comportamental GMS.</p>
+    <div style="font-family:'Cormorant Garamond',serif;font-size:1rem;text-transform:uppercase;letter-spacing:.2em;opacity:.7;margin-bottom:1rem">Presente Exclusivo</div>
+    <h3>30 minutos gratuitos com a Dra. Lauriane Silva</h3>
+    <p>Este é um presente exclusivo para quem concluiu o Perfil Comportamental Inself. Use esse tempo para transformar seu diagnóstico em um plano de ação real.</p>
     <div class="bonus-steps">
       <div class="bstep"><span class="bstep-n">1</span><span>Siga <strong>@dralauriane</strong> no Instagram</span></div>
-      <div class="bstep"><span class="bstep-n">2</span><span>Envie uma mensagem: <em>"Quero minha sessão gratuita do GMS"</em></span></div>
+      <div class="bstep"><span class="bstep-n">2</span><span>Envie uma mensagem: <em>"Quero minha sessão gratuita do Inself"</em></span></div>
     </div>
     <div class="bonus-btns">
-      <a href="${CFG.instagramUrl}" target="_blank" class="bb-insta">📸 Seguir @dralauriane</a>
-      <a href="${waLink}" target="_blank" class="bb-wpp">💬 Solicitar Horário</a>
+      <a href="${CFG.instagramUrl}" target="_blank" class="bb-insta">Seguir @dralauriane</a>
+      <a href="${waLink}" target="_blank" class="bb-wpp">Solicitar Horário</a>
     </div>
   </div>`;
 
   /* 11. Mentor CTA */
-  const mentorBody = encodeURIComponent(`Olá ${CFG.mentorName},\n\nConcluí a Análise de Perfil Comportamental GMS.\n\nNome: ${ST.name}\nE-mail: ${ST.email}\nWhatsApp: ${ST.phone||'—'}\n\nResultados:\n• DISC: ${profileKey} (D${disc.D} I${disc.I} S${disc.S} C${disc.C})\n• MBTI: ${mbti.type} — ${mbtiInfo.name}\n• Valor principal: ${topValueName}\n• Liderança: ${topLeadName}\n• Identidade: ${ident} | Capacidade: ${capac} | Abundância: ${abund}\n\nGostaria de conversar sobre meu desenvolvimento.`);
-  const mentorWaMsg = encodeURIComponent(`Olá ${CFG.mentorName}! Concluí a Análise GMS. Perfil: ${profileKey} / ${mbti.type} (${mbtiInfo.name}). Valor: ${topValueName}. Crenças — Id:${ident} Cap:${capac} Ab:${abund}. Gostaria de conversar sobre meu desenvolvimento.`);
+  const mentorBody = encodeURIComponent(`Olá ${CFG.mentorName},\n\nConcluí o Perfil Comportamental Inself.\n\nNome: ${ST.name}\nE-mail: ${ST.email}\nWhatsApp: ${ST.phone||'—'}\n\nResultados:\n— DISC: ${profileKey} (D${disc.D} I${disc.I} S${disc.S} C${disc.C})\n— MBTI: ${mbti.type} — ${mbtiInfo.name}\n— Valor principal: ${topValueName}\n— Liderança: ${topLeadName}\n— Identidade: ${ident}/100 | Capacidade: ${capac}/100 | Abundância: ${abund}/100\n\nGostaria de conversar sobre meu desenvolvimento.`);
+  const mentorWaMsg = encodeURIComponent(`Olá ${CFG.mentorName}! Concluí o Perfil Comportamental Inself. Perfil: ${profileKey} / ${mbti.type} (${mbtiInfo.name}). Valor: ${topValueName}. Crenças — Id:${ident} Cap:${capac} Ab:${abund}. Gostaria de conversar sobre meu desenvolvimento.`);
   html += `<div class="mentor-card">
-    <h3>Compartilhe seu resultado com a ${CFG.mentorName}</h3>
-    <p>Envie seu relatório para um acompanhamento personalizado do seu desenvolvimento.</p>
+    <h3>Envie seu resultado para a ${CFG.mentorName}</h3>
+    <p>Compartilhe seu relatório para um acompanhamento personalizado do seu desenvolvimento.</p>
     <div class="mentor-btns">
-      <a class="btn btn-cream" href="https://wa.me/${CFG.mentorWhatsApp}?text=${mentorWaMsg}" target="_blank">💬 Enviar via WhatsApp</a>
-      <a class="btn btn-cream" href="mailto:${CFG.mentorEmail}?subject=${encodeURIComponent('Meu Perfil GMS — '+ST.name)}&body=${mentorBody}">✉️ Enviar via E-mail</a>
+      <a class="btn btn-cream" href="https://wa.me/${CFG.mentorWhatsApp}?text=${mentorWaMsg}" target="_blank">Enviar via WhatsApp</a>
+      <a class="btn btn-cream" href="mailto:${CFG.mentorEmail}?subject=${encodeURIComponent('Perfil Inself — '+ST.name)}&body=${mentorBody}">Enviar via E-mail</a>
     </div>
   </div>`;
 
   document.getElementById('resBody').innerHTML = html;
+  markTokenUsed(window._activeToken);
   show('s-results');
 
   /* animate bars */
@@ -1006,6 +1028,28 @@ function dichBar(left,right,lp,rp){
   const dom = lp>=rp;
   return `<div class="bar-row"><div class="bar-top"><span>${left} (${lp}%)</span><span>${right} (${rp}%)</span></div><div class="bar-track"><div class="bar-fill" data-w="${dom?lp:rp}" style="width:0;${dom?'':'margin-left:auto;'}background:var(--wine)"></div></div></div>`;
 }
+function financialDiagnosis(ab,id,ca){
+  const overall = Math.round(ab*0.5 + id*0.25 + ca*0.25);
+  let cls,title,body,action;
+  if(overall>=80){
+    cls='diag-aligned';
+    title='Mentalidade Financeira Alinhada';
+    body=`Seu conjunto de crenças — Identidade (${id}/100), Capacidade (${ca}/100) e Merecimento (${ab}/100) — está acima do limiar crítico de 80 pontos. Isso indica que você opera a partir de uma mentalidade de abundância: acredita que merece prosperar, que tem capacidade de gerar riqueza e que sua identidade é compatível com o sucesso financeiro em alto nível.`;
+    action='Continue cultivando e expandindo esse campo. A manutenção de crenças alinhadas exige revisão periódica, especialmente em períodos de expansão acelerada — novos níveis trazem novas crenças a serem trabalhadas.';
+  } else if(overall>=65){
+    cls='diag-moderate';
+    title='Crenças em Desenvolvimento — Zona de Atenção';
+    body=`Crenças financeiras abaixo de 80 criam um "teto de vidro invisível": você consegue crescer até um certo ponto, mas uma força subconsciente freia a expansão. Com um score combinado de ${overall}/100, você provavelmente já experimenta ciclos de avanço e recuo financeiro — sentindo que quase chega lá, mas algo sempre interrompe.`;
+    action='Para superar esse limiar, não basta mudar comportamentos financeiros — é necessário reprogramar as crenças na raiz. Enquanto a mente inconsciente interpretar prosperidade como perigosa, improvável ou "não para mim", qualquer estratégia encontrará resistência interna. A sessão gratuita com a Dra. Lauriane Silva é o próximo passo.';
+  } else {
+    cls='diag-critical';
+    title='Bloqueio Financeiro Identificado — Reprogramação Necessária';
+    body=`Um score combinado de ${overall}/100 é um sinal claro: existe um bloqueio subconsciente ativamente impedindo sua prosperidade. Crenças abaixo de 65 em qualquer dimensão criam padrões de sabotagem automática — você pode trabalhar intensamente, mas os resultados financeiros ficam abaixo do seu real potencial. Isso não é falta de esforço ou de habilidade. É programação mental incompatível com a abundância.`;
+    action='Reprogramação mental não é opcional neste ponto — é urgente. Enquanto essas crenças permanecerem ativas no inconsciente, qualquer estratégia de negócio encontrará resistência interna. A Dra. Lauriane Silva trabalha com reprogramação de crenças financeiras através de hipnoterapia clínica e neurociência comportamental — agende sua sessão gratuita agora.';
+  }
+  return `<div class="financial-diag ${cls}"><div class="fd-title">${title}</div><p class="fd-body">${body}</p><div class="fd-action"><div class="fd-action-label">O que fazer</div><p>${action}</p></div></div>`;
+}
+
 function beliefsNarrative(id,cap,ab){
   const lowest = Math.min(id,cap,ab);
   let focus = '';
@@ -1097,17 +1141,17 @@ function toast(msg){
 function copyLink(){
   const url = CFG.appUrl;
   if(navigator.clipboard && navigator.clipboard.writeText){
-    navigator.clipboard.writeText(url).then(()=>toast('🔗 Link copiado!')).catch(()=>fallbackCopy(url));
+    navigator.clipboard.writeText(url).then(()=>toast('Link copiado!')).catch(()=>fallbackCopy(url));
   } else { fallbackCopy(url); }
 }
 function fallbackCopy(text){
   const ta=document.createElement('textarea'); ta.value=text; document.body.appendChild(ta); ta.select();
-  try{ document.execCommand('copy'); toast('🔗 Link copiado!'); }catch(e){ toast('Não foi possível copiar.'); }
+  try{ document.execCommand('copy'); toast('Link copiado!'); }catch(e){ toast('Não foi possível copiar.'); }
   document.body.removeChild(ta);
 }
 function savePDF(){
   const old = document.title;
-  document.title = `Perfil GMS — ${ST.name}`;
+  document.title = `Perfil Inself — ${ST.name}`;
   window.print();
   setTimeout(()=>{ document.title = old; }, 500);
 }
@@ -1122,9 +1166,63 @@ function restartTest(){
   show('s-landing');
 }
 
+/* ════════ TOKEN SYSTEM ════════ */
+const USED_TOKENS_KEY = 'inself_used_tokens';
+window._activeToken = null;
+
+function getUrlToken(){
+  return new URLSearchParams(window.location.search).get('t') || null;
+}
+function isTokenValid(token){
+  if(!token) return {valid:false,reason:'no_token'};
+  try{
+    const parts = token.split('_');
+    if(parts.length !== 2) return {valid:false,reason:'invalid_format'};
+    const expiry = parseInt(parts[1], 36);
+    if(isNaN(expiry)) return {valid:false,reason:'invalid_format'};
+    if(Date.now() > expiry) return {valid:false,reason:'expired'};
+    const used = JSON.parse(localStorage.getItem(USED_TOKENS_KEY)||'[]');
+    if(used.includes(token)) return {valid:false,reason:'already_used'};
+    return {valid:true};
+  }catch(e){ return {valid:false,reason:'error'}; }
+}
+function markTokenUsed(token){
+  if(!token) return;
+  try{
+    const used = JSON.parse(localStorage.getItem(USED_TOKENS_KEY)||'[]');
+    if(!used.includes(token)){ used.push(token); localStorage.setItem(USED_TOKENS_KEY, JSON.stringify(used)); }
+  }catch(e){}
+}
+// Called from admin.html (exposed globally)
+function generateToken(days=7){
+  const rand = Math.random().toString(36).substring(2,10)+Math.random().toString(36).substring(2,6);
+  const expiry = (Date.now()+days*86400000).toString(36);
+  return `${rand}_${expiry}`;
+}
+
 /* ════════ INIT ════════ */
 window.addEventListener('DOMContentLoaded', ()=>{
-  /* Landing is shown by default. Resume offered on register screen. */
+  const token = getUrlToken();
+  const validation = isTokenValid(token);
+
+  if(!validation.valid){
+    // Show blocked screen
+    document.getElementById('s-landing').style.display = 'none';
+    const blocked = document.getElementById('s-blocked');
+    blocked.style.display = 'flex';
+    const msgs = {
+      no_token: 'Este link não é válido. Para realizar o Perfil Comportamental Inself, solicite um link personalizado à Dra. Lauriane Silva.',
+      expired: 'Este link expirou. Entre em contato com a Dra. Lauriane Silva para receber um novo link.',
+      already_used: 'Este link já foi utilizado. Cada link é exclusivo para um único acesso. Entre em contato com a Dra. Lauriane Silva para realizar uma nova análise.',
+      invalid_format: 'Link inválido. Certifique-se de usar o link completo enviado pela Dra. Lauriane Silva.',
+      error: 'Não foi possível validar o link. Tente novamente ou entre em contato.',
+    };
+    document.getElementById('blockedMsg').textContent = msgs[validation.reason] || msgs.error;
+    return;
+  }
+
+  window._activeToken = token;
+  /* Landing shown by default. Resume offered on register screen. */
 });
 </script>
 </body>
