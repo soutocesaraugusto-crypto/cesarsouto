@@ -562,7 +562,7 @@ const METHOD = {
 };
 
 /* ════════ STATE ════════ */
-const SAVE_KEY = 'gms_assessment_v1';
+const SAVE_KEY = 'inself_assessment_v1';
 let ST = {name:'',email:'',phone:'',section:1,disc:{},mbti:{},valores:{},lider:{},ident:{},capac:{},abund:{}};
 
 function saveST(){ try{ localStorage.setItem(SAVE_KEY, JSON.stringify(ST)); }catch(e){} }
@@ -1174,7 +1174,8 @@ function getUrlToken(){
   return new URLSearchParams(window.location.search).get('t') || null;
 }
 function isTokenValid(token){
-  if(!token) return {valid:false,reason:'no_token'};
+  // Sem token = acesso livre (mentor testa normalmente, link público funciona)
+  if(!token) return {valid:true};
   try{
     const parts = token.split('_');
     if(parts.length !== 2) return {valid:false,reason:'invalid_format'};
