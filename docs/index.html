@@ -2,506 +2,374 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<meta name="description" content="Assessment de Perfil Comportamental — Mastermind Aliança Ouro. Descubra seu DISC, tipo psicológico, valores e crenças de abundância.">
-<meta property="og:title" content="Mapeamento de Perfil Comportamental">
-<meta property="og:description" content="Assessment completo: DISC · Jung · Valores · Liderança · Crenças de Abundância">
-<meta property="og:type" content="website">
-<title>Perfil Comportamental — Mastermind Aliança Ouro</title>
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Análise de Perfil Comportamental GMS — Dra. Lauriane Silva</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
+<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
 <style>
-/* ── TOKENS ── */
 :root{
-  --teal:#00B4A6;--teal-d:#008a80;--teal-l:rgba(0,180,166,.12);
-  --navy:#1a2744;--navy-l:#2d3f6a;
-  --orange:#FF6B35;--gold:#f59e0b;
-  --green:#10b981;--purple:#6366f1;
-  --bg:#F0F4F8;--card:#fff;
-  --border:#e2e8f0;--txt:#1a2744;--muted:#64748b;
-  --r8:8px;--r12:12px;--r16:16px;--r24:24px;--r100:100px;
-  --shadow:0 2px 12px rgba(0,0,0,.08);
-  --shadow-lg:0 8px 30px rgba(0,0,0,.14);
+  --jam:#3F1817;
+  --wine:#562120;
+  --cream:#DDD7CA;
+  --bg:#FAFAF8;
+  --surface:#F2EDE4;
+  --text:#1A1818;
+  --muted:#857D75;
+  --line:#E8E2D9;
 }
-*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
-html{scroll-behavior:smooth}
-body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:var(--bg);color:var(--txt);min-height:100vh;-webkit-font-smoothing:antialiased}
-.screen{display:none}.screen.active{display:block}
-img,svg{display:block}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;line-height:1.6;-webkit-font-smoothing:antialiased}
+h1,h2,h3,h4{font-family:'Cormorant Garamond',serif;font-weight:700;line-height:1.15;letter-spacing:-0.01em}
+a{color:inherit}
+img{max-width:100%}
+.screen{display:none;min-height:100vh}
+.screen.active{display:block}
+.wrap{max-width:1040px;margin:0 auto;padding:0 20px}
+.btn{display:inline-flex;align-items:center;gap:8px;border:none;cursor:pointer;font-family:'Inter',sans-serif;font-weight:600;font-size:1rem;border-radius:999px;padding:15px 34px;transition:transform .15s ease,box-shadow .15s ease,opacity .15s ease}
+.btn:hover{transform:translateY(-2px)}
+.btn:active{transform:translateY(0)}
+.btn-cream{background:var(--cream);color:var(--wine)}
+.btn-wine{background:var(--wine);color:var(--cream)}
+.btn-outline{background:transparent;border:1.5px solid var(--line);color:var(--text)}
+.btn-ghost{background:var(--surface);color:var(--wine)}
+.btn:disabled{opacity:.4;cursor:not-allowed;transform:none}
 
-/* ═══════════════════════
-   WELCOME
-═══════════════════════ */
-.welcome{background:linear-gradient(160deg,var(--navy) 0%,var(--navy-l) 50%,var(--teal-d) 100%);min-height:100vh;display:flex;align-items:center;justify-content:center;padding:1.25rem}
-.wcard{background:#fff;border-radius:var(--r24);padding:2.25rem 1.75rem;max-width:560px;width:100%;box-shadow:var(--shadow-lg)}
-.whead{text-align:center;margin-bottom:1.5rem}
-.wlogo{width:68px;height:68px;background:linear-gradient(135deg,var(--teal),var(--teal-d));border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 1rem;font-size:1.8rem;box-shadow:0 4px 16px rgba(0,180,166,.4)}
-.wtitle{font-size:1.65rem;font-weight:900;color:var(--navy);line-height:1.2;margin-bottom:.35rem}
-.wsub{font-size:.95rem;color:var(--teal-d);font-weight:700}
-.wdesc{color:var(--muted);line-height:1.7;font-size:.88rem;margin-bottom:1.25rem;text-align:center}
-.badges{display:flex;flex-wrap:wrap;gap:.35rem;justify-content:center;margin-bottom:1.4rem}
-.badge{padding:.3rem .75rem;border-radius:var(--r100);font-size:.72rem;font-weight:700;border:1.5px solid var(--border);background:var(--bg);color:var(--navy)}
-.badge.t{background:var(--teal-l);color:var(--teal-d);border-color:var(--teal)}
-.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:.6rem;margin-bottom:1.4rem}
-.stat{background:var(--bg);border-radius:var(--r12);padding:.75rem .5rem;text-align:center}
-.stat .n{font-size:1.75rem;font-weight:900;color:var(--teal);line-height:1}
-.stat .l{font-size:.7rem;color:var(--muted);font-weight:600;margin-top:.2rem}
-.sep{height:1px;background:var(--border);margin-bottom:1.25rem}
-.form-row{display:grid;grid-template-columns:1fr 1fr;gap:.65rem;margin-bottom:.65rem}
-.form-group{display:flex;flex-direction:column;gap:.35rem}
-.form-group label{font-size:.78rem;font-weight:700;color:var(--navy)}
-.input{width:100%;padding:.75rem 1rem;border:2px solid var(--border);border-radius:var(--r12);font-size:.95rem;outline:none;transition:border-color .2s;background:#fff;color:var(--txt)}
-.input:focus{border-color:var(--teal)}
-.btn-start{background:linear-gradient(135deg,var(--teal),var(--teal-d));color:#fff;border:none;padding:1rem;border-radius:var(--r12);font-size:1.05rem;font-weight:700;cursor:pointer;width:100%;margin-top:.75rem;transition:transform .2s,box-shadow .2s;display:flex;align-items:center;justify-content:center;gap:.5rem}
-.btn-start:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(0,180,166,.4)}
-.resume-banner{background:linear-gradient(135deg,#fef3c7,#fde68a);border:2px solid var(--gold);border-radius:var(--r12);padding:1rem;margin-bottom:1rem;display:none}
-.resume-banner.show{display:flex;align-items:center;gap:.75rem}
-.resume-banner .emoji{font-size:1.5rem;flex-shrink:0}
-.resume-banner p{font-size:.85rem;color:#92400e;font-weight:600;flex:1}
-.btn-resume{background:var(--gold);color:#fff;border:none;padding:.5rem 1rem;border-radius:var(--r8);font-size:.8rem;font-weight:700;cursor:pointer;white-space:nowrap}
+/* ───── LANDING ───── */
+#s-landing .hero{background:linear-gradient(160deg,var(--jam) 0%,var(--wine) 100%);color:var(--cream);padding:64px 20px 80px}
+.logo-block{text-align:center;margin-bottom:48px}
+.logo-gms{font-family:'Cormorant Garamond',serif;font-weight:700;font-size:4rem;color:var(--cream);line-height:1}
+.logo-tag{font-family:'Inter',sans-serif;font-size:.65rem;text-transform:uppercase;letter-spacing:.25em;color:rgba(221,215,202,.7);margin-top:10px}
+.logo-author{font-family:'Cormorant Garamond',serif;font-style:italic;font-size:1.1rem;color:rgba(221,215,202,.9);margin-top:14px}
+.hero-title{text-align:center;font-size:2.6rem;color:var(--cream);margin-top:8px}
+.hero-sub{text-align:center;font-family:'Inter',sans-serif;font-weight:500;font-size:1.05rem;color:rgba(221,215,202,.85);margin-top:10px;max-width:680px;margin-left:auto;margin-right:auto}
+.hero-cta{text-align:center;margin-top:40px}
+.intro-section{padding:60px 20px;background:var(--bg)}
+.intro-body{max-width:720px;margin:0 auto;font-size:1.04rem;color:var(--text)}
+.intro-body p{margin-bottom:18px}
+.intro-body ul{list-style:none;margin:18px 0;padding:0}
+.intro-body li{padding:8px 0 8px 0;border-bottom:1px solid var(--line)}
+.intro-body li strong{color:var(--wine)}
+.dims-section{padding:20px 20px 60px;background:var(--surface)}
+.dims-title{text-align:center;font-size:2rem;color:var(--wine);margin-bottom:8px;padding-top:40px}
+.dims-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;max-width:920px;margin:32px auto 0}
+.dim-card{background:var(--bg);border:1px solid var(--line);border-radius:14px;padding:22px 16px;text-align:center;transition:transform .2s ease,box-shadow .2s ease}
+.dim-card:hover{transform:translateY(-4px);box-shadow:0 12px 28px rgba(63,24,23,.10)}
+.dim-emoji{font-size:1.9rem;display:block;margin-bottom:10px}
+.dim-name{font-family:'Inter',sans-serif;font-weight:600;font-size:.82rem;color:var(--text)}
+.dim-sub{font-size:.72rem;color:var(--muted);margin-top:4px}
+.stats-bar{display:flex;justify-content:center;flex-wrap:wrap;gap:10px;margin:42px auto 0;max-width:760px}
+.stat-item{background:var(--bg);border:1px solid var(--line);border-radius:999px;padding:10px 22px;font-size:.9rem;font-weight:600;color:var(--wine)}
+.stat-item span{color:var(--muted);font-weight:400}
+.landing-foot-cta{text-align:center;padding:50px 20px 70px;background:var(--surface)}
 
-/* ═══════════════════════
-   TEST HEADER
-═══════════════════════ */
-.tbar{background:linear-gradient(135deg,var(--navy),var(--navy-l));color:#fff;padding:.9rem 1.1rem;position:sticky;top:0;z-index:200}
-.tbar-inner{max-width:720px;margin:0 auto;display:flex;align-items:center;gap:1rem}
-.prog-info{flex:1;min-width:0}
-.prog-meta{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:.4rem}
-.prog-label{font-size:.72rem;opacity:.65}
-.prog-pct{font-size:.78rem;font-weight:700;color:var(--teal)}
-.sec-name{font-size:.95rem;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:.4rem}
-.ptrack{background:rgba(255,255,255,.2);border-radius:var(--r100);height:4px}
-.pfill{background:var(--teal);height:100%;border-radius:var(--r100);transition:width .4s ease}
-.sec-tag{background:var(--teal);color:#fff;padding:.35rem .75rem;border-radius:var(--r100);font-size:.75rem;font-weight:700;white-space:nowrap;flex-shrink:0}
+/* ───── REGISTER ───── */
+#s-register{display:none;align-items:center;justify-content:center;padding:50px 20px;background:linear-gradient(160deg,var(--surface),var(--bg))}
+#s-register.active{display:flex}
+.reg-card{background:#fff;border:1px solid var(--line);border-radius:20px;padding:44px 38px;max-width:520px;width:100%;box-shadow:0 20px 60px rgba(63,24,23,.10)}
+.reg-card h2{font-size:2rem;color:var(--wine);margin-bottom:10px}
+.reg-card .reg-lead{color:var(--muted);font-size:.95rem;margin-bottom:26px}
+.field{margin-bottom:18px}
+.field label{display:block;font-weight:600;font-size:.85rem;margin-bottom:7px;color:var(--text)}
+.field label .req{color:#8B2020}
+.field input{width:100%;border:1.5px solid var(--line);border-radius:11px;padding:13px 15px;font-family:'Inter',sans-serif;font-size:1rem;background:var(--bg);transition:border-color .15s ease}
+.field input:focus{outline:none;border-color:var(--wine)}
+.resume-banner{display:none;background:#FFF6D6;border:1px solid #E8D48A;border-radius:12px;padding:14px 16px;margin-bottom:20px;font-size:.9rem}
+.resume-banner.show{display:block}
+.resume-banner button{margin-top:10px;margin-right:8px}
+.reg-err{color:#8B2020;font-size:.82rem;margin-top:6px;display:none}
+.reg-err.show{display:block}
 
-/* ═══════════════════════
-   SECTION DOTS (mobile)
-═══════════════════════ */
-.dots{display:flex;justify-content:center;gap:.4rem;padding:.6rem 0;background:#fff;border-bottom:1px solid var(--border)}
-.dot{width:8px;height:8px;border-radius:50%;background:var(--border);transition:all .2s}
-.dot.done{background:var(--teal)}
-.dot.active{background:var(--navy);width:20px;border-radius:4px}
+/* ───── TEST ───── */
+#s-test{background:var(--bg)}
+.test-header{position:sticky;top:0;z-index:30;background:rgba(250,250,248,.96);backdrop-filter:blur(8px);border-bottom:1px solid var(--line);padding:16px 20px 14px}
+.th-row{max-width:760px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:12px}
+.th-label{font-size:.72rem;text-transform:uppercase;letter-spacing:.12em;color:var(--muted)}
+.th-name{font-family:'Cormorant Garamond',serif;font-weight:700;font-size:1.4rem;color:var(--wine)}
+.th-tag{background:var(--wine);color:var(--cream);font-size:.7rem;font-weight:600;text-transform:uppercase;letter-spacing:.08em;padding:5px 12px;border-radius:999px}
+.progress-track{max-width:760px;margin:12px auto 0;height:7px;background:var(--surface);border-radius:999px;overflow:hidden}
+.progress-fill{height:100%;width:0%;background:linear-gradient(90deg,var(--wine),var(--jam));transition:width .35s ease}
+.section-dots{max-width:760px;margin:12px auto 0;display:flex;justify-content:center;gap:9px}
+.dot{width:10px;height:10px;border-radius:50%;background:var(--line);transition:all .2s ease}
+.dot.done{background:var(--wine)}
+.dot.current{background:var(--jam);transform:scale(1.35)}
+.test-body{max-width:760px;margin:0 auto;padding:30px 20px 130px}
+.tsection{display:none}
+.tsection.active{display:block}
+.q-block{background:#fff;border:1px solid var(--line);border-radius:16px;padding:24px 22px;margin-bottom:18px;box-shadow:0 4px 16px rgba(63,24,23,.04)}
+.q-text{font-weight:600;font-size:1.02rem;margin-bottom:16px;color:var(--text)}
+.q-hint{font-size:.82rem;color:var(--muted);margin:-8px 0 16px}
 
-/* ═══════════════════════
-   QUESTIONS
-═══════════════════════ */
-.qwrap{max-width:720px;margin:0 auto;padding:1.25rem 1rem 6rem}
-.sec-head{background:#fff;border-radius:var(--r16);padding:1.1rem 1.25rem;margin-bottom:1rem;border-left:4px solid var(--teal);box-shadow:var(--shadow)}
-.sec-head h2{font-size:1.1rem;font-weight:800;color:var(--navy);margin-bottom:.3rem}
-.sec-head p{color:var(--muted);line-height:1.6;font-size:.83rem}
+/* DISC ranking grid */
+.disc-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.disc-word{position:relative;background:var(--bg);border:1.5px solid var(--line);border-radius:12px;padding:18px 14px;cursor:pointer;text-align:center;font-weight:500;transition:all .15s ease;user-select:none}
+.disc-word:hover{border-color:var(--wine)}
+.disc-word.ranked{background:var(--surface);border-color:var(--wine)}
+.rank-badge{position:absolute;top:-9px;left:-9px;width:26px;height:26px;border-radius:50%;background:var(--wine);color:var(--cream);font-size:.8rem;font-weight:700;display:none;align-items:center;justify-content:center}
+.disc-word.ranked .rank-badge{display:flex}
 
-/* DISC groups */
-.dgroup{background:#fff;border-radius:var(--r16);padding:1.1rem;margin-bottom:.75rem;box-shadow:var(--shadow)}
-.dghdr{display:flex;align-items:center;gap:.5rem;margin-bottom:.75rem}
-.gnr{background:var(--navy);color:#fff;width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.7rem;font-weight:700;flex-shrink:0}
-.ginst{font-size:.77rem;color:var(--muted)}
-.drow{display:grid;grid-template-columns:1fr auto;align-items:center;gap:.5rem;padding:.55rem .75rem;background:var(--bg);border-radius:var(--r8);margin-bottom:.35rem;border:1.5px solid transparent;transition:all .15s}
-.drow.most{background:rgba(0,180,166,.1);border-color:var(--teal)}
-.drow.least{background:rgba(239,68,68,.06);border-color:rgba(239,68,68,.3)}
-.dword{font-size:.9rem;font-weight:600;color:var(--navy)}
-.dbtns{display:flex;gap:.75rem}
-.dbl{display:flex;align-items:center;gap:.3rem;cursor:pointer;font-size:.72rem;color:var(--muted);font-weight:600;white-space:nowrap;padding:.25rem .4rem;border-radius:var(--r8);transition:background .15s}
-.dbl:hover{background:var(--border)}
-.dbl input{accent-color:var(--teal);width:14px;height:14px;flex-shrink:0}
+/* MBTI / Leadership choices */
+.choice{display:block;width:100%;text-align:left;background:var(--bg);border:1.5px solid var(--line);border-radius:12px;padding:15px 18px;margin-bottom:10px;cursor:pointer;font-family:'Inter',sans-serif;font-size:.96rem;transition:all .15s ease;color:var(--text)}
+.choice:hover{border-color:var(--wine)}
+.choice.sel{background:var(--wine);color:var(--cream);border-color:var(--wine)}
 
 /* Likert */
-.lq{background:#fff;border-radius:var(--r16);padding:1.1rem;margin-bottom:.75rem;box-shadow:var(--shadow)}
-.qtxt{display:flex;align-items:flex-start;gap:.5rem;font-size:.9rem;font-weight:600;color:var(--navy);margin-bottom:.9rem;line-height:1.5}
-.qnum{background:var(--teal);color:#fff;min-width:22px;height:22px;border-radius:50%;font-size:.68rem;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px}
-.lscale{display:grid;grid-template-columns:repeat(5,1fr);gap:.35rem}
-.lopt{position:relative}
-.lopt input{position:absolute;opacity:0;width:100%;height:100%;cursor:pointer;top:0;left:0}
-.lbtn{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:.55rem .15rem;border-radius:var(--r8);border:2px solid var(--border);cursor:pointer;transition:all .15s;min-height:58px;text-align:center}
-.lbtn .ln{font-size:1.1rem;font-weight:800;color:var(--muted)}
-.lbtn .lt{font-size:.58rem;color:var(--muted);margin-top:.15rem;line-height:1.2}
-.lopt input:checked+.lbtn{border-color:var(--teal);background:var(--teal-l)}
-.lopt input:checked+.lbtn .ln{color:var(--teal-d)}
+.likert{display:grid;grid-template-columns:repeat(5,1fr);gap:8px}
+.lk{background:var(--bg);border:1.5px solid var(--line);border-radius:11px;padding:12px 6px;cursor:pointer;text-align:center;font-size:.74rem;font-weight:500;color:var(--muted);transition:all .15s ease;line-height:1.25}
+.lk:hover{border-color:var(--wine)}
+.lk.sel{background:var(--wine);color:var(--cream);border-color:var(--wine)}
+.lk-num{display:block;font-size:1.2rem;font-weight:700;margin-bottom:3px}
 
-/* Binary */
-.bq{background:#fff;border-radius:var(--r16);padding:1.1rem;margin-bottom:.75rem;box-shadow:var(--shadow)}
-.bopts{display:grid;grid-template-columns:1fr 1fr;gap:.5rem;margin-top:.75rem}
-@media(max-width:480px){.bopts{grid-template-columns:1fr}}
-.bopt{position:relative}
-.bopt input{position:absolute;opacity:0;width:100%;height:100%;cursor:pointer;top:0;left:0}
-.bbtn{display:block;padding:.8rem .75rem;border-radius:var(--r12);border:2px solid var(--border);cursor:pointer;transition:all .15s;text-align:center;font-size:.85rem;color:var(--navy);line-height:1.4}
-.bopt input:checked+.bbtn{border-color:var(--teal);background:var(--teal-l);font-weight:700;color:var(--teal-d)}
+.test-nav{position:fixed;bottom:0;left:0;right:0;background:rgba(250,250,248,.97);backdrop-filter:blur(8px);border-top:1px solid var(--line);padding:14px 20px;z-index:30}
+.test-nav-inner{max-width:760px;margin:0 auto;display:flex;justify-content:space-between;gap:12px}
 
-/* Choice 4 */
-.cq{background:#fff;border-radius:var(--r16);padding:1.1rem;margin-bottom:.75rem;box-shadow:var(--shadow)}
-.copts{display:flex;flex-direction:column;gap:.4rem;margin-top:.75rem}
-.copt{position:relative}
-.copt input{position:absolute;opacity:0;width:100%;height:100%;cursor:pointer;top:0;left:0}
-.cbtn{display:flex;align-items:center;gap:.75rem;padding:.75rem .9rem;border-radius:var(--r12);border:2px solid var(--border);cursor:pointer;transition:all .15s}
-.cbar{width:5px;height:32px;border-radius:3px;flex-shrink:0}
-.cd{background:var(--orange)}.ci{background:var(--gold)}.cs{background:var(--teal)}.cc{background:var(--purple)}
-.ctxt{font-size:.85rem;color:var(--navy);line-height:1.4}
-.copt input:checked+.cbtn{border-color:var(--teal);background:var(--teal-l)}
+/* ───── RESULTS ───── */
+#s-results{background:var(--bg);padding-bottom:120px}
+.res-header{background:linear-gradient(160deg,var(--jam),var(--wine));color:var(--cream);padding:50px 20px 56px;text-align:center}
+.res-header h1{color:var(--cream);font-size:2.6rem}
+.res-name{font-family:'Cormorant Garamond',serif;font-style:italic;font-size:1.5rem;color:rgba(221,215,202,.95);margin-top:8px}
+.res-date{font-size:.82rem;text-transform:uppercase;letter-spacing:.12em;color:rgba(221,215,202,.65);margin-top:8px}
+.res-body{max-width:820px;margin:0 auto;padding:36px 20px}
+.summary-card{background:#fff;border:1px solid var(--line);border-radius:18px;padding:28px;margin-top:-44px;box-shadow:0 18px 50px rgba(63,24,23,.12);position:relative;z-index:2}
+.summary-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-top:4px}
+.sum-item{text-align:center;padding:6px}
+.sum-label{font-size:.7rem;text-transform:uppercase;letter-spacing:.1em;color:var(--muted)}
+.sum-value{font-family:'Cormorant Garamond',serif;font-weight:700;font-size:1.5rem;color:var(--wine);margin-top:4px}
+.sum-sub{font-size:.78rem;color:var(--muted)}
+.share-bar{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;margin:26px 0 8px}
+.share-bar .btn{padding:11px 20px;font-size:.88rem}
+.res-card{background:#fff;border:1px solid var(--line);border-radius:18px;padding:30px 28px;margin-top:24px;box-shadow:0 6px 22px rgba(63,24,23,.05)}
+.res-card h2{font-size:1.9rem;color:var(--wine);margin-bottom:6px}
+.method-intro{background:var(--surface);border-left:3px solid var(--wine);border-radius:0 10px 10px 0;padding:14px 16px;font-size:.85rem;color:var(--muted);margin:14px 0 20px;line-height:1.5}
+.bars{margin-top:14px}
+.bar-row{margin-bottom:14px}
+.bar-top{display:flex;justify-content:space-between;font-size:.88rem;font-weight:600;margin-bottom:5px}
+.bar-track{height:12px;background:var(--surface);border-radius:999px;overflow:hidden}
+.bar-fill{height:100%;border-radius:999px;background:var(--wine);transition:width .8s ease}
+.profile-text{font-size:1rem;line-height:1.7;margin-top:18px;color:var(--text)}
+.type-name{font-family:'Cormorant Garamond',serif;font-size:1.6rem;color:var(--jam);font-weight:700;margin-top:6px}
+.type-tagline{font-style:italic;color:var(--muted);margin-bottom:14px}
+.belief-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:18px}
+.belief-item{background:var(--bg);border:1px solid var(--line);border-radius:14px;padding:20px 16px;text-align:center}
+.belief-score{font-family:'Cormorant Garamond',serif;font-weight:700;font-size:2.4rem;line-height:1}
+.belief-lbl{font-size:.78rem;font-weight:600;margin-top:6px}
+.belief-name{font-size:.78rem;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-top:8px}
+.plan-list{list-style:none;padding:0;margin-top:10px}
+.plan-list li{background:var(--bg);border:1px solid var(--line);border-radius:12px;padding:15px 18px;margin-bottom:10px;display:flex;gap:14px;align-items:flex-start}
+.plan-n{flex:0 0 auto;width:28px;height:28px;border-radius:50%;background:var(--wine);color:var(--cream);font-weight:700;font-size:.85rem;display:flex;align-items:center;justify-content:center}
+.chart-wrap{max-width:520px;margin:10px auto 0}
 
-/* Fixed nav */
-.fixnav{position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:1px solid var(--border);padding:.75rem 1.25rem;display:flex;justify-content:space-between;align-items:center;z-index:100;max-width:720px;margin:0 auto;left:50%;transform:translateX(-50%);width:100%;box-shadow:0 -4px 16px rgba(0,0,0,.08)}
-.fixnav.results-nav{justify-content:center;gap:.75rem}
-.btn-back{background:#fff;color:var(--navy);border:2px solid var(--border);padding:.7rem 1.25rem;border-radius:var(--r100);font-size:.88rem;font-weight:600;cursor:pointer;transition:border-color .2s}
-.btn-back:hover{border-color:var(--navy)}
-.btn-next{background:linear-gradient(135deg,var(--teal),var(--teal-d));color:#fff;border:none;padding:.7rem 1.75rem;border-radius:var(--r100);font-size:.88rem;font-weight:700;cursor:pointer;transition:transform .2s,box-shadow .2s;display:flex;align-items:center;gap:.4rem}
-.btn-next:hover{transform:translateY(-1px);box-shadow:0 6px 20px rgba(0,180,166,.35)}
+/* Bonus block */
+.bonus-block{background:linear-gradient(160deg,var(--wine),var(--jam));color:var(--cream);border-radius:20px;padding:38px 30px;margin-top:28px;text-align:center;box-shadow:0 18px 50px rgba(63,24,23,.25)}
+.bonus-emoji{font-size:3rem}
+.bonus-block h3{color:var(--cream);font-size:1.9rem;margin:10px 0;line-height:1.2}
+.bonus-block p{color:rgba(221,215,202,.9);max-width:520px;margin:0 auto 18px}
+.bonus-steps{max-width:480px;margin:0 auto 22px;text-align:left}
+.bstep{display:flex;gap:14px;align-items:center;background:rgba(221,215,202,.12);border:1px solid rgba(221,215,202,.2);border-radius:12px;padding:13px 16px;margin-bottom:10px;font-size:.95rem}
+.bstep-n{flex:0 0 auto;width:30px;height:30px;border-radius:50%;background:var(--cream);color:var(--wine);font-weight:700;display:flex;align-items:center;justify-content:center}
+.bonus-btns{display:flex;flex-wrap:wrap;gap:12px;justify-content:center}
+.bb-insta,.bb-wpp{display:inline-flex;align-items:center;gap:8px;border-radius:999px;padding:14px 28px;font-weight:600;font-size:.95rem;text-decoration:none;transition:transform .15s ease}
+.bb-insta:hover,.bb-wpp:hover{transform:translateY(-2px)}
+.bb-insta{background:var(--cream);color:var(--wine)}
+.bb-wpp{background:#25D366;color:#fff}
 
-/* ═══════════════════════
-   RESULTS
-═══════════════════════ */
-.rhdr{background:linear-gradient(160deg,var(--navy),var(--navy-l) 60%,var(--teal-d) 100%);color:#fff;padding:2rem 1.25rem 1.75rem;text-align:center}
-.rhdr h1{font-size:1.6rem;font-weight:900;margin-bottom:.35rem}
-.rname{font-size:1rem;opacity:.85;margin-bottom:.15rem}
-.rdate{font-size:.78rem;opacity:.55}
+/* Mentor card */
+.mentor-card{background:var(--jam);color:var(--cream);border-radius:18px;padding:32px 28px;margin-top:24px;text-align:center}
+.mentor-card h3{color:var(--cream);font-size:1.6rem;margin-bottom:8px}
+.mentor-card p{color:rgba(221,215,202,.85);margin-bottom:18px;font-size:.95rem}
+.mentor-btns{display:flex;gap:12px;justify-content:center;flex-wrap:wrap}
 
-/* Profile card (shareable) */
-.pcard{background:#fff;border-radius:var(--r16);padding:1.25rem;margin-bottom:1rem;box-shadow:var(--shadow)}
-.pcard-top{display:flex;align-items:center;gap:1rem;margin-bottom:1rem;padding-bottom:1rem;border-bottom:1px solid var(--border)}
-.avatar{width:52px;height:52px;background:linear-gradient(135deg,var(--teal),var(--teal-d));border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1.4rem;flex-shrink:0}
-.pname{font-size:1.1rem;font-weight:800;color:var(--navy)}
-.pdate{font-size:.75rem;color:var(--muted);margin-top:.15rem}
-.ptag{background:linear-gradient(135deg,var(--navy),var(--navy-l));color:#fff;padding:.3rem .9rem;border-radius:var(--r100);font-size:.95rem;font-weight:900;letter-spacing:.05em}
-.pstats{display:grid;grid-template-columns:repeat(4,1fr);gap:.5rem}
-.pstat{text-align:center;padding:.6rem .25rem;background:var(--bg);border-radius:var(--r8)}
-.pstat-v{font-size:1.35rem;font-weight:900;color:var(--navy)}
-.pstat-l{font-size:.65rem;color:var(--muted);font-weight:600;margin-top:.1rem}
-
-/* Share buttons */
-.share-bar{display:grid;grid-template-columns:1fr 1fr;gap:.65rem;margin-bottom:1rem}
-@media(min-width:500px){.share-bar{grid-template-columns:repeat(4,1fr)}}
-.sbtn{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.3rem;padding:.75rem .5rem;border-radius:var(--r12);border:2px solid var(--border);cursor:pointer;transition:all .2s;background:#fff;font-size:.75rem;font-weight:700;color:var(--navy);text-decoration:none}
-.sbtn:hover{transform:translateY(-2px);box-shadow:var(--shadow)}
-.sbtn .sico{font-size:1.5rem}
-.sbtn.wpp{background:#25D366;border-color:#25D366;color:#fff}
-.sbtn.wpp:hover{background:#1ebe5a}
-.sbtn.mail{background:#4285F4;border-color:#4285F4;color:#fff}
-.sbtn.mail:hover{background:#2b6fe8}
-.sbtn.pdf{background:var(--orange);border-color:var(--orange);color:#fff}
-.sbtn.pdf:hover{background:#e85520}
-.sbtn.copy{background:var(--navy);border-color:var(--navy);color:#fff}
-.sbtn.copy:hover{background:var(--navy-l)}
-
-/* Result cards */
-.rcontent{max-width:720px;margin:0 auto;padding:1.25rem 1rem 5rem}
-.rcard{background:#fff;border-radius:var(--r16);padding:1.5rem;margin-bottom:1rem;box-shadow:var(--shadow)}
-.rchdr{display:flex;align-items:center;gap:.75rem;margin-bottom:1.1rem;padding-bottom:.9rem;border-bottom:2px solid var(--bg)}
-.rico{width:40px;height:40px;border-radius:var(--r12);display:flex;align-items:center;justify-content:center;font-size:1.25rem;flex-shrink:0}
-.ic1{background:rgba(0,180,166,.15)}.ic2{background:rgba(26,39,68,.1)}.ic3{background:rgba(255,107,53,.15)}.ic4{background:rgba(99,102,241,.15)}.ic5{background:rgba(16,185,129,.15)}.ic6{background:rgba(245,158,11,.15)}
-.rtitle{font-size:1.05rem;font-weight:800;color:var(--navy)}
-.rsub{font-size:.75rem;color:var(--muted);margin-top:.15rem}
-.chart-h{position:relative;height:250px;margin:.75rem 0}
-.chart-h-lg{position:relative;height:300px;margin:.75rem 0}
-
-/* DISC display */
-.dprofile{display:grid;grid-template-columns:repeat(4,1fr);gap:.65rem;margin:1rem 0}
-.df{text-align:center;padding:1rem .35rem;border-radius:var(--r12)}
-.df-d{background:linear-gradient(135deg,#fee2e2,#fca5a5)}
-.df-i{background:linear-gradient(135deg,#fef3c7,#fcd34d)}
-.df-s{background:linear-gradient(135deg,#d1fae5,#6ee7b7)}
-.df-c{background:linear-gradient(135deg,#e0e7ff,#a5b4fc)}
-.df-l{font-size:2rem;font-weight:900;line-height:1}
-.df-n{font-size:.65rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em;margin:.2rem 0}
-.df-s2{font-size:1.45rem;font-weight:800}
-.df-bar{height:4px;background:rgba(0,0,0,.1);border-radius:2px;margin-top:.5rem;overflow:hidden}
-.df-fill{height:100%;border-radius:2px;background:rgba(0,0,0,.25)}
-.ptag-result{display:inline-flex;align-items:center;padding:.4rem 1.1rem;border-radius:var(--r100);font-size:1rem;font-weight:900;background:linear-gradient(135deg,var(--navy),var(--navy-l));color:#fff;margin-bottom:1rem}
-
-/* Jung */
-.jgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:.75rem;margin:1rem 0}
-@media(max-width:400px){.jgrid{grid-template-columns:1fr}}
-.jdim{}
-.jdlbl{font-size:.72rem;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.05em;margin-bottom:.5rem}
-.jbar{background:var(--border);border-radius:var(--r100);height:8px;overflow:hidden;margin-bottom:.35rem}
-.jfill{background:linear-gradient(90deg,var(--teal),var(--teal-d));height:100%;border-radius:var(--r100);transition:width 1s ease}
-.jvals{display:flex;justify-content:space-between;font-size:.72rem;font-weight:700}
-.jtype-badge{background:linear-gradient(135deg,var(--teal),var(--teal-d));color:#fff;padding:.35rem 1.1rem;border-radius:var(--r100);font-size:1.3rem;font-weight:900;letter-spacing:.1em;display:inline-block;margin-bottom:.9rem}
-
-/* Values */
-.vbars{display:flex;flex-direction:column;gap:.6rem;margin:.75rem 0}
-.vrow{display:grid;grid-template-columns:95px 1fr 40px;align-items:center;gap:.65rem}
-.vname{font-size:.78rem;font-weight:700;color:var(--navy)}
-.vtrack{background:var(--border);border-radius:var(--r100);height:8px;overflow:hidden}
-.vfill{height:100%;border-radius:var(--r100);transition:width 1.2s ease}
-.vscore{font-size:.82rem;font-weight:700;color:var(--muted);text-align:right}
-
-/* Beliefs */
-.bgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:.65rem;margin:1rem 0}
-@media(max-width:400px){.bgrid{grid-template-columns:1fr}}
-.bcard{border-radius:var(--r12);padding:1.1rem;text-align:center}
-.bid{background:linear-gradient(135deg,#e0e7ff,#c7d2fe)}
-.bcap{background:linear-gradient(135deg,#d1fae5,#a7f3d0)}
-.babu{background:linear-gradient(135deg,#fef3c7,#fde68a)}
-.btitle{font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em;margin-bottom:.75rem;color:var(--navy)}
-.bcirc{width:68px;height:68px;border-radius:50%;background:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;margin:0 auto .5rem;box-shadow:0 4px 12px rgba(0,0,0,.1)}
-.bsn{font-size:1.25rem;font-weight:900;color:var(--navy);line-height:1}
-.bsp{font-size:.6rem;color:var(--muted)}
-.blevel{font-size:.78rem;font-weight:700}
-
-/* Leadership */
-.lgrid{display:grid;grid-template-columns:repeat(2,1fr);gap:.65rem;margin:1rem 0}
-.lstyle{border-radius:var(--r12);padding:1rem;display:flex;align-items:center;gap:.75rem}
-.ls-e{background:linear-gradient(135deg,#fee2e2,#fca5a5)}
-.ls-m{background:linear-gradient(135deg,#fef3c7,#fcd34d)}
-.ls-o{background:linear-gradient(135deg,#d1fae5,#6ee7b7)}
-.ls-s{background:linear-gradient(135deg,#e0e7ff,#a5b4fc)}
-.lpct{font-size:1.65rem;font-weight:900;color:var(--navy);flex-shrink:0;min-width:54px}
-.lname{font-weight:700;font-size:.88rem;color:var(--navy)}
-.ldesc{font-size:.73rem;color:var(--muted);margin-top:.15rem;line-height:1.4}
-
-/* Text */
-.atxt{color:var(--muted);line-height:1.8;font-size:.88rem}
-.atxt strong{color:var(--navy)}
-.atxt p+p{margin-top:.75rem}
-.hbox{background:rgba(0,180,166,.08);border:1px solid rgba(0,180,166,.25);border-radius:var(--r12);padding:.85rem 1rem;margin-top:.85rem;font-size:.83rem;color:var(--teal-d);line-height:1.6}
-.hbox strong{color:var(--teal-d)}
-
-/* Recs */
-.rgrid{display:grid;grid-template-columns:1fr 1fr;gap:.65rem}
-@media(max-width:420px){.rgrid{grid-template-columns:1fr}}
-.ritem{display:flex;gap:.6rem;align-items:flex-start;background:var(--bg);border-radius:var(--r12);padding:.9rem}
-.remi{font-size:1.2rem;flex-shrink:0}
-.rttl{font-weight:700;color:var(--navy);font-size:.82rem;margin-bottom:.2rem}
-.rtxt2{font-size:.78rem;color:var(--muted);line-height:1.5}
-
-/* Mentor CTA */
-.mentor-cta{background:linear-gradient(135deg,var(--navy),var(--navy-l));border-radius:var(--r16);padding:1.5rem;text-align:center;color:#fff;margin-bottom:1rem}
-.mentor-cta h3{font-size:1.1rem;font-weight:800;margin-bottom:.5rem}
-.mentor-cta p{font-size:.85rem;opacity:.85;margin-bottom:1.1rem;line-height:1.6}
-.mentor-btns{display:flex;gap:.65rem;justify-content:center;flex-wrap:wrap}
-.mbtn{display:flex;align-items:center;gap:.4rem;padding:.65rem 1.25rem;border-radius:var(--r100);font-size:.83rem;font-weight:700;cursor:pointer;border:none;transition:transform .2s;text-decoration:none}
-.mbtn:hover{transform:translateY(-2px)}
-.mbtn-wpp{background:#25D366;color:#fff}
-.mbtn-mail{background:#fff;color:var(--navy)}
+.res-nav{position:fixed;bottom:0;left:0;right:0;background:rgba(250,250,248,.97);backdrop-filter:blur(8px);border-top:1px solid var(--line);padding:14px 20px;z-index:30}
+.res-nav-inner{max-width:820px;margin:0 auto;display:flex;justify-content:space-between;gap:12px}
 
 /* Toast */
-.toast{position:fixed;bottom:80px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--navy);color:#fff;padding:.75rem 1.5rem;border-radius:var(--r100);font-size:.85rem;font-weight:600;opacity:0;transition:all .3s;z-index:300;white-space:nowrap;pointer-events:none}
+.toast{position:fixed;bottom:90px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--jam);color:var(--cream);padding:13px 24px;border-radius:999px;font-size:.9rem;font-weight:500;opacity:0;pointer-events:none;transition:all .3s ease;z-index:100}
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 
-/* Divider */
-.divlbl{font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin:1.25rem 0 .65rem;display:flex;align-items:center;gap:.5rem}
-.divlbl::before,.divlbl::after{content:'';flex:1;height:1px;background:var(--border)}
+/* Responsive */
+@media(max-width:768px){
+  .logo-gms{font-size:3rem}
+  .hero-title{font-size:2rem}
+  .dims-grid{grid-template-columns:repeat(2,1fr)}
+  .summary-grid{grid-template-columns:repeat(2,1fr)}
+  .belief-grid{grid-template-columns:1fr}
+  .res-header h1{font-size:2rem}
+  .reg-card{padding:32px 24px}
+}
 
+/* Print */
 @media print{
-  .tbar,.dots,.fixnav,.share-bar,.mentor-cta,.toast,.results-nav{display:none!important}
-  .rcard{box-shadow:none;border:1px solid #ddd;break-inside:avoid;margin-bottom:.5rem}
-  .pcard{box-shadow:none;border:1px solid #ddd}
+  .test-nav,.res-nav,.share-bar,.bonus-block,.mentor-card,.toast{display:none!important}
+  .res-header{background:var(--wine)!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  .res-card,.summary-card{box-shadow:none;border:1px solid #ccc;break-inside:avoid;page-break-inside:avoid}
   body{background:#fff}
+  #s-results{padding-bottom:0}
 }
 </style>
 </head>
 <body>
 
-<!-- ═══════════════════════════════════
-     WELCOME
-═══════════════════════════════════ -->
-<div id="s-welcome" class="screen active welcome">
-<div class="wcard">
-  <div class="whead">
-    <div class="wlogo">🧠</div>
-    <div class="wtitle">Mapeamento de Perfil Comportamental</div>
-    <div class="wsub">Mastermind Aliança Ouro</div>
-  </div>
-  <p class="wdesc">Descubra seu perfil completo com DISC, Tipos Jung, Valores, Liderança e Crenças de Abundância — em apenas ~20 minutos.</p>
-  <div class="badges">
-    <span class="badge t">DISC</span><span class="badge t">Jung</span><span class="badge t">Spranger</span><span class="badge t">Liderança</span><span class="badge">Identidade</span><span class="badge">Capacidade</span><span class="badge">Abundância</span>
-  </div>
-  <div class="stats">
-    <div class="stat"><div class="n">74</div><div class="l">Perguntas</div></div>
-    <div class="stat"><div class="n">~20</div><div class="l">Minutos</div></div>
-    <div class="stat"><div class="n">7</div><div class="l">Dimensões</div></div>
-  </div>
-  <div class="sep"></div>
-
-  <div id="resume-banner" class="resume-banner">
-    <div class="emoji">💾</div>
-    <p>Você tem um teste salvo. Continuar de onde parou?</p>
-    <button class="btn-resume" onclick="resumeTest()">Continuar</button>
-  </div>
-
-  <div class="form-row">
-    <div class="form-group">
-      <label>Nome completo *</label>
-      <input id="pname" type="text" class="input" placeholder="Seu nome">
+<!-- ════════ SCREEN 0 — LANDING ════════ -->
+<section id="s-landing" class="screen active">
+  <div class="hero">
+    <div class="logo-block">
+      <div class="logo-gms">GMS</div>
+      <div class="logo-tag">Gestão e Mentalidade de Sucesso</div>
+      <div class="logo-author">por Dra. Lauriane Silva</div>
     </div>
-    <div class="form-group">
-      <label>WhatsApp</label>
-      <input id="pwhats" type="tel" class="input" placeholder="(00) 00000-0000">
+    <h1 class="hero-title">ANÁLISE DE PERFIL COMPORTAMENTAL</h1>
+    <p class="hero-sub">A ferramenta mais completa e atualizada do mercado</p>
+    <div class="hero-cta">
+      <button class="btn btn-cream" onclick="goRegister()">Iniciar Minha Análise →</button>
     </div>
   </div>
-  <div class="form-group" style="margin-bottom:.65rem">
-    <label>E-mail</label>
-    <input id="pemail" type="email" class="input" placeholder="seu@email.com">
-  </div>
-  <button class="btn-start" onclick="startTest()">
-    Começar Assessment <span>→</span>
-  </button>
-  <p style="text-align:center;font-size:.72rem;color:var(--muted);margin-top:.75rem">Seus dados são privados e usados apenas para gerar seu relatório.</p>
-</div>
-</div>
 
-<!-- ═══════════════════════════════════
-     TEST
-═══════════════════════════════════ -->
-<div id="s-test" class="screen">
-  <div class="tbar">
-    <div class="tbar-inner">
-      <div class="prog-info">
-        <div class="prog-meta"><span class="prog-label" id="prog-label">Seção 1 de 7</span><span class="prog-pct" id="prog-pct">14%</span></div>
-        <div class="sec-name" id="sec-name">Perfil DISC</div>
-        <div class="ptrack"><div class="pfill" id="pfill" style="width:14%"></div></div>
+  <div class="intro-section">
+    <div class="intro-body">
+      <p>A <strong>Análise de Perfil Comportamental GMS®</strong> foi desenvolvida para compreender com profundidade a personalidade e as potenciais competências dos indivíduos — identificando pontos fortes e oportunidades de desenvolvimento para promover crescimento pessoal e profissional.</p>
+      <p>Pesquisas na área do desenvolvimento humano mostram que os indivíduos mais eficazes são aqueles que se conhecem melhor. Nesta análise você descobrirá:</p>
+      <ul>
+        <li>Seu estilo <strong>NATURAL</strong> de comportamento — como você realmente é</li>
+        <li>Seu estilo <strong>ADAPTADO</strong> — como você age sob pressão e exigências</li>
+        <li>Seus <strong>motivadores</strong> e melhor adequação a funções profissionais</li>
+        <li>Crenças de <strong>identidade, capacidade e merecimento</strong> de abundância</li>
+      </ul>
+      <p>Este relatório é <strong>100% personalizado</strong> com base nas suas respostas.</p>
+    </div>
+  </div>
+
+  <div class="dims-section">
+    <h2 class="dims-title">8 Dimensões Avaliadas</h2>
+    <div class="dims-grid">
+      <div class="dim-card"><span class="dim-emoji">📊</span><div class="dim-name">DISC</div><div class="dim-sub">William M. Marston</div></div>
+      <div class="dim-card"><span class="dim-emoji">🧠</span><div class="dim-name">MBTI Myers-Briggs</div><div class="dim-sub">16 Tipos</div></div>
+      <div class="dim-card"><span class="dim-emoji">💎</span><div class="dim-name">Valores Spranger</div><div class="dim-sub">O que te move</div></div>
+      <div class="dim-card"><span class="dim-emoji">👑</span><div class="dim-name">Estilo de Liderança</div><div class="dim-sub">Como você lidera</div></div>
+      <div class="dim-card"><span class="dim-emoji">🪞</span><div class="dim-name">Crenças de Identidade</div><div class="dim-sub">Quem você é</div></div>
+      <div class="dim-card"><span class="dim-emoji">⚡</span><div class="dim-name">Crenças de Capacidade</div><div class="dim-sub">O que você pode</div></div>
+      <div class="dim-card"><span class="dim-emoji">💰</span><div class="dim-name">Merecimento de Abundância</div><div class="dim-sub">O que você merece</div></div>
+      <div class="dim-card"><span class="dim-emoji">🎯</span><div class="dim-name">Plano de Ação GMS</div><div class="dim-sub">Seus próximos passos</div></div>
+    </div>
+    <div class="stats-bar">
+      <div class="stat-item">80+ <span>Questões</span></div>
+      <div class="stat-item">~25 <span>Minutos</span></div>
+      <div class="stat-item">8 <span>Dimensões</span></div>
+      <div class="stat-item"><span>Relatório</span> Personalizado</div>
+    </div>
+  </div>
+
+  <div class="landing-foot-cta">
+    <button class="btn btn-wine" onclick="goRegister()">Iniciar Minha Análise →</button>
+  </div>
+</section>
+
+<!-- ════════ SCREEN 1 — REGISTER ════════ -->
+<section id="s-register" class="screen">
+  <div class="reg-card">
+    <h2>Antes de começar</h2>
+    <p class="reg-lead">Suas informações são usadas apenas para personalizar seu relatório e são mantidas com total privacidade.</p>
+
+    <div id="resumeBanner" class="resume-banner">
+      <strong>📌 Você tem um progresso salvo.</strong>
+      <div style="color:var(--muted);margin-top:4px">Deseja continuar de onde parou?</div>
+      <button class="btn btn-wine" style="padding:9px 20px;font-size:.85rem" onclick="resumeProgress()">Continuar</button>
+      <button class="btn btn-outline" style="padding:9px 20px;font-size:.85rem" onclick="discardProgress()">Começar de novo</button>
+    </div>
+
+    <div class="field">
+      <label for="pname">Nome completo <span class="req">*</span></label>
+      <input type="text" id="pname" placeholder="Seu nome completo" autocomplete="name">
+    </div>
+    <div class="field">
+      <label for="pemail">E-mail <span class="req">*</span></label>
+      <input type="email" id="pemail" placeholder="seu@email.com" autocomplete="email">
+    </div>
+    <div class="field">
+      <label for="pphone">WhatsApp <span style="color:var(--muted);font-weight:400">(opcional)</span></label>
+      <input type="tel" id="pphone" placeholder="(00) 00000-0000" autocomplete="tel">
+    </div>
+    <div id="regErr" class="reg-err">Por favor, preencha nome e e-mail válidos.</div>
+    <button class="btn btn-wine" style="width:100%;justify-content:center;margin-top:14px" onclick="startTest()">Iniciar Assessment →</button>
+  </div>
+</section>
+
+<!-- ════════ SCREEN 2 — TEST ════════ -->
+<section id="s-test" class="screen">
+  <div class="test-header">
+    <div class="th-row">
+      <div>
+        <div class="th-label" id="thLabel">Seção 1 de 7</div>
+        <div class="th-name" id="thName">Perfil DISC</div>
       </div>
-      <div class="sec-tag" id="sec-tag">DISC</div>
+      <div class="th-tag" id="thTag">DISC</div>
+    </div>
+    <div class="progress-track"><div class="progress-fill" id="progFill"></div></div>
+    <div class="section-dots" id="sectionDots"></div>
+  </div>
+
+  <div class="test-body">
+    <div id="sec1" class="tsection active"></div>
+    <div id="sec2" class="tsection"></div>
+    <div id="sec3" class="tsection"></div>
+    <div id="sec4" class="tsection"></div>
+    <div id="sec5" class="tsection"></div>
+    <div id="sec6" class="tsection"></div>
+    <div id="sec7" class="tsection"></div>
+  </div>
+
+  <div class="test-nav">
+    <div class="test-nav-inner">
+      <button class="btn btn-outline" id="btnBack" onclick="prevSection()">← Voltar</button>
+      <button class="btn btn-wine" id="btnNext" onclick="nextSection()">Próxima Seção →</button>
     </div>
   </div>
-  <div class="dots" id="dots"></div>
+</section>
 
-  <div id="sec1" class="qwrap">
-    <div class="sec-head"><h2>📊 Perfil DISC — William M. Marston</h2><p>Para cada grupo, selecione a palavra que <strong>MAIS</strong> e <strong>MENOS</strong> descreve você. Responda pelo seu comportamento natural, não pelo ideal.</p></div>
-    <div id="disc-qs"></div>
+<!-- ════════ SCREEN 3 — RESULTS ════════ -->
+<section id="s-results" class="screen">
+  <div class="res-header">
+    <h1>Seu Relatório Comportamental GMS</h1>
+    <div class="res-name" id="resName"></div>
+    <div class="res-date" id="resDate"></div>
   </div>
-  <div id="sec2" class="qwrap" style="display:none">
-    <div class="sec-head"><h2>🔮 Tipos Psicológicos — Carl Gustav Jung</h2><p>Escolha a alternativa que melhor descreve como você naturalmente funciona — não o ideal, mas o real.</p></div>
-    <div id="jung-qs"></div>
-  </div>
-  <div id="sec3" class="qwrap" style="display:none">
-    <div class="sec-head"><h2>💎 Hierarquia de Valores — Eduard Spranger</h2><p>Avalie o quanto cada afirmação reflete seus valores genuínos. Escala de 1 (Discordo totalmente) a 5 (Concordo totalmente).</p></div>
-    <div id="valores-qs"></div>
-  </div>
-  <div id="sec4" class="qwrap" style="display:none">
-    <div class="sec-head"><h2>👑 Estilo de Liderança</h2><p>Em cada situação, escolha a resposta que melhor descreve como você age na prática. Não há certo ou errado.</p></div>
-    <div id="lider-qs"></div>
-  </div>
-  <div id="sec5" class="qwrap" style="display:none">
-    <div class="sec-head"><h2>🪞 Crenças de Identidade</h2><p>Como você se enxerga como líder e empresário(a)? Responda com honestidade — quanto mais genuíno(a), mais útil o resultado.</p></div>
-    <div id="ident-qs"></div>
-  </div>
-  <div id="sec6" class="qwrap" style="display:none">
-    <div class="sec-head"><h2>⚡ Crenças de Capacidade</h2><p>O quanto você acredita nas suas habilidades para crescer e superar desafios?</p></div>
-    <div id="capac-qs"></div>
-  </div>
-  <div id="sec7" class="qwrap" style="display:none">
-    <div class="sec-head"><h2>💰 Merecimento de Abundância &amp; Prosperidade</h2><p>Suas crenças mais profundas sobre dinheiro e merecimento. Responda com total honestidade — esses dados são apenas para você.</p></div>
-    <div id="abund-qs"></div>
-  </div>
-
-  <div class="fixnav" id="fixnav">
-    <button class="btn-back" id="btn-back" onclick="goBack()" style="display:none">← Voltar</button>
-    <button class="btn-next" id="btn-next" onclick="goNext()">Próxima Seção →</button>
-  </div>
-</div>
-
-<!-- ═══════════════════════════════════
-     RESULTS
-═══════════════════════════════════ -->
-<div id="s-results" class="screen">
-  <div class="rhdr">
-    <h1>Seu Perfil Comportamental</h1>
-    <div class="rname" id="r-name"></div>
-    <div class="rdate" id="r-date"></div>
-  </div>
-  <div class="rcontent">
-
-    <!-- Profile card -->
-    <div class="pcard" id="r-pcard">
-      <div class="pcard-top">
-        <div class="avatar">👤</div>
-        <div style="flex:1">
-          <div class="pname" id="rc-name"></div>
-          <div class="pdate" id="rc-date"></div>
-        </div>
-        <div class="ptag" id="rc-disc"></div>
-      </div>
-      <div class="pstats" id="rc-stats"></div>
+  <div class="res-body" id="resBody"></div>
+  <div class="res-nav">
+    <div class="res-nav-inner">
+      <button class="btn btn-outline" onclick="restartTest()">↺ Nova Análise</button>
+      <button class="btn btn-wine" onclick="savePDF()">🖨️ Salvar PDF</button>
     </div>
-
-    <!-- Share -->
-    <div class="divlbl">Compartilhe seus resultados</div>
-    <div class="share-bar">
-      <a id="wpp-btn" class="sbtn wpp" href="#" onclick="shareWpp(event)"><span class="sico">💬</span><span>WhatsApp</span></a>
-      <a id="mail-btn" class="sbtn mail" href="#" onclick="shareMail(event)"><span class="sico">📧</span><span>E-mail</span></a>
-      <button class="sbtn pdf" onclick="window.print()"><span class="sico">🖨️</span><span>PDF</span></button>
-      <button class="sbtn copy" onclick="copyLink()"><span class="sico">🔗</span><span>Copiar Link</span></button>
-    </div>
-
-    <!-- DISC -->
-    <div class="rcard">
-      <div class="rchdr"><div class="rico ic1">📊</div><div><div class="rtitle">Perfil DISC</div><div class="rsub">Teoria de William M. Marston (1928)</div></div></div>
-      <div id="r-disc"></div>
-      <div id="r-disc-txt" class="atxt"></div>
-    </div>
-
-    <!-- Jung -->
-    <div class="rcard">
-      <div class="rchdr"><div class="rico ic2">🔮</div><div><div class="rtitle">Tipo Psicológico</div><div class="rsub">Teoria de Carl Gustav Jung</div></div></div>
-      <div id="r-jung"></div>
-      <div id="r-jung-txt" class="atxt"></div>
-    </div>
-
-    <!-- Valores -->
-    <div class="rcard">
-      <div class="rchdr"><div class="rico ic3">💎</div><div><div class="rtitle">Hierarquia de Valores</div><div class="rsub">Teoria de Eduard Spranger</div></div></div>
-      <div id="r-vals"></div>
-      <div id="r-vals-txt" class="atxt"></div>
-    </div>
-
-    <!-- Liderança -->
-    <div class="rcard">
-      <div class="rchdr"><div class="rico ic4">👑</div><div><div class="rtitle">Estilo de Liderança</div><div class="rsub">Distribuição dos seus estilos de liderar</div></div></div>
-      <div id="r-lider"></div>
-      <div id="r-lider-txt" class="atxt"></div>
-    </div>
-
-    <!-- Crenças -->
-    <div class="rcard">
-      <div class="rchdr"><div class="rico ic5">🧬</div><div><div class="rtitle">Mapa de Crenças</div><div class="rsub">Identidade · Capacidade · Merecimento de Abundância</div></div></div>
-      <div id="r-beliefs"></div>
-      <div id="r-beliefs-txt" class="atxt"></div>
-    </div>
-
-    <!-- Radar -->
-    <div class="rcard">
-      <div class="rchdr"><div class="rico ic6">🎯</div><div><div class="rtitle">Competências Comportamentais</div><div class="rsub">16 subfatores do perfil DISC</div></div></div>
-      <div class="chart-h-lg"><canvas id="radar-chart"></canvas></div>
-    </div>
-
-    <!-- Recs -->
-    <div class="rcard">
-      <div class="rchdr"><div class="rico ic1">🚀</div><div><div class="rtitle">Plano de Desenvolvimento</div><div class="rsub">Ações práticas baseadas no seu perfil</div></div></div>
-      <div id="r-recs" class="rgrid" style="margin-top:.5rem"></div>
-    </div>
-
-    <!-- Mentor CTA -->
-    <div class="mentor-cta" id="mentor-cta">
-      <h3>📲 Envie para sua Mentora</h3>
-      <p>Compartilhe seus resultados com a Dra. Lauriane Silva para que ela possa preparar sua análise personalizada.</p>
-      <div class="mentor-btns">
-        <a id="mentor-wpp" class="mbtn mbtn-wpp" href="#"><span>💬</span> Enviar pelo WhatsApp</a>
-        <a id="mentor-mail" class="mbtn mbtn-mail" href="#"><span>📧</span> Enviar por E-mail</a>
-      </div>
-    </div>
-
   </div>
-  <div class="fixnav results-nav" id="fixnav-r">
-    <button class="btn-back" onclick="restartTest()">↺ Novo Assessment</button>
-    <button class="btn-next" onclick="window.print()">🖨️ Salvar PDF</button>
-  </div>
-</div>
+</section>
 
-<div class="toast" id="toast"></div>
+<div id="toast" class="toast"></div>
 
 <script>
-/* ═══════════════════════════════════
-   APP CONFIG — personalize aqui
-═══════════════════════════════════ */
-const CFG = {
-  appName: "Mastermind Aliança Ouro",
-  mentorName: "Dra. Lauriane Silva",
-  mentorWhatsApp: "5548988888888",  // ← substitua pelo número real
-  mentorEmail: "lauriane20@gmail.com",
-  appUrl: "https://startling-manatee-f5f631.netlify.app",
+/* ════════════════════════════════════════════════════════════
+   EmailJS Config
+   1. Crie conta grátis em emailjs.com
+   2. Crie um serviço Gmail → anote o Service ID
+   3. Crie um template → anote o Template ID
+   4. Vá em Account → anote a Public Key
+   Substitua os valores abaixo:
+   ════════════════════════════════════════════════════════════ */
+const EMAILJS_CFG = {
+  serviceId: 'SEU_SERVICE_ID',
+  templateId: 'SEU_TEMPLATE_ID',
+  publicKey: 'SUA_PUBLIC_KEY',
 };
 
-/* ═══════════════════════════════════
-   DATA
-═══════════════════════════════════ */
+const CFG = {
+  appName: 'Análise de Perfil Comportamental GMS',
+  mentorName: 'Dra. Lauriane Silva',
+  mentorWhatsApp: '5548988888888', // ← substitua pelo número real
+  mentorEmail: 'lauriane20@gmail.com',
+  appUrl: 'https://startling-manatee-f5f631.netlify.app',
+  instagramUrl: 'https://www.instagram.com/dralauriane/',
+};
+
+/* ════════ DATA ════════ */
 const DG = [
   [{t:'Dominante',f:'D'},{t:'Inspirador',f:'I'},{t:'Estável',f:'S'},{t:'Analítico',f:'C'}],
   [{t:'Ousado',f:'D'},{t:'Entusiasmado',f:'I'},{t:'Leal',f:'S'},{t:'Preciso',f:'C'}],
@@ -520,18 +388,45 @@ const DG = [
   [{t:'Corajoso',f:'D'},{t:'Dinâmico',f:'I'},{t:'Gentil',f:'S'},{t:'Precavido',f:'C'}],
   [{t:'Ambicioso',f:'D'},{t:'Espontâneo',f:'I'},{t:'Modesto',f:'S'},{t:'Disciplinado',f:'C'}],
 ];
-const JQ = [
-  {q:'Em eventos com muitas pessoas, você geralmente…',a:[{t:'Se energiza com a interação e conhece pessoas novas',d:'E'},{t:'Fica cansado(a) e precisa de tempo sozinho(a) depois',d:'I'}]},
-  {q:'Quando precisa resolver um problema complexo, você prefere…',a:[{t:'Discutir com outras pessoas e pensar em voz alta',d:'E'},{t:'Refletir sozinho(a) antes de compartilhar suas ideias',d:'I'}]},
-  {q:'Em situações novas e desconhecidas, você tende a…',a:[{t:'Agir primeiro e aprender com a experiência',d:'E'},{t:'Observar e analisar bastante antes de entrar em ação',d:'I'}]},
-  {q:'Você se sente mais motivado(a) por…',a:[{t:'Interação com pessoas e pelo mundo externo',d:'E'},{t:'Reflexões internas e ideias que desenvolve sozinho(a)',d:'I'}]},
-  {q:'Para resolver problemas, você confia mais em…',a:[{t:'Sua intuição e visão do todo, mesmo sem todos os dados',d:'N'},{t:'Fatos concretos, dados verificáveis e experiências passadas',d:'S'}]},
-  {q:'Ao planejar o futuro do seu negócio, você…',a:[{t:'Pensa em grandes visões e possibilidades inovadoras',d:'N'},{t:'Foca em passos práticos e realistas no curto prazo',d:'S'}]},
-  {q:'Você aprende melhor…',a:[{t:'Entendendo conceitos abstratos e frameworks gerais',d:'N'},{t:'Vendo exemplos práticos e aplicações concretas imediatas',d:'S'}]},
-  {q:'Ao tomar decisões difíceis, você prioriza…',a:[{t:'A lógica e a análise objetiva dos fatos',d:'T'},{t:'O impacto nas pessoas e a harmonia do grupo',d:'F'}]},
-  {q:'Em conflitos, você geralmente…',a:[{t:'Busca a solução mais racional e justa, mesmo que desconfortável',d:'T'},{t:'Considera os sentimentos de todos e preserva o relacionamento',d:'F'}]},
-  {q:'Para você, o mais importante em uma decisão é…',a:[{t:'Que seja logicamente correta e baseada em dados',d:'T'},{t:'Que seja boa para as pessoas e alinhada com seus valores',d:'F'}]},
+
+const MQ = [
+  {q:'Em eventos sociais, você geralmente se sente...',a:[{t:'Energizado(a) — adoro conhecer pessoas novas',d:'E'},{t:'Esgotado(a) — preciso de tempo sozinho(a) depois',d:'I'}]},
+  {q:'Ao resolver um problema complexo, você prefere...',a:[{t:'Falar sobre ele — penso melhor em voz alta',d:'E'},{t:'Refletir sozinho(a) — clareza vem na quietude',d:'I'}]},
+  {q:'Seu ambiente de trabalho ideal tem...',a:[{t:'Movimento, colaboração e interação constante',d:'E'},{t:'Foco, silêncio e poucas interrupções',d:'I'}]},
+  {q:'Quando precisa de novas ideias, você...',a:[{t:'Conversa com pessoas — a troca gera inspiração',d:'E'},{t:'Fica sozinho(a) — preciso de espaço para criar',d:'I'}]},
+  {q:'Para resolver desafios, você começa por...',a:[{t:'Imaginar possibilidades — o que poderia ser',d:'N'},{t:'Analisar fatos — o que realmente existe',d:'S'}]},
+  {q:'Você aprende mais rápido...',a:[{t:'Por conceitos e teorias — captando o padrão geral',d:'N'},{t:'Por exemplos práticos — vendo como funciona na realidade',d:'S'}]},
+  {q:'Ao planejar, você prefere...',a:[{t:'Visão geral — detalhes podem ser ajustados depois',d:'N'},{t:'Passo a passo — cada etapa bem definida',d:'S'}]},
+  {q:'Você confia mais em...',a:[{t:'Sua intuição e visão de futuro',d:'N'},{t:'Dados concretos e experiências passadas',d:'S'}]},
+  {q:'Ao tomar decisões difíceis, você prioriza...',a:[{t:'Lógica e análise objetiva',d:'T'},{t:'Impacto nas pessoas e nos valores',d:'F'}]},
+  {q:'Em conflitos, você busca...',a:[{t:'A solução mais justa, mesmo que desconfortável',d:'T'},{t:'Preservar a relação e o bem-estar coletivo',d:'F'}]},
+  {q:'Ao dar feedback, você é...',a:[{t:'Direto(a) e objetivo(a) — a verdade ajuda',d:'T'},{t:'Cuidadoso(a) e empático(a) — o tom importa tanto quanto o conteúdo',d:'F'}]},
+  {q:'Uma boa decisão de negócio deve ser...',a:[{t:'Sólida logicamente, mesmo que impopular',d:'T'},{t:'Alinhada com valores e boa para as pessoas',d:'F'}]},
+  {q:'Sua relação com planejamento é...',a:[{t:'Adoro — estrutura me dá controle e clareza',d:'J'},{t:'Flexibilidade primeiro — planos enrijecem demais',d:'P'}]},
+  {q:'Quando começa um projeto, você...',a:[{t:'Define tudo antes — clareza antes da ação',d:'J'},{t:'Vai descobrindo — a jornada revela o caminho',d:'P'}]},
+  {q:'Prazos para você são...',a:[{t:'Compromissos sérios — me organizo para cumprir',d:'J'},{t:'Estimativas razoáveis — ajustáveis conforme o contexto',d:'P'}]},
+  {q:'Seu estilo de trabalho é...',a:[{t:'Sistemático — listas, rotinas, processos definidos',d:'J'},{t:'Orgânico — adapto conforme o momento pede',d:'P'}]},
 ];
+
+const MBTI_TYPES = {
+  INTJ:{name:'O Arquiteto',tagline:'Estrategista visionário com mente analítica e determinação singular',desc:'Você combina visão estratégica de longo prazo com capacidade de execução metódica. Pensa de forma sistêmica, desafia o status quo com argumentos sólidos. <strong>Ponto forte:</strong> transformar visões complexas em planos executáveis. <strong>Desafio:</strong> paciência com quem não acompanha seu ritmo mental.'},
+  INTP:{name:'O Lógico',tagline:'Inovador teórico com sede insaciável por conhecimento',desc:'Mente analítica com capacidade rara de ver o que ninguém mais viu. Resolve problemas complexos com elegância conceitual. <strong>Ponto forte:</strong> soluções originais onde outros veem obstáculos. <strong>Desafio:</strong> transformar conceitos brilhantes em ação consistente.'},
+  ENTJ:{name:'O Comandante',tagline:'Líder nato com visão de longo prazo e execução implacável',desc:'Você nasceu para liderar. Decisivo, visionário e capaz de estruturar caos em estratégia. <strong>Ponto forte:</strong> construir times e entregar resultado. <strong>Desafio:</strong> cultivar escuta ativa — as melhores ideias nem sempre vêm de você.'},
+  ENTP:{name:'O Debatedor',tagline:'Empreendedor disruptivo que usa a mente como seu maior ativo',desc:'Você enxerga oportunidades onde outros veem limitações. Conecta pontos distantes com velocidade intelectual. <strong>Ponto forte:</strong> inovar e energizar ambientes com ideias provocadoras. <strong>Desafio:</strong> finalizar antes de começar o próximo projeto brilhante.'},
+  INFJ:{name:'O Advogado',tagline:'Visionário de propósito profundo com impacto transformador',desc:'Você vê padrões nas pessoas antes de elas se verem. Lidera com propósito e inspira pela autenticidade. <strong>Ponto forte:</strong> criar ambientes onde pessoas se tornam melhores. <strong>Desafio:</strong> estabelecer limites — você doa tanto que pode se esgotar.'},
+  INFP:{name:'O Mediador',tagline:'Criativo empático que constrói negócios com significado e alma',desc:'Movido por autenticidade, você constrói negócios onde lucro e propósito coexistem. <strong>Ponto forte:</strong> criar produtos com alma genuína. <strong>Desafio:</strong> navegar o lado prático sem perder a essência que faz seu trabalho único.'},
+  ENFJ:{name:'O Protagonista',tagline:'Líder inspirador que multiplica potencial nas pessoas ao redor',desc:'Você motiva, conecta e desenvolve pessoas de forma natural. Times te seguem pela confiança que você gera. <strong>Ponto forte:</strong> transformar equipes comuns em times extraordinários. <strong>Desafio:</strong> tomar decisões difíceis que podem desagradar, mas são certas para o negócio.'},
+  ENFP:{name:'O Ativista',tagline:'Catalisador energético que une visão, pessoas e entusiasmo',desc:'Energia contagiante e capacidade de ver potencial em cada pessoa. <strong>Ponto forte:</strong> inspirar e mobilizar para frente. <strong>Desafio:</strong> disciplina que transforma entusiasmo em resultado consistente.'},
+  ISTJ:{name:'O Logístico',tagline:'Pilar de confiança que constrói sistemas duradouros',desc:'Confiabilidade extraordinária e comprometimento com qualidade. Você cumpre o que promete, sempre. <strong>Ponto forte:</strong> construir negócios duradouros. <strong>Desafio:</strong> abraçar inovação — às vezes o que funcionou ontem precisa ser renovado.'},
+  ISTP:{name:'O Virtuoso',tagline:'Solucionador pragmático com maestria técnica e adaptabilidade',desc:'Pragmático e eficaz sob pressão — você resolve problemas com elegância técnica notável. <strong>Ponto forte:</strong> agir quando necessário e entregar resultado com eficiência. <strong>Desafio:</strong> comunicar seu valor — você faz mais do que mostra.'},
+  ESTJ:{name:'O Executor',tagline:'Administrador eficaz que lidera com autoridade e comprometimento',desc:'Estrutura, processa e entrega — seu time sabe exatamente o que esperar de você. <strong>Ponto forte:</strong> clareza de expectativas e consistência de resultado. <strong>Desafio:</strong> flexibilidade — nem todos trabalham como você.'},
+  ESTP:{name:'O Empreendedor',tagline:'Ágil, perspicaz e orientado para ação e resultado imediato',desc:'Rápido, perspicaz e energético, você prospera em ambientes dinâmicos. Negocia com naturalidade. <strong>Ponto forte:</strong> decidir e agir com confiança. <strong>Desafio:</strong> parar para planejar — a intuição é poderosa, mas um mapa acelera qualquer jornada.'},
+  ISFJ:{name:'O Defensor',tagline:'Protetor dedicado que lidera pelo cuidado e lealdade genuína',desc:'Cuidado genuíno e comprometimento inabalável. Você cria ambientes onde pessoas se sentem seguras para crescer. <strong>Ponto forte:</strong> lealdade e consistência. <strong>Desafio:</strong> colocar suas próprias necessidades na equação.'},
+  ISFP:{name:'O Aventureiro',tagline:'Criativo sensível que lidera pelo exemplo e autenticidade',desc:'Autêntico e orientado por valores, você cria produtos e serviços com beleza e cuidado. <strong>Ponto forte:</strong> liderança pelo exemplo genuíno. <strong>Desafio:</strong> visibilidade — o mundo precisa te ver para te contratar.'},
+  ESFJ:{name:'O Cônsul',tagline:'Harmonizador social que constrói times coesos e culturas fortes',desc:'Conector nato que constrói comunidades onde as pessoas se sentem parte de algo maior. <strong>Ponto forte:</strong> fazer negócios com alma genuína. <strong>Desafio:</strong> estabelecer limites saudáveis e aprender a dizer não sem culpa.'},
+  ESFP:{name:'O Animador',tagline:'Espontâneo, caloroso e energizador de ambientes e pessoas',desc:'Energia pura, presença magnética e capacidade de transformar qualquer ambiente. <strong>Ponto forte:</strong> vender com naturalidade e conectar com autenticidade. <strong>Desafio:</strong> disciplina operacional — o back-office que sustenta o show.'},
+};
+
 const VQ = [
   {q:'Valorizo ocupar posições onde posso liderar e influenciar decisões importantes.',c:'P'},
   {q:'Crescimento profissional, reconhecimento e status são motivadores relevantes para mim.',c:'P'},
@@ -546,9 +441,10 @@ const VQ = [
   {q:'Vivo guiado(a) por princípios e valores profundos que nunca abro mão.',c:'R'},
   {q:'Uma estrutura filosófica, espiritual ou de crenças orienta minhas escolhas de vida.',c:'R'},
 ];
+
 const LQ = [
-  {q:'Sua equipe precisa entregar um projeto urgente. Você…',o:[{t:'Define prazo firme, acompanha diariamente e exige resultado',s:'E'},{t:'Reúne a equipe, conta a visão e motiva todos',s:'M'},{t:'Conversa individualmente com cada pessoa',s:'O'},{t:'Cria um plano detalhado com etapas e critérios claros',s:'S'}]},
-  {q:'Um colaborador comete um erro grave. Você…',o:[{t:'Aponta o problema diretamente e exige solução imediata',s:'E'},{t:'Explora o que aconteceu focando no aprendizado',s:'M'},{t:'Conversa com empatia para entender o contexto',s:'O'},{t:'Analisa as causas sistematicamente para prevenir recorrência',s:'S'}]},
+  {q:'Sua equipe precisa entregar um projeto urgente. Você…',o:[{t:'Define prazo firme, acompanha diariamente e exige resultado',s:'E'},{t:'Reúne a equipe, conta a visão e motiva todos',s:'M'},{t:'Conversa individualmente, ouve e apoia cada um',s:'O'},{t:'Cria plano detalhado com etapas e critérios claros',s:'S'}]},
+  {q:'Um colaborador comete um erro grave. Você…',o:[{t:'Aponta o problema diretamente e exige solução imediata',s:'E'},{t:'Explora o aprendizado com foco no desenvolvimento',s:'M'},{t:'Conversa com empatia para entender o contexto',s:'O'},{t:'Analisa as causas sistematicamente para prevenir recorrência',s:'S'}]},
   {q:'Ao apresentar seu negócio para investidores, você…',o:[{t:'Vai direto aos números, ROI e retorno esperado',s:'E'},{t:'Conta uma história inspiradora sobre o impacto',s:'M'},{t:'Enfatiza a solidez da equipe e a confiabilidade',s:'O'},{t:'Apresenta dados detalhados e análise de riscos',s:'S'}]},
   {q:'Para crescer sua equipe, você prefere…',o:[{t:'Contratar pessoas proativas e resultadistas',s:'E'},{t:'Encontrar pessoas com energia e que abracem a cultura',s:'M'},{t:'Buscar pessoas de confiança que se adaptem bem',s:'O'},{t:'Selecionar com base em critérios técnicos estruturados',s:'S'}]},
   {q:'Em reuniões de equipe, você tende a…',o:[{t:'Ir direto às decisões e ações, sem muita conversa',s:'E'},{t:'Criar um ambiente animado e encorajar todos',s:'M'},{t:'Garantir que todos se sintam ouvidos antes de avançar',s:'O'},{t:'Seguir uma pauta detalhada e registrar tudo',s:'S'}]},
@@ -558,6 +454,7 @@ const LQ = [
   {q:'Seu estilo de dar feedback é…',o:[{t:'Direto e imediato, sem rodeios',s:'E'},{t:'Positivo e encorajador, focado no potencial',s:'M'},{t:'Gentil e empático, considerando os sentimentos',s:'O'},{t:'Estruturado com exemplos específicos e critérios',s:'S'}]},
   {q:'Para você, o sucesso de um time se mede por…',o:[{t:'Resultados concretos e metas atingidas',s:'E'},{t:'Entusiasmo, criatividade e engajamento',s:'M'},{t:'Coesão, confiança e estabilidade',s:'O'},{t:'Qualidade, precisão e conformidade com padrões',s:'S'}]},
 ];
+
 const IQ=[
   {q:'Tenho clareza sobre quem sou como líder e empreendedor(a).',r:false},
   {q:'Acredito que minha personalidade é compatível com o sucesso nos negócios.',r:false},
@@ -568,6 +465,7 @@ const IQ=[
   {q:'Quando falho, ainda me vejo como uma pessoa competente e valiosa.',r:false},
   {q:'Sinto que tenho o perfil certo para alcançar grandes resultados empresariais.',r:false},
 ];
+
 const KQ=[
   {q:'Acredito que tenho as habilidades necessárias para escalar meu negócio.',r:false},
   {q:'Quando encontro um obstáculo, confio genuinamente na minha capacidade de superá-lo.',r:false},
@@ -578,6 +476,7 @@ const KQ=[
   {q:'Acredito que minha experiência e conhecimento têm muito valor no mercado.',r:false},
   {q:'Sinto que tenho o que é preciso para competir com os melhores do meu setor.',r:false},
 ];
+
 const AQ=[
   {q:'Mereço receber muito dinheiro pelo meu trabalho e expertise.',r:false},
   {q:'Sinto-me confortável em cobrar preços altos pelos meus produtos ou serviços.',r:false},
@@ -590,10 +489,12 @@ const AQ=[
   {q:'Às vezes me saboto quando estou prestes a alcançar um novo patamar financeiro.',r:true},
   {q:'Acredito profundamente que mereço viver em abundância em todas as áreas da vida.',r:false},
 ];
-const LL=['Discordo\ntotalmente','Discordo\nparcialmente','Neutro','Concordo\nparcialmente','Concordo\ntotalmente'];
-const SECINFO=[
+
+const LL=['Discordo totalmente','Discordo parcialmente','Neutro','Concordo parcialmente','Concordo totalmente'];
+
+const SECINFO = [
   {lbl:'Seção 1 de 7',name:'Perfil DISC',tag:'DISC'},
-  {lbl:'Seção 2 de 7',name:'Tipos Psicológicos (Jung)',tag:'Jung'},
+  {lbl:'Seção 2 de 7',name:'Tipos Myers-Briggs (MBTI)',tag:'MBTI'},
   {lbl:'Seção 3 de 7',name:'Hierarquia de Valores',tag:'Valores'},
   {lbl:'Seção 4 de 7',name:'Estilo de Liderança',tag:'Liderança'},
   {lbl:'Seção 5 de 7',name:'Crenças de Identidade',tag:'Identidade'},
@@ -601,343 +502,630 @@ const SECINFO=[
   {lbl:'Seção 7 de 7',name:'Merecimento de Abundância',tag:'Abundância'},
 ];
 
-/* ═══════════════════════════════════
-   STATE
-═══════════════════════════════════ */
-let ST={name:'',whats:'',email:'',section:1,disc:{},jung:{},valores:{},lider:{},ident:{},capac:{},abund:{}};
-const SAVE_KEY='mpc_state';
+const DA = {
+  DI:`Perfil <strong>DI — Diretor Influente</strong>: combina assertividade e orientação a resultados com carisma e capacidade de inspirar. Você decide rápido, comunica com impacto e mobiliza times com naturalidade. Quando está alinhado(a), é praticamente imparável. <strong>Ponto de atenção:</strong> equilibre a velocidade com a escuta — os melhores insights às vezes vêm de quem está sendo apressado.`,
+  ID:`Perfil <strong>ID — Influente Dominante</strong>: comunicador(a) nato(a) com forte orientação a resultados. Cria conexões rapidamente e mobiliza pessoas para uma causa. <strong>Ponto de atenção:</strong> desenvolva sistemas de follow-up — sua energia de início precisa de estrutura para chegar ao fim.`,
+  DC:`Perfil <strong>DC — Diretor Analítico</strong>: combina velocidade com exigência por qualidade. Entrega resultados com precisão e não aceita mediocridade. <strong>Ponto de atenção:</strong> suavize o estilo para construir equipes mais engajadas — pessoas produzem mais quando se sentem valorizadas, não apenas cobradas.`,
+  CD:`Perfil <strong>CD — Analítico Dominante</strong>: preciso(a), estratégico(a) e determinado(a). Pensa antes de agir e entrega com qualidade consistente. <strong>Ponto de atenção:</strong> desenvolva a delegação — confie no time mesmo quando o padrão é diferente do seu.`,
+  DS:`Perfil <strong>DS — Diretor Estável</strong>: executa com força e cuida da equipe. Combina resultado com fidelidade — um perfil raro e muito valorizado em posições de liderança de alto impacto.`,
+  SD:`Perfil <strong>SD — Estável Dominante</strong>: leal, consistente e determinado(a). Constrói negócios sólidos com base em confiança e entrega constante. <strong>Ponto de atenção:</strong> explore mais oportunidades de risco calculado.`,
+  IS:`Perfil <strong>IS — Influente Estável</strong>: líder humanista — inspira, cuida e cria ambientes onde as pessoas florescem. Ideal para negócios baseados em relacionamento. <strong>Ponto de atenção:</strong> desenvolva a habilidade de ter conversas difíceis — a gentileza precisa do coragem como par.`,
+  SI:`Perfil <strong>SI — Estável Influente</strong>: combina harmonia com comunicação afetuosa. É o(a) líder que todos querem no time. <strong>Ponto de atenção:</strong> desenvolva a capacidade de impor limites sem culpa.`,
+  IC:`Perfil <strong>IC — Influente Analítico</strong>: pensa com profundidade e comunica com clareza. Transforma análises complexas em mensagens que as pessoas entendem e abraçam — uma combinação rara e muito valiosa.`,
+  CI:`Perfil <strong>CI — Analítico Influente</strong>: detalhista e comunicativo(a). Convence com dados e cativa com a forma como os apresenta.`,
+  SC:`Perfil <strong>SC — Estável Analítico</strong>: metódico(a), confiável e preciso(a). Constrói processos sólidos e equipes de alta confiança. <strong>Ponto de atenção:</strong> acelere as decisões e abrace mais riscos calculados.`,
+  CS:`Perfil <strong>CS — Analítico Estável</strong>: combina precisão com paciência. Excelente para construir sistemas duradouros e entregas de qualidade consistente.`,
+};
 
-function saveState(){try{localStorage.setItem(SAVE_KEY,JSON.stringify(ST));}catch(e){}}
-function loadState(){try{const s=localStorage.getItem(SAVE_KEY);return s?JSON.parse(s):null;}catch(e){return null;}}
-function clearState(){try{localStorage.removeItem(SAVE_KEY);}catch(e){}}
+const VINFO = {
+  P:{name:'Poder',color:'#8B2020'},
+  E:{name:'Utilidade',color:'#B5601A'},
+  T:{name:'Conhecimento',color:'#4A3080'},
+  A:{name:'Harmonia',color:'#1A6B8A'},
+  S:{name:'Altruísmo',color:'#1A7A4A'},
+  R:{name:'Princípios',color:'#7A5A1A'},
+};
 
-/* ═══════════════════════════════════
-   RENDER QUESTIONS
-═══════════════════════════════════ */
-function renderDISC(){
-  const c=document.getElementById('disc-qs');c.innerHTML='';
-  DG.forEach((g,gi)=>{
-    const d=document.createElement('div');d.className='dgroup';
-    d.innerHTML=`<div class="dghdr"><div class="gnr">${gi+1}</div><div class="ginst">Selecione <strong>MAIS</strong> e <strong>MENOS</strong></div></div><div id="dg${gi}"></div>`;
-    c.appendChild(d);
-    const dw=d.querySelector(`#dg${gi}`);
-    g.forEach((w,wi)=>{
-      const r=document.createElement('div');r.className='drow';r.id=`dr${gi}_${wi}`;
-      r.innerHTML=`<span class="dword">${w.t}</span><div class="dbtns"><label class="dbl"><input type="radio" name="dm${gi}" value="${wi}" onchange="dp(${gi},${wi},'most')"><span>Mais</span></label><label class="dbl"><input type="radio" name="dl${gi}" value="${wi}" onchange="dp(${gi},${wi},'least')"><span>Menos</span></label></div>`;
-      dw.appendChild(r);
-    });
-  });
-}
-function dp(gi,wi,type){
-  if(!ST.disc[gi])ST.disc[gi]={};
-  const prev=ST.disc[gi][type];
-  if(prev!==undefined){const o=document.getElementById(`dr${gi}_${prev}`);if(o)o.classList.remove(type==='most'?'most':'least');}
-  ST.disc[gi][type]=wi;
-  const el=document.getElementById(`dr${gi}_${wi}`);if(el)el.classList.add(type==='most'?'most':'least');
-  if(type==='most'&&ST.disc[gi].least===wi){ST.disc[gi].least=undefined;document.querySelectorAll(`input[name="dl${gi}"]`).forEach(r=>r.checked=false);document.getElementById(`dr${gi}_${wi}`).classList.remove('least');}
-  if(type==='least'&&ST.disc[gi].most===wi){ST.disc[gi].most=undefined;document.querySelectorAll(`input[name="dm${gi}"]`).forEach(r=>r.checked=false);document.getElementById(`dr${gi}_${wi}`).classList.remove('most');}
-  saveState();
-}
-function renderBin(qsArr,stateKey,cid){
-  const c=document.getElementById(cid);c.innerHTML='';
-  qsArr.forEach((q,qi)=>{
-    const d=document.createElement('div');d.className='bq';
-    const sel=ST[stateKey][qi];
-    d.innerHTML=`<div class="qtxt"><div class="qnum">${qi+1}</div><div>${q.q}</div></div><div class="bopts">${q.a.map((a,ai)=>`<label class="bopt"><input type="radio" name="${stateKey}${qi}" value="${a.d}"${sel===a.d?' checked':''} onchange="ST.${stateKey}[${qi}]='${a.d}';saveState()"><div class="bbtn">${a.t}</div></label>`).join('')}</div>`;
-    c.appendChild(d);
-  });
-}
-function renderLikert(qsArr,stateKey,cid){
-  const c=document.getElementById(cid);c.innerHTML='';
-  qsArr.forEach((q,qi)=>{
-    const d=document.createElement('div');d.className='lq';
-    const sel=ST[stateKey][qi];
-    const btns=LL.map((lbl,li)=>`<label class="lopt"><input type="radio" name="${stateKey}${qi}" value="${li+1}"${sel===li+1?' checked':''} onchange="ST.${stateKey}[${qi}]=${li+1};saveState()"><div class="lbtn"><span class="ln">${li+1}</span><span class="lt">${lbl}</span></div></label>`).join('');
-    d.innerHTML=`<div class="qtxt"><div class="qnum">${qi+1}</div><div>${q.q}</div></div><div class="lscale">${btns}</div>`;
-    c.appendChild(d);
-  });
-}
-function renderLider(){
-  const c=document.getElementById('lider-qs');c.innerHTML='';
-  const cl={E:'cd',M:'ci',O:'cs',S:'cc'};
-  LQ.forEach((q,qi)=>{
-    const d=document.createElement('div');d.className='cq';
-    const sel=ST.lider[qi];
-    const opts=q.o.map((o,oi)=>`<label class="copt"><input type="radio" name="lider${qi}" value="${o.s}"${sel===o.s?' checked':''} onchange="ST.lider[${qi}]='${o.s}';saveState()"><div class="cbtn"><div class="cbar ${cl[o.s]}"></div><div class="ctxt">${o.t}</div></div></label>`).join('');
-    d.innerHTML=`<div class="qtxt"><div class="qnum">${qi+1}</div><div>${q.q}</div></div><div class="copts">${opts}</div>`;
-    c.appendChild(d);
-  });
-}
-function renderDots(n){
-  const c=document.getElementById('dots');c.innerHTML='';
-  for(let i=1;i<=7;i++){const d=document.createElement('div');d.className='dot'+(i<n?' done':i===n?' active':'');c.appendChild(d);}
-}
+const LEAD_INFO = {
+  E:{name:'Executivo',desc:'Lidera por resultados — direto, decisivo e orientado à ação. Estabelece metas claras e cobra entrega.'},
+  M:{name:'Motivador',desc:'Lidera por inspiração — energiza, vende a visão e mobiliza pessoas pelo entusiasmo e propósito.'},
+  O:{name:'Orientador',desc:'Lidera pelo cuidado — empático, próximo e focado no bem-estar e desenvolvimento de cada pessoa.'},
+  S:{name:'Sistemático',desc:'Lidera por estrutura — analítico, metódico e orientado a processos, dados e padrões de qualidade.'},
+};
 
-/* ═══════════════════════════════════
-   NAVIGATION
-═══════════════════════════════════ */
-function startTest(){
-  const n=document.getElementById('pname').value.trim();
-  if(!n){showToast('Por favor, informe seu nome.');return;}
-  ST.name=n;ST.whats=document.getElementById('pwhats').value.trim();ST.email=document.getElementById('pemail').value.trim();
-  ST.section=1;
-  document.getElementById('s-welcome').classList.remove('active');
-  document.getElementById('s-test').classList.add('active');
-  renderDISC();renderBin(JQ,'jung','jung-qs');
-  renderLikert(VQ,'valores','valores-qs');renderLider();
-  renderLikert(IQ,'ident','ident-qs');renderLikert(KQ,'capac','capac-qs');renderLikert(AQ,'abund','abund-qs');
-  setSection(1);saveState();
-}
-function resumeTest(){
-  const s=loadState();if(!s||!s.name)return;
-  Object.assign(ST,s);
-  document.getElementById('s-welcome').classList.remove('active');
-  document.getElementById('s-test').classList.add('active');
-  renderDISC();renderBin(JQ,'jung','jung-qs');
-  renderLikert(VQ,'valores','valores-qs');renderLider();
-  renderLikert(IQ,'ident','ident-qs');renderLikert(KQ,'capac','capac-qs');renderLikert(AQ,'abund','abund-qs');
-  setSection(ST.section);
-  // Restore DISC visual state
-  Object.entries(ST.disc).forEach(([gi,sel])=>{
-    if(sel.most!==undefined){const el=document.getElementById(`dr${gi}_${sel.most}`);if(el){el.classList.add('most');el.querySelector(`input[name="dm${gi}"]`).checked=true;}}
-    if(sel.least!==undefined){const el=document.getElementById(`dr${gi}_${sel.least}`);if(el){el.classList.add('least');el.querySelector(`input[name="dl${gi}"]`).checked=true;}}
-  });
-}
-function setSection(n){
-  ST.section=n;
-  for(let i=1;i<=7;i++){const s=document.getElementById(`sec${i}`);if(s)s.style.display=i===n?'block':'none';}
-  const info=SECINFO[n-1];
-  document.getElementById('prog-label').textContent=info.lbl;
-  document.getElementById('sec-name').textContent=info.name;
-  document.getElementById('sec-tag').textContent=info.tag;
-  document.getElementById('pfill').style.width=`${(n/7)*100}%`;
-  document.getElementById('prog-pct').textContent=`${Math.round((n/7)*100)}%`;
-  document.getElementById('btn-back').style.display=n>1?'block':'none';
-  renderDots(n);
+const METHOD = {
+  disc:'Desenvolvido pelo Dr. William Moulton Marston (1928) e aperfeiçoado por pesquisadores como John Geier, o modelo DISC mede 4 dimensões do comportamento observável. Seu perfil foi calculado com base na ordenação de 64 descritores em 16 grupos — quanto mais consistente sua escolha, mais preciso o resultado.',
+  mbti:'Baseado na teoria dos Tipos Psicológicos de Carl G. Jung e sistematizado por Isabel Briggs Myers, o MBTI identifica 16 tipos de personalidade a partir de 4 dimensões. É uma das ferramentas de autoconhecimento mais utilizadas no mundo, presente em Fortune 500 e processos de desenvolvimento de liderança.',
+  values:'A Teoria dos Tipos de Valores de Eduard Spranger (1914) identifica 6 motivadores fundamentais que guiam nossas decisões mais profundas. Diferente de preferências superficiais, esses valores são estáveis e influenciam suas escolhas mesmo quando você não percebe.',
+  leadership:'Seu estilo de liderança foi avaliado em 10 situações reais do mundo empresarial. Não existe estilo certo ou errado — cada um tem forças únicas. O autoconhecimento sobre como você lidera é o primeiro passo para liderar melhor.',
+  beliefs:'As crenças de identidade, capacidade e merecimento são os filtros invisíveis que determinam seus resultados. Estudos em neurociência comportamental mostram que nossas crenças sobre nós mesmos influenciam diretamente nossas ações, escolhas e limites.',
+};
+
+/* ════════ STATE ════════ */
+const SAVE_KEY = 'gms_assessment_v1';
+let ST = {name:'',email:'',phone:'',section:1,disc:{},mbti:{},valores:{},lider:{},ident:{},capac:{},abund:{}};
+
+function saveST(){ try{ localStorage.setItem(SAVE_KEY, JSON.stringify(ST)); }catch(e){} }
+function loadST(){ try{ const r=localStorage.getItem(SAVE_KEY); return r?JSON.parse(r):null; }catch(e){ return null; } }
+function clearST(){ try{ localStorage.removeItem(SAVE_KEY); }catch(e){} }
+
+/* ════════ NAVIGATION ════════ */
+function show(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
   window.scrollTo(0,0);
 }
-function goNext(){if(ST.section<7)setSection(ST.section+1);else showResults();}
-function goBack(){if(ST.section>1)setSection(ST.section-1);}
+function goRegister(){ show('s-register'); checkResume(); }
 
-/* ═══════════════════════════════════
-   SCORING
-═══════════════════════════════════ */
-function calcDISC(){
-  let D=0,I=0,S=0,C=0;
-  DG.forEach((g,gi)=>{
-    const sel=ST.disc[gi]||{};
-    g.forEach((w,wi)=>{
-      let pts=0;
-      if(sel.most===wi)pts=1;
-      else if(sel.least===wi)pts=-1;
-      if(w.f==='D')D+=pts;else if(w.f==='I')I+=pts;else if(w.f==='S')S+=pts;else C+=pts;
-    });
-  });
-  const n=x=>Math.round(((x+16)/32)*100);
-  return{D:n(D),I:n(I),S:n(S),C:n(C)};
-}
-function calcJung(){
-  let E=0,Iv=0,N=0,Sv=0,T=0,F=0;
-  JQ.forEach((q,qi)=>{
-    const v=ST.jung[qi];if(!v)return;
-    if(v==='E')E++;else if(v==='I')Iv++;else if(v==='N')N++;else if(v==='S')Sv++;else if(v==='T')T++;else F++;
-  });
-  const ep=Math.round((E/((E+Iv)||1))*100);
-  const np=Math.round((N/((N+Sv)||1))*100);
-  const tp=Math.round((T/((T+F)||1))*100);
-  return{E:ep,I:100-ep,N:np,S:100-np,T:tp,F:100-tp,type:(ep>=50?'E':'I')+(np>=50?'N':'S')+(tp>=50?'T':'F')};
-}
-function calcVals(){
-  const s={P:0,E:0,T:0,A:0,S:0,R:0},cnt={P:0,E:0,T:0,A:0,S:0,R:0};
-  VQ.forEach((q,qi)=>{const v=ST.valores[qi]||0;s[q.c]+=v;cnt[q.c]++;});
-  const r={};Object.keys(s).forEach(k=>{r[k]=cnt[k]?Math.round((s[k]/(cnt[k]*5))*100):0;});return r;
-}
-function calcLider(){
-  const c={E:0,M:0,O:0,S:0};
-  LQ.forEach((q,qi)=>{const v=ST.lider[qi];if(v&&c[v]!==undefined)c[v]++;});
-  const tot=Object.values(c).reduce((a,b)=>a+b,0)||1;
-  return{E:Math.round((c.E/tot)*100),M:Math.round((c.M/tot)*100),O:Math.round((c.O/tot)*100),S:Math.round((c.S/tot)*100)};
-}
-function calcB(qsArr,stateKey){
-  let s=0,ct=0;
-  qsArr.forEach((q,qi)=>{let v=ST[stateKey][qi];if(v===undefined)return;if(q.r)v=6-v;s+=v;ct++;});
-  return ct?Math.round((s/(ct*5))*100):50;
-}
-function topDisc(d){return Object.entries(d).sort((a,b)=>b[1]-a[1]).slice(0,2).map(e=>e[0]).join('');}
-
-/* ═══════════════════════════════════
-   ANALYSIS TEXTS
-═══════════════════════════════════ */
-const DA={
-  DI:`Perfil <strong>DI — Diretor Influente</strong>: combina força de execução com capacidade de inspirar pessoas. Decide rápido, mobiliza equipes e lidera pelo exemplo. Seu maior desafio é equilibrar a velocidade com a escuta.`,
-  ID:`Perfil <strong>ID — Influente Dominante</strong>: comunicador(a) nato(a) com forte orientação a resultados. Cria conexões rapidamente e sabe mobilizar pessoas para uma causa. Desenvolva sistemas para garantir finalização.`,
-  DC:`Perfil <strong>DC — Diretor Analítico</strong>: combina velocidade com exigência por qualidade. Entrega resultados com precisão. O desafio é suavizar o estilo de liderança para construir equipes mais engajadas.`,
-  CD:`Perfil <strong>CD — Analítico Dominante</strong>: preciso(a), estratégico(a) e determinado(a). Pensa antes de agir e entrega com qualidade. Desenvolva a delegação — confie no time mesmo quando o padrão é diferente do seu.`,
-  DS:`Perfil <strong>DS — Diretor Estável</strong>: executa com força e cuida da equipe. Combina resultado com fidelidade — entrega E mantém pessoas. Um perfil raro e muito valorizado.`,
-  SD:`Perfil <strong>SD — Estável Dominante</strong>: leal, consistente e determinado(a). Constrói negócios sólidos com base em confiança e entrega constante. Explore mais oportunidades de risco calculado.`,
-  IS:`Perfil <strong>IS — Influente Estável</strong>: líder humanista — inspira, cuida e cria ambientes onde as pessoas florescem. Ideal para negócios baseados em relacionamento. Desenvolva a habilidade de ter conversas difíceis.`,
-  SI:`Perfil <strong>SI — Estável Influente</strong>: combina harmonia com comunicação afetuosa. É o(a) líder que todos querem no time. Desenvolva a capacidade de impor limites sem culpa.`,
-  IC:`Perfil <strong>IC — Influente Analítico</strong>: pensa com profundidade e comunica com clareza. Transforma análises complexas em mensagens que as pessoas entendem e abraçam.`,
-  CI:`Perfil <strong>CI — Analítico Influente</strong>: detalhista e comunicativo(a) — uma combinação rara. Convence com dados e cativa com a forma como os apresenta.`,
-  SC:`Perfil <strong>SC — Estável Analítico</strong>: metódico(a), confiável e preciso(a). Constrói processos sólidos e equipes de alta confiança. Acelere as decisões e abrace mais riscos calculados.`,
-  CS:`Perfil <strong>CS — Analítico Estável</strong>: combina precisão com paciência. Excelente para construir sistemas duradouros. Entrega com qualidade consistente.`,
-};
-const VINFO={
-  P:{name:'Poder',color:'#ef4444'},E:{name:'Utilidade',color:'#f97316'},T:{name:'Conhecimento',color:'#8b5cf6'},
-  A:{name:'Harmonia',color:'#06b6d4'},S:{name:'Altruísmo',color:'#10b981'},R:{name:'Princípios',color:'#f59e0b'},
-};
-function bLevel(s){
-  if(s>=80)return{l:'Muito Forte 🌟',c:'#10b981'};if(s>=65)return{l:'Forte ✅',c:'#22c55e'};
-  if(s>=50)return{l:'Moderado 🔄',c:'#f59e0b'};if(s>=35)return{l:'Em Desenvolvimento ⚠️',c:'#f97316'};
-  return{l:'Atenção Necessária 🔴',c:'#ef4444'};
-}
-
-/* ═══════════════════════════════════
-   SHOW RESULTS
-═══════════════════════════════════ */
-function showResults(){
-  document.getElementById('s-test').classList.remove('active');
-  document.getElementById('s-results').classList.add('active');
-  window.scrollTo(0,0);clearState();
-
-  const disc=calcDISC(),jung=calcJung(),vals=calcVals(),lid=calcLider();
-  const ident=calcB(IQ,'ident'),capac=calcB(KQ,'capac'),abund=calcB(AQ,'abund');
-  const profile=topDisc(disc);
-  const now=new Date().toLocaleDateString('pt-BR',{day:'2-digit',month:'long',year:'numeric'});
-
-  document.getElementById('r-name').textContent=ST.name;
-  document.getElementById('r-date').textContent=now;
-  document.getElementById('rc-name').textContent=ST.name;
-  document.getElementById('rc-date').textContent=now;
-  document.getElementById('rc-disc').textContent=`Perfil ${profile}`;
-
-  // Profile card stats
-  const sorted=Object.entries(vals).sort((a,b)=>b[1]-a[1]);
-  const lidSorted=Object.entries({Executivo:lid.E,Motivador:lid.M,Metódico:lid.O,Sistemático:lid.S}).sort((a,b)=>b[1]-a[1]);
-  document.getElementById('rc-stats').innerHTML=[
-    {v:`${profile}`,l:'DISC'},{v:jung.type,l:'Jung'},{v:VINFO[sorted[0][0]].name,l:'Valor nº1'},
-    {v:lidSorted[0][0],l:'Liderança'}
-  ].map(s=>`<div class="pstat"><div class="pstat-v">${s.v}</div><div class="pstat-l">${s.l}</div></div>`).join('');
-
-  rDisc(disc,profile);rJung(jung);rVals(vals);rLider(lid);rBeliefs(ident,capac,abund);
-  rRadar(disc,ident,capac,abund);rRecs(disc,jung,vals,ident,capac,abund);
-  buildShareLinks(disc,jung,vals,lid,ident,capac,abund,profile,now);
-}
-
-function rDisc(d,profile){
-  const names={D:'Dominância',I:'Influência',S:'Estabilidade',C:'Conformidade'};
-  document.getElementById('r-disc').innerHTML=`<div class="ptag-result">Perfil ${profile}</div>
-  <div class="dprofile">${['D','I','S','C'].map(f=>`<div class="df df-${f.toLowerCase()}"><div class="df-l">${f}</div><div class="df-n">${names[f]}</div><div class="df-s2">${d[f]}</div><div class="df-bar"><div class="df-fill" style="width:${d[f]}%"></div></div></div>`).join('')}</div>`;
-  document.getElementById('r-disc-txt').innerHTML=`<p>${DA[profile]||DA[profile[0]+profile[1]]||`Perfil <strong>${profile}</strong>: você tem uma combinação única de forças.`}</p>`;
-}
-function rJung(j){
-  document.getElementById('r-jung').innerHTML=`<div style="margin-bottom:.75rem"><span class="jtype-badge">${j.type}</span></div>
-  <div class="jgrid">
-    <div class="jdim"><div class="jdlbl">Atitude</div><div class="jbar"><div class="jfill" style="width:${j.E}%"></div></div><div class="jvals"><span>E ${j.E}%</span><span>I ${j.I}%</span></div></div>
-    <div class="jdim"><div class="jdlbl">Percepção</div><div class="jbar"><div class="jfill" style="width:${j.N}%"></div></div><div class="jvals"><span>N ${j.N}%</span><span>S ${j.S}%</span></div></div>
-    <div class="jdim"><div class="jdlbl">Julgamento</div><div class="jbar"><div class="jfill" style="width:${j.T}%"></div></div><div class="jvals"><span>T ${j.T}%</span><span>F ${j.F}%</span></div></div>
-  </div>`;
-  const d={E:'Extrovertido(a) — energizado(a) pelo mundo externo e interações.',I:'Introvertido(a) — motivado(a) pela reflexão interna e espaço para pensar.',N:'Intuitivo(a) — capta padrões e possibilidades com facilidade. Pensa no futuro.',S:'Sensorial — fundamentado(a) em fatos e experiência prática.',T:'Racional — decide pela lógica e análise objetiva.',F:'Orientado(a) por sentimento — prioriza impacto nas pessoas e valores.'};
-  const ei=j.E>=50?'E':'I',ns=j.N>=50?'N':'S',tf=j.T>=50?'T':'F';
-  document.getElementById('r-jung-txt').innerHTML=`<p><strong>${ei}:</strong> ${d[ei]}</p><p><strong>${ns}:</strong> ${d[ns]}</p><p><strong>${tf}:</strong> ${d[tf]}</p>`;
-}
-function rVals(v){
-  const sorted=Object.entries(v).sort((a,b)=>b[1]-a[1]);
-  document.getElementById('r-vals').innerHTML=`<div class="vbars">${sorted.map(([k,val])=>`<div class="vrow"><div class="vname">${VINFO[k].name}</div><div class="vtrack"><div class="vfill" style="width:${val}%;background:${VINFO[k].color}"></div></div><div class="vscore">${val}</div></div>`).join('')}</div>`;
-  const top3=sorted.slice(0,3).map(([k])=>VINFO[k].name).join(', ');
-  document.getElementById('r-vals-txt').innerHTML=`<p>Seus valores mais significativos são: <strong>${top3}</strong>. Eles direcionam suas decisões mais profundas e definem o que realmente te move como empresário(a).</p><div class="hbox">💡 Você se sentirá mais realizado(a) em projetos e ambientes que estejam alinhados com esses valores.</div>`;
-}
-function rLider(l){
-  const s=[{k:'E',n:'Executivo',p:l.E,c:'ls-e',d:'Rápido, firme, orientado a resultados. Decide com velocidade.'},{k:'M',n:'Motivador',p:l.M,c:'ls-m',d:'Inspira, envolve e energiza a equipe pelo diálogo.'},{k:'O',n:'Metódico',p:l.O,c:'ls-o',d:'Paciente, empático, orientado ao consenso e à confiança.'},{k:'S',n:'Sistemático',p:l.S,c:'ls-s',d:'Analítico, preciso e estruturado.'}].sort((a,b)=>b.p-a.p);
-  document.getElementById('r-lider').innerHTML=`<div class="lgrid">${s.map(x=>`<div class="lstyle ${x.c}"><div class="lpct">${x.p}%</div><div><div class="lname">${x.n}</div><div class="ldesc">${x.d}</div></div></div>`).join('')}</div>`;
-  document.getElementById('r-lider-txt').innerHTML=`<p>Seu estilo <strong>predominante</strong> é o Líder <strong>${s[0].n}</strong> (${s[0].p}%). ${s[0].d}</p><div class="hbox">💡 Líderes eficazes adaptam o estilo conforme o colaborador e o contexto. Quanto mais você conhecer o DISC da sua equipe, mais eficaz será sua liderança.</div>`;
-}
-function rBeliefs(id,ca,ab){
-  const li=bLevel(id),lc=bLevel(ca),la=bLevel(ab);
-  document.getElementById('r-beliefs').innerHTML=`<div class="bgrid">
-    <div class="bcard bid"><div class="btitle">Identidade</div><div class="bcirc"><div class="bsn">${id}</div><div class="bsp">/100</div></div><div class="blevel" style="color:${li.c}">${li.l}</div></div>
-    <div class="bcard bcap"><div class="btitle">Capacidade</div><div class="bcirc"><div class="bsn">${ca}</div><div class="bsp">/100</div></div><div class="blevel" style="color:${lc.c}">${lc.l}</div></div>
-    <div class="bcard babu"><div class="btitle">Abundância</div><div class="bcirc"><div class="bsn">${ab}</div><div class="bsp">/100</div></div><div class="blevel" style="color:${la.c}">${la.l}</div></div>
-  </div>`;
-  let txt='';
-  const bf=(s,t,g,r)=>`<p>${s<50?`⚠️ Suas <strong>${t}</strong> ${g}`:`s>=70`?`✅ Suas <strong>${t}</strong> ${r}`:`🔄 Suas <strong>${t}</strong> estão em desenvolvimento. ${r}`}</p>`;
-  if(id<50)txt+=`<p>⚠️ Suas <strong>crenças de identidade</strong> indicam que você ainda está consolidando uma autoimagem sólida como líder. Trabalhar o autoconhecimento é prioridade.</p>`;
-  else if(id<70)txt+=`<p>🔄 Suas <strong>crenças de identidade</strong> estão em desenvolvimento. Há espaço para consolidar uma autoimagem mais inabalável sob pressão.</p>`;
-  else txt+=`<p>✅ Suas <strong>crenças de identidade</strong> são sólidas — você tem clareza de quem é como líder. Isso é um ativo enorme.</p>`;
-  if(ca<50)txt+=`<p>⚠️ Suas <strong>crenças de capacidade</strong> revelam dúvidas sobre seu poder de execução. A síndrome do impostor pode estar limitando seu crescimento. Invista em evidências concretas das suas vitórias.</p>`;
-  else if(ca<70)txt+=`<p>🔄 Suas <strong>crenças de capacidade</strong> são razoáveis, mas há momentos de dúvida. Documente conquistas e revise-as regularmente.</p>`;
-  else txt+=`<p>✅ Suas <strong>crenças de capacidade</strong> são robustas. Você confia na sua habilidade de aprender e superar desafios.</p>`;
-  if(ab<50)txt+=`<p>⚠️ Suas <strong>crenças de merecimento</strong> indicam bloqueios em relação à prosperidade. Trabalhar a reprogramação financeira é urgente e transformador.</p>`;
-  else if(ab<70)txt+=`<p>🔄 Você tem uma relação razoável com a abundância, mas há crenças limitantes que merecem atenção — especialmente em cobrar o que seu trabalho vale.</p>`;
-  else txt+=`<p>✅ Você tem uma <strong>mentalidade de abundância</strong> bem desenvolvida. Acredita no seu merecimento e não tem conflitos internos com a prosperidade.</p>`;
-  document.getElementById('r-beliefs-txt').innerHTML=txt;
-}
-function rRadar(d,id,ca,ab){
-  const ctx=document.getElementById('radar-chart').getContext('2d');
-  new Chart(ctx,{type:'radar',data:{labels:['Ousadia','Comando','Objetividade','Assertividade','Persuasão','Extroversão','Entusiasmo','Sociabilidade','Empatia','Paciência','Persistência','Planejamento','Organização','Detalhismo','Autoconfiança','Merecimento'],datasets:[{label:'Seu Perfil',data:[
-    Math.min(100,d.D*0.9+8),d.D,Math.min(100,(d.D+d.C)/2),Math.min(100,(d.D+d.C)/2),
-    Math.min(100,(d.I+d.D)/2),d.I,Math.min(100,d.I*0.9+8),Math.min(100,(d.I+d.S)/2),
-    Math.min(100,(d.S+d.I)/2),d.S,Math.min(100,(d.S+d.C)/2),Math.min(100,d.C*0.8+d.S*0.2),
-    Math.min(100,(d.C+d.S)/2),Math.min(100,d.C*0.9+5),id,ab
-  ],backgroundColor:'rgba(0,180,166,.15)',borderColor:'rgba(0,180,166,.9)',borderWidth:2,pointBackgroundColor:'rgba(0,180,166,1)',pointRadius:3}]},options:{responsive:true,maintainAspectRatio:false,scales:{r:{min:0,max:100,ticks:{stepSize:25,font:{size:8}},pointLabels:{font:{size:9}}}},plugins:{legend:{display:false}}}});
-}
-function rRecs(d,j,v,id,ca,ab){
-  const r=[];
-  if(d.D>=70)r.push({e:'👂',t:'Pratique escuta ativa',d:'Seu alto D pode fazer você agir antes de ouvir. Reserve 2 min por reunião para perguntar: "O que a equipe vê que eu ainda não vi?"'});
-  if(d.I>=70)r.push({e:'📋',t:'Crie sistemas de follow-up',d:'Seu talento para motivar é raro. Complemente com ritual semanal de revisão de métricas para garantir que a energia vire resultado.'});
-  if(d.S<=35)r.push({e:'🏅',t:'Celebre as pequenas vitórias',d:'Seu ritmo acelerado é um ativo, mas pode esgotar a equipe. Crie rituais de celebração das conquistas do time.'});
-  if(d.C<=30)r.push({e:'📊',t:'Documente suas decisões',d:'Registrar o raciocínio por trás das decisões cria previsibilidade para a equipe e facilita a delegação.'});
-  if(id<60)r.push({e:'🪞',t:'Trabalhe sua autonarrativa',d:'Liste 10 vitórias concretas dos últimos 12 meses. Leia diariamente até internalizar que você é a prova do que acredita.'});
-  if(ca<60)r.push({e:'🏆',t:'Banco de conquistas',d:'Crie um documento com evidências das suas vitórias. A síndrome do impostor se dissolve com fatos concretos revisados regularmente.'});
-  if(ab<60)r.push({e:'💰',t:'Reprograme a relação com dinheiro',d:'Escreva sua crença atual sobre dinheiro. Pergunte: "Isso é fato ou opinião herdada?" Substitua por uma crença que te sirva.'});
-  if(j.N>=70)r.push({e:'🔬',t:'Valide intuições com dados',d:'Sua visão intuitiva é poderosa. Habitue-se a apresentar 1-2 dados concretos por grande decisão — aumenta a confiança da equipe.'});
-  const def=[{e:'📚',t:'30 min de aprendizado diário',d:'Leitura ou podcast sobre negócios, psicologia ou liderança. O composto anual é transformador.'},{e:'🗓️',t:'Planejamento semanal intencional',d:'Todo domingo: 3 prioridades da semana. Isso alinha ações com objetivos maiores.'},{e:'🌱',t:'Busque mentoria ativa',d:'Uma relação de mentoria genuína acelera o crescimento exponencialmente.'},{e:'💬',t:'Feedback estruturado trimestral',d:'Peça à equipe feedback anônimo sobre seu estilo. Use como dado, não como julgamento.'}];
-  for(const x of def){if(r.length>=8)break;r.push(x);}
-  document.getElementById('r-recs').innerHTML=r.slice(0,8).map(x=>`<div class="ritem"><div class="remi">${x.e}</div><div><div class="rttl">${x.t}</div><div class="rtxt2">${x.d}</div></div></div>`).join('');
-}
-
-/* ═══════════════════════════════════
-   SHARE / LINKS
-═══════════════════════════════════ */
-function buildMsg(disc,jung,vals,lid,id,ca,ab,profile,date){
-  const vs=Object.entries(vals).sort((a,b)=>b[1]-a[1]);
-  const ls=Object.entries({Executivo:lid.E,Motivador:lid.M,Metódico:lid.O,Sistemático:lid.S}).sort((a,b)=>b[1]-a[1]);
-  return `🧠 *PERFIL COMPORTAMENTAL*\n${CFG.appName}\n\n👤 *${ST.name}*\n📅 ${date}\n\n📊 *DISC:* Perfil ${profile}\n• D:${disc.D} | I:${disc.I} | S:${disc.S} | C:${disc.C}\n\n🔮 *Tipo Jung:* ${jung.type}\n💎 *Valor nº1:* ${VINFO[vs[0][0]].name}\n👑 *Liderança:* ${ls[0][0]} (${ls[0][1]}%)\n\n🧬 *CRENÇAS:*\n• Identidade: ${id}/100 ${bLevel(id).l.split(' ')[0]}\n• Capacidade: ${ca}/100 ${bLevel(ca).l.split(' ')[0]}\n• Abundância: ${ab}/100 ${bLevel(ab).l.split(' ')[0]}\n\n🔗 ${CFG.appUrl}`;
-}
-function buildShareLinks(d,j,v,l,id,ca,ab,p,date){
-  const msg=buildMsg(d,j,v,l,id,ca,ab,p,date);
-  const enc=encodeURIComponent(msg);
-  // Personal share
-  document.getElementById('wpp-btn').href=`https://wa.me/?text=${enc}`;
-  document.getElementById('mail-btn').href=`mailto:?subject=Meu Perfil Comportamental — ${CFG.appName}&body=${encodeURIComponent(msg.replace(/\*/g,''))}`;
-  // Mentor links
-  document.getElementById('mentor-wpp').href=`https://wa.me/${CFG.mentorWhatsApp}?text=${enc}`;
-  document.getElementById('mentor-mail').href=`mailto:${CFG.mentorEmail}?subject=Perfil Comportamental de ${encodeURIComponent(ST.name)}&body=${encodeURIComponent(msg.replace(/\*/g,''))}`;
-}
-function shareWpp(e){e.preventDefault();const href=document.getElementById('wpp-btn').href;window.open(href,'_blank');}
-function shareMail(e){e.preventDefault();window.location.href=document.getElementById('mail-btn').href;}
-function copyLink(){navigator.clipboard.writeText(CFG.appUrl).then(()=>showToast('Link copiado! 🔗')).catch(()=>{prompt('Copie este link:',CFG.appUrl);});}
-
-/* ═══════════════════════════════════
-   UTILS
-═══════════════════════════════════ */
-function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2800);}
-function restartTest(){clearState();ST={name:'',whats:'',email:'',section:1,disc:{},jung:{},valores:{},lider:{},ident:{},capac:{},abund:{}};document.getElementById('s-results').classList.remove('active');document.getElementById('s-welcome').classList.add('active');window.scrollTo(0,0);}
-
-/* ═══════════════════════════════════
-   INIT
-═══════════════════════════════════ */
-(function init(){
-  const saved=loadState();
-  if(saved&&saved.name&&saved.section&&saved.section>1){
-    document.getElementById('resume-banner').classList.add('show');
-    document.getElementById('pname').value=saved.name||'';
-    document.getElementById('pwhats').value=saved.whats||'';
-    document.getElementById('pemail').value=saved.email||'';
+function checkResume(){
+  const saved = loadST();
+  const banner = document.getElementById('resumeBanner');
+  const hasProgress = saved && (Object.keys(saved.disc||{}).length || Object.keys(saved.mbti||{}).length || (saved.section>1));
+  if(hasProgress){
+    banner.classList.add('show');
+    if(saved.name) document.getElementById('pname').value = saved.name;
+    if(saved.email) document.getElementById('pemail').value = saved.email;
+    if(saved.phone) document.getElementById('pphone').value = saved.phone;
+  } else {
+    banner.classList.remove('show');
   }
-  // Render dots placeholder
-  renderDots(1);
-})();
+}
+function resumeProgress(){
+  const saved = loadST();
+  if(saved){ ST = Object.assign(ST, saved); }
+  startTest(true);
+}
+function discardProgress(){
+  clearST();
+  ST = {name:'',email:'',phone:'',section:1,disc:{},mbti:{},valores:{},lider:{},ident:{},capac:{},abund:{}};
+  document.getElementById('resumeBanner').classList.remove('show');
+}
+
+function validEmail(e){ return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e); }
+
+function startTest(resuming){
+  if(resuming !== true){
+    const name = document.getElementById('pname').value.trim();
+    const email = document.getElementById('pemail').value.trim();
+    const phone = document.getElementById('pphone').value.trim();
+    if(!name || !validEmail(email)){
+      document.getElementById('regErr').classList.add('show');
+      return;
+    }
+    document.getElementById('regErr').classList.remove('show');
+    ST.name = name; ST.email = email; ST.phone = phone;
+    saveST();
+  }
+  buildAllSections();
+  show('s-test');
+  goToSection(ST.section || 1);
+}
+
+/* ════════ BUILD SECTIONS ════════ */
+function buildAllSections(){
+  buildDISC();
+  buildMBTI();
+  buildLikertSection('sec3', VQ, 'valores');
+  buildLeadership();
+  buildLikertSection('sec5', IQ, 'ident');
+  buildLikertSection('sec6', KQ, 'capac');
+  buildLikertSection('sec7', AQ, 'abund');
+}
+
+function buildDISC(){
+  const el = document.getElementById('sec1');
+  let html = '';
+  DG.forEach((g,gi)=>{
+    html += `<div class="q-block"><div class="q-text">Grupo ${gi+1} de 16</div>`;
+    html += `<div class="q-hint">Toque na ordem: da que MAIS te descreve (1ª) para a que MENOS te descreve (4ª)</div>`;
+    html += `<div class="disc-grid" id="dg${gi}">`;
+    g.forEach((w,wi)=>{
+      html += `<div class="disc-word" data-gi="${gi}" data-wi="${wi}" onclick="discTap(${gi},${wi})"><span class="rank-badge"></span>${w.t}</div>`;
+    });
+    html += `</div></div>`;
+  });
+  el.innerHTML = html;
+  DG.forEach((g,gi)=>renderDISCGroup(gi));
+}
+function renderDISCGroup(gi){
+  const order = ST.disc[gi] || [];
+  const grid = document.getElementById('dg'+gi);
+  if(!grid) return;
+  grid.querySelectorAll('.disc-word').forEach(cell=>{
+    const wi = +cell.dataset.wi;
+    const rank = order.indexOf(wi);
+    const badge = cell.querySelector('.rank-badge');
+    if(rank>=0){ cell.classList.add('ranked'); badge.textContent = rank+1; }
+    else { cell.classList.remove('ranked'); badge.textContent = ''; }
+  });
+}
+function discTap(gi,wi){
+  let order = ST.disc[gi] ? ST.disc[gi].slice() : [];
+  const idx = order.indexOf(wi);
+  if(idx>=0){ order = order.slice(0,idx); }
+  else if(order.length<4){ order.push(wi); }
+  ST.disc[gi] = order;
+  renderDISCGroup(gi);
+  updateProgress();
+  saveST();
+}
+
+function buildMBTI(){
+  const el = document.getElementById('sec2');
+  let html = '';
+  MQ.forEach((q,qi)=>{
+    html += `<div class="q-block"><div class="q-text">${qi+1}. ${q.q}</div>`;
+    q.a.forEach((a)=>{
+      const sel = ST.mbti[qi]===a.d ? ' sel':'';
+      html += `<button class="choice${sel}" data-qi="${qi}" data-d="${a.d}" onclick="mbtiPick(${qi},'${a.d}')">${a.t}</button>`;
+    });
+    html += `</div>`;
+  });
+  el.innerHTML = html;
+}
+function mbtiPick(qi,d){
+  ST.mbti[qi] = d;
+  const block = document.getElementById('sec2');
+  block.querySelectorAll(`.choice[data-qi="${qi}"]`).forEach(c=>{
+    c.classList.toggle('sel', c.dataset.d===d);
+  });
+  updateProgress();
+  saveST();
+}
+
+function buildLeadership(){
+  const el = document.getElementById('sec4');
+  let html = '';
+  LQ.forEach((q,qi)=>{
+    html += `<div class="q-block"><div class="q-text">${qi+1}. ${q.q}</div>`;
+    q.o.forEach((o)=>{
+      const sel = ST.lider[qi]===o.s ? ' sel':'';
+      html += `<button class="choice${sel}" data-qi="${qi}" data-s="${o.s}" onclick="leadPick(${qi},'${o.s}')">${o.t}</button>`;
+    });
+    html += `</div>`;
+  });
+  el.innerHTML = html;
+}
+function leadPick(qi,s){
+  ST.lider[qi] = s;
+  const block = document.getElementById('sec4');
+  block.querySelectorAll(`.choice[data-qi="${qi}"]`).forEach(c=>{
+    c.classList.toggle('sel', c.dataset.s===s);
+  });
+  updateProgress();
+  saveST();
+}
+
+function buildLikertSection(secId, arr, key){
+  const el = document.getElementById(secId);
+  let html = '';
+  arr.forEach((q,qi)=>{
+    html += `<div class="q-block"><div class="q-text">${qi+1}. ${q.q}</div><div class="likert">`;
+    for(let v=1;v<=5;v++){
+      const sel = ST[key][qi]===v ? ' sel':'';
+      html += `<div class="lk${sel}" data-qi="${qi}" data-v="${v}" onclick="likertPick('${key}','${secId}',${qi},${v})"><span class="lk-num">${v}</span>${LL[v-1]}</div>`;
+    }
+    html += `</div></div>`;
+  });
+  el.innerHTML = html;
+}
+function likertPick(key, secId, qi, v){
+  ST[key][qi] = v;
+  const block = document.getElementById(secId);
+  block.querySelectorAll(`.lk[data-qi="${qi}"]`).forEach(c=>{
+    c.classList.toggle('sel', +c.dataset.v===v);
+  });
+  updateProgress();
+  saveST();
+}
+
+/* ════════ SECTION FLOW ════════ */
+function goToSection(n){
+  ST.section = n;
+  saveST();
+  document.querySelectorAll('.tsection').forEach(s=>s.classList.remove('active'));
+  document.getElementById('sec'+n).classList.add('active');
+  const info = SECINFO[n-1];
+  document.getElementById('thLabel').textContent = info.lbl;
+  document.getElementById('thName').textContent = info.name;
+  document.getElementById('thTag').textContent = info.tag;
+  document.getElementById('btnBack').disabled = (n===1);
+  document.getElementById('btnNext').textContent = (n===7) ? 'Ver Resultado →' : 'Próxima Seção →';
+  renderDots(n);
+  updateProgress();
+  window.scrollTo(0,0);
+}
+function renderDots(current){
+  const dots = document.getElementById('sectionDots');
+  let html = '';
+  for(let i=1;i<=7;i++){
+    let cls = 'dot';
+    if(i<current) cls += ' done';
+    if(i===current) cls += ' current';
+    html += `<div class="${cls}"></div>`;
+  }
+  dots.innerHTML = html;
+}
+function sectionComplete(n){
+  if(n===1) return DG.every((g,gi)=>(ST.disc[gi]||[]).length===4);
+  if(n===2) return MQ.every((q,qi)=>ST.mbti[qi]!==undefined);
+  if(n===3) return VQ.every((q,qi)=>ST.valores[qi]!==undefined);
+  if(n===4) return LQ.every((q,qi)=>ST.lider[qi]!==undefined);
+  if(n===5) return IQ.every((q,qi)=>ST.ident[qi]!==undefined);
+  if(n===6) return KQ.every((q,qi)=>ST.capac[qi]!==undefined);
+  if(n===7) return AQ.every((q,qi)=>ST.abund[qi]!==undefined);
+  return false;
+}
+function updateProgress(){
+  const counts = [DG.length, MQ.length, VQ.length, LQ.length, IQ.length, KQ.length, AQ.length];
+  const total = counts.reduce((a,b)=>a+b,0);
+  let done = 0;
+  done += DG.filter((g,gi)=>(ST.disc[gi]||[]).length===4).length;
+  done += MQ.filter((q,qi)=>ST.mbti[qi]!==undefined).length;
+  done += VQ.filter((q,qi)=>ST.valores[qi]!==undefined).length;
+  done += LQ.filter((q,qi)=>ST.lider[qi]!==undefined).length;
+  done += IQ.filter((q,qi)=>ST.ident[qi]!==undefined).length;
+  done += KQ.filter((q,qi)=>ST.capac[qi]!==undefined).length;
+  done += AQ.filter((q,qi)=>ST.abund[qi]!==undefined).length;
+  const pct = Math.round(done/total*100);
+  document.getElementById('progFill').style.width = pct+'%';
+}
+function prevSection(){
+  if(ST.section>1) goToSection(ST.section-1);
+}
+function nextSection(){
+  if(!sectionComplete(ST.section)){
+    toast('Responda todas as questões desta seção para avançar.');
+    return;
+  }
+  if(ST.section<7){ goToSection(ST.section+1); }
+  else { showResults(); }
+}
+
+/* ════════ SCORING ════════ */
+const RANK_PTS = [3, 1, -1, -3];
+function calcDISC() {
+  let s = {D:0,I:0,S:0,C:0};
+  DG.forEach((g,gi) => {
+    const order = ST.disc[gi] || [];
+    order.forEach((wi,ri) => { s[g[wi].f] += RANK_PTS[ri]; });
+  });
+  const n = x => Math.round((x+48)/96*100);
+  return {D:n(s.D),I:n(s.I),S:n(s.S),C:n(s.C)};
+}
+function calcMBTI() {
+  let E=0,Iv=0,N=0,Sv=0,T=0,F=0,J=0,P=0;
+  MQ.forEach((q,qi) => {
+    const v = ST.mbti[qi]; if(!v) return;
+    if(v==='E')E++; else if(v==='I')Iv++;
+    else if(v==='N')N++; else if(v==='S')Sv++;
+    else if(v==='T')T++; else if(v==='F')F++;
+    else if(v==='J')J++; else if(v==='P')P++;
+  });
+  const t = (E>=Iv?'E':'I')+(N>=Sv?'N':'S')+(T>=F?'T':'F')+(J>=P?'J':'P');
+  return {
+    type:t,
+    Ep:Math.round(E/(E+Iv||1)*100), Ip:Math.round(Iv/(E+Iv||1)*100),
+    Np:Math.round(N/(N+Sv||1)*100), Sp:Math.round(Sv/(N+Sv||1)*100),
+    Tp:Math.round(T/(T+F||1)*100), Fp:Math.round(F/(T+F||1)*100),
+    Jp:Math.round(J/(J+P||1)*100), Pp:Math.round(P/(J+P||1)*100),
+  };
+}
+function calcValues(){
+  const sum={P:0,E:0,T:0,A:0,S:0,R:0}, ct={P:0,E:0,T:0,A:0,S:0,R:0};
+  VQ.forEach((q,qi)=>{ const v=ST.valores[qi]; if(v===undefined)return; sum[q.c]+=v; ct[q.c]++; });
+  const out={};
+  Object.keys(sum).forEach(k=>{ out[k]= ct[k]?Math.round(sum[k]/(ct[k]*5)*100):0; });
+  return out;
+}
+function calcLeadership(){
+  const c={E:0,M:0,O:0,S:0};
+  LQ.forEach((q,qi)=>{ const s=ST.lider[qi]; if(s)c[s]++; });
+  const tot = (c.E+c.M+c.O+c.S)||1;
+  return {E:Math.round(c.E/tot*100),M:Math.round(c.M/tot*100),O:Math.round(c.O/tot*100),S:Math.round(c.S/tot*100)};
+}
+function calcB(arr, key) {
+  let s=0,ct=0;
+  arr.forEach((q,qi) => { let v=ST[key][qi]; if(v===undefined)return; if(q.r)v=6-v; s+=v; ct++; });
+  return ct ? Math.round(s/(ct*5)*100) : 50;
+}
+function topDisc(disc){
+  const sorted = Object.entries(disc).sort((a,b)=>b[1]-a[1]);
+  return sorted[0][0]+sorted[1][0];
+}
+function bLevel(s){
+  if(s>=80)return{l:'Muito Forte 🌟',c:'#1A7A4A'};
+  if(s>=65)return{l:'Forte ✅',c:'#2A9A5A'};
+  if(s>=50)return{l:'Moderado 🔄',c:'#B5601A'};
+  if(s>=35)return{l:'Em Desenvolvimento ⚠️',c:'#C07010'};
+  return{l:'Atenção Necessária 🔴',c:'#8B2020'};
+}
+
+/* ════════ RESULTS RENDER ════════ */
+let radarChart = null;
+function showResults(){
+  const disc = calcDISC();
+  const mbti = calcMBTI();
+  const vals = calcValues();
+  const lid = calcLeadership();
+  const ident = calcB(IQ,'ident');
+  const capac = calcB(KQ,'capac');
+  const abund = calcB(AQ,'abund');
+
+  const profileKey = topDisc(disc);
+  const vs = Object.entries(vals).sort((a,b)=>b[1]-a[1]);
+  const ls = Object.entries({E:lid.E,M:lid.M,O:lid.O,S:lid.S}).sort((a,b)=>b[1]-a[1]);
+  const topValueName = VINFO[vs[0][0]].name;
+  const topLeadName = LEAD_INFO[ls[0][0]].name;
+  const mbtiInfo = MBTI_TYPES[mbti.type] || {name:mbti.type,tagline:'',desc:''};
+
+  document.getElementById('resName').textContent = ST.name;
+  document.getElementById('resDate').textContent = new Date().toLocaleDateString('pt-BR',{day:'2-digit',month:'long',year:'numeric'});
+
+  const discProfileText = DA[profileKey] || `Perfil <strong>${profileKey}</strong>: combinação equilibrada dos seus fatores comportamentais, com forças que se complementam.`;
+  const waMsg = encodeURIComponent(`Olá Dra. Lauriane! Acabei de concluir minha Análise de Perfil Comportamental GMS e gostaria de agendar minha sessão gratuita de 30 minutos. Meu perfil: ${profileKey} / ${mbti.type} (${mbtiInfo.name})`);
+  const waLink = `https://wa.me/${CFG.mentorWhatsApp}?text=${waMsg}`;
+
+  let html = '';
+
+  /* 1. Summary card */
+  html += `<div class="summary-card">
+    <div class="summary-grid">
+      <div class="sum-item"><div class="sum-label">DISC</div><div class="sum-value">${profileKey}</div><div class="sum-sub">Perfil dominante</div></div>
+      <div class="sum-item"><div class="sum-label">MBTI</div><div class="sum-value">${mbti.type}</div><div class="sum-sub">${mbtiInfo.name}</div></div>
+      <div class="sum-item"><div class="sum-label">Valor</div><div class="sum-value" style="font-size:1.2rem">${topValueName}</div><div class="sum-sub">Principal motivador</div></div>
+      <div class="sum-item"><div class="sum-label">Liderança</div><div class="sum-value" style="font-size:1.2rem">${topLeadName}</div><div class="sum-sub">Estilo dominante</div></div>
+    </div>
+  </div>`;
+
+  /* 2. Share bar */
+  const shareTxt = encodeURIComponent(`Concluí minha Análise de Perfil Comportamental GMS! Perfil: ${profileKey} / ${mbti.type} — ${mbtiInfo.name}. Faça a sua: ${CFG.appUrl}`);
+  html += `<div class="share-bar">
+    <a class="btn btn-ghost" href="https://wa.me/?text=${shareTxt}" target="_blank">💬 WhatsApp</a>
+    <a class="btn btn-ghost" href="mailto:?subject=${encodeURIComponent('Meu Perfil Comportamental GMS')}&body=${shareTxt}">✉️ E-mail</a>
+    <button class="btn btn-ghost" onclick="savePDF()">📄 PDF</button>
+    <button class="btn btn-ghost" onclick="copyLink()">🔗 Copiar link</button>
+  </div>`;
+
+  /* 3. DISC card */
+  html += `<div class="res-card"><h2>📊 Perfil DISC</h2>
+    <div class="method-intro">${METHOD.disc}</div>
+    <div class="bars">
+      ${discBar('Dominância (D)',disc.D)}
+      ${discBar('Influência (I)',disc.I)}
+      ${discBar('Estabilidade (S)',disc.S)}
+      ${discBar('Conformidade (C)',disc.C)}
+    </div>
+    <div class="profile-text">${discProfileText}</div>
+  </div>`;
+
+  /* 4. MBTI card */
+  html += `<div class="res-card"><h2>🧠 Tipo Myers-Briggs</h2>
+    <div class="method-intro">${METHOD.mbti}</div>
+    <div style="text-align:center;margin:10px 0">
+      <div style="font-family:'Cormorant Garamond',serif;font-size:3rem;font-weight:700;color:var(--wine);letter-spacing:.08em">${mbti.type}</div>
+      <div class="type-name">${mbtiInfo.name}</div>
+      <div class="type-tagline">${mbtiInfo.tagline}</div>
+    </div>
+    <div class="bars">
+      ${dichBar('Extroversão','Introversão',mbti.Ep,mbti.Ip)}
+      ${dichBar('Intuição','Sensação',mbti.Np,mbti.Sp)}
+      ${dichBar('Pensamento','Sentimento',mbti.Tp,mbti.Fp)}
+      ${dichBar('Julgamento','Percepção',mbti.Jp,mbti.Pp)}
+    </div>
+    <div class="profile-text">${mbtiInfo.desc}</div>
+  </div>`;
+
+  /* 5. Values card */
+  let valBars = '';
+  vs.forEach(([k,v])=>{ valBars += discBar(VINFO[k].name,v,VINFO[k].color); });
+  html += `<div class="res-card"><h2>💎 Hierarquia de Valores</h2>
+    <div class="method-intro">${METHOD.values}</div>
+    <div class="bars">${valBars}</div>
+    <div class="profile-text">Seu principal motivador é <strong>${topValueName}</strong>. Esse valor orienta suas decisões mais profundas, muitas vezes de forma inconsciente. Alinhar seu trabalho e suas metas a esse motivador é a chave para sustentar energia e propósito ao longo do tempo.</div>
+  </div>`;
+
+  /* 6. Leadership card */
+  let leadBars = '';
+  ls.forEach(([k,v])=>{ leadBars += discBar(LEAD_INFO[k].name,v); });
+  html += `<div class="res-card"><h2>👑 Estilo de Liderança</h2>
+    <div class="method-intro">${METHOD.leadership}</div>
+    <div class="bars">${leadBars}</div>
+    <div class="profile-text"><strong>${topLeadName}:</strong> ${LEAD_INFO[ls[0][0]].desc}</div>
+  </div>`;
+
+  /* 7. Beliefs map */
+  const il = bLevel(ident), cl = bLevel(capac), al = bLevel(abund);
+  html += `<div class="res-card"><h2>🪞 Mapa de Crenças</h2>
+    <div class="method-intro">${METHOD.beliefs}</div>
+    <div class="belief-grid">
+      <div class="belief-item"><div class="belief-score" style="color:${il.c}">${ident}</div><div class="belief-lbl" style="color:${il.c}">${il.l}</div><div class="belief-name">Identidade</div></div>
+      <div class="belief-item"><div class="belief-score" style="color:${cl.c}">${capac}</div><div class="belief-lbl" style="color:${cl.c}">${cl.l}</div><div class="belief-name">Capacidade</div></div>
+      <div class="belief-item"><div class="belief-score" style="color:${al.c}">${abund}</div><div class="belief-lbl" style="color:${al.c}">${al.l}</div><div class="belief-name">Abundância</div></div>
+    </div>
+    <div class="profile-text">${beliefsNarrative(ident,capac,abund)}</div>
+  </div>`;
+
+  /* 8. Radar chart */
+  html += `<div class="res-card"><h2>🎯 Mapa de Competências</h2>
+    <div class="method-intro">Visão integrada das suas 16 principais competências comportamentais, derivadas dos seus resultados de DISC e do seu mapa de crenças.</div>
+    <div class="chart-wrap"><canvas id="radarCanvas"></canvas></div>
+  </div>`;
+
+  /* 9. Development plan */
+  html += `<div class="res-card"><h2>🎯 Plano de Desenvolvimento GMS</h2>
+    <div class="method-intro">Recomendações personalizadas com base no seu perfil completo. Pequenos ajustes consistentes geram grandes transformações.</div>
+    <ul class="plan-list">${buildPlan(disc,mbti,ident,capac,abund,profileKey).map((p,i)=>`<li><span class="plan-n">${i+1}</span><span>${p}</span></li>`).join('')}</ul>
+  </div>`;
+
+  /* 10. Bonus CTA */
+  html += `<div class="bonus-block">
+    <div class="bonus-emoji">🎁</div>
+    <h3>Você ganhou 30 minutos gratuitos com a Dra. Lauriane Silva!</h3>
+    <p>Este é um presente exclusivo para quem concluiu a Análise de Perfil Comportamental GMS.</p>
+    <div class="bonus-steps">
+      <div class="bstep"><span class="bstep-n">1</span><span>Siga <strong>@dralauriane</strong> no Instagram</span></div>
+      <div class="bstep"><span class="bstep-n">2</span><span>Envie uma mensagem: <em>"Quero minha sessão gratuita do GMS"</em></span></div>
+    </div>
+    <div class="bonus-btns">
+      <a href="${CFG.instagramUrl}" target="_blank" class="bb-insta">📸 Seguir @dralauriane</a>
+      <a href="${waLink}" target="_blank" class="bb-wpp">💬 Solicitar Horário</a>
+    </div>
+  </div>`;
+
+  /* 11. Mentor CTA */
+  const mentorBody = encodeURIComponent(`Olá ${CFG.mentorName},\n\nConcluí a Análise de Perfil Comportamental GMS.\n\nNome: ${ST.name}\nE-mail: ${ST.email}\nWhatsApp: ${ST.phone||'—'}\n\nResultados:\n• DISC: ${profileKey} (D${disc.D} I${disc.I} S${disc.S} C${disc.C})\n• MBTI: ${mbti.type} — ${mbtiInfo.name}\n• Valor principal: ${topValueName}\n• Liderança: ${topLeadName}\n• Identidade: ${ident} | Capacidade: ${capac} | Abundância: ${abund}\n\nGostaria de conversar sobre meu desenvolvimento.`);
+  const mentorWaMsg = encodeURIComponent(`Olá ${CFG.mentorName}! Concluí a Análise GMS. Perfil: ${profileKey} / ${mbti.type} (${mbtiInfo.name}). Valor: ${topValueName}. Crenças — Id:${ident} Cap:${capac} Ab:${abund}. Gostaria de conversar sobre meu desenvolvimento.`);
+  html += `<div class="mentor-card">
+    <h3>Compartilhe seu resultado com a ${CFG.mentorName}</h3>
+    <p>Envie seu relatório para um acompanhamento personalizado do seu desenvolvimento.</p>
+    <div class="mentor-btns">
+      <a class="btn btn-cream" href="https://wa.me/${CFG.mentorWhatsApp}?text=${mentorWaMsg}" target="_blank">💬 Enviar via WhatsApp</a>
+      <a class="btn btn-cream" href="mailto:${CFG.mentorEmail}?subject=${encodeURIComponent('Meu Perfil GMS — '+ST.name)}&body=${mentorBody}">✉️ Enviar via E-mail</a>
+    </div>
+  </div>`;
+
+  document.getElementById('resBody').innerHTML = html;
+  show('s-results');
+
+  /* animate bars */
+  setTimeout(()=>{ document.querySelectorAll('.bar-fill').forEach(b=>{ b.style.width = b.dataset.w+'%'; }); }, 80);
+
+  /* radar */
+  renderRadar(disc, ident, capac, abund);
+
+  /* email submit */
+  submitToEmailJS(disc, mbti, vals, lid, ident, capac, abund);
+}
+
+function discBar(label,val,color){
+  const c = color || 'var(--wine)';
+  return `<div class="bar-row"><div class="bar-top"><span>${label}</span><span>${val}%</span></div><div class="bar-track"><div class="bar-fill" data-w="${val}" style="width:0;background:${c}"></div></div></div>`;
+}
+function dichBar(left,right,lp,rp){
+  const dom = lp>=rp;
+  return `<div class="bar-row"><div class="bar-top"><span>${left} (${lp}%)</span><span>${right} (${rp}%)</span></div><div class="bar-track"><div class="bar-fill" data-w="${dom?lp:rp}" style="width:0;${dom?'':'margin-left:auto;'}background:var(--wine)"></div></div></div>`;
+}
+function beliefsNarrative(id,cap,ab){
+  const lowest = Math.min(id,cap,ab);
+  let focus = '';
+  if(lowest===ab) focus='Sua maior oportunidade está no <strong>merecimento de abundância</strong> — trabalhar a permissão interna para receber pode destravar resultados financeiros.';
+  else if(lowest===cap) focus='Sua maior oportunidade está nas <strong>crenças de capacidade</strong> — fortalecer a confiança nas suas habilidades acelera sua tomada de ação.';
+  else focus='Sua maior oportunidade está nas <strong>crenças de identidade</strong> — consolidar quem você é como líder dá base para tudo o mais.';
+  return `Suas crenças são os filtros invisíveis dos seus resultados. ${focus} A boa notícia: crenças são treináveis, e é exatamente isso que o trabalho com a ${CFG.mentorName} desenvolve.`;
+}
+function buildPlan(disc,mbti,id,cap,ab,profileKey){
+  const plan = [];
+  const sorted = Object.entries(disc).sort((a,b)=>a[1]-b[1]);
+  const lowFactor = sorted[0][0];
+  const factorTip = {
+    D:'Pratique a assertividade: tome uma decisão importante por dia sem buscar validação externa.',
+    I:'Invista em comunicação e relacionamento: compartilhe suas ideias publicamente uma vez por semana.',
+    S:'Desenvolva consistência e paciência: implemente uma rotina estável que sustente seus grandes objetivos.',
+    C:'Refine processos e atenção ao detalhe: documente um sistema-chave do seu negócio.',
+  };
+  plan.push(factorTip[lowFactor]);
+  if(ab<65) plan.push('Trabalhe seu merecimento de abundância: revise seus preços e pratique cobrar pelo valor que entrega, sem culpa.');
+  if(cap<65) plan.push('Fortaleça suas crenças de capacidade: registre semanalmente 3 evidências de competência e conquistas suas.');
+  if(id<65) plan.push('Consolide sua identidade de líder: escreva uma declaração de quem você é como empreendedor(a) e leia diariamente.');
+  plan.push(`Aproveite seu tipo ${mbti.type}: posicione-se em atividades que usem suas forças naturais e delegue o que te drena energia.`);
+  plan.push(`Agende sua sessão gratuita de 30 minutos com a ${CFG.mentorName} para transformar este diagnóstico em um plano de ação concreto.`);
+  return plan.slice(0,6);
+}
+
+function renderRadar(disc, id, cap, ab){
+  const ctx = document.getElementById('radarCanvas');
+  if(!ctx || typeof Chart==='undefined') return;
+  if(radarChart) radarChart.destroy();
+  const labels = ['Liderança','Comunicação','Estabilidade','Análise','Decisão','Influência','Persistência','Precisão','Identidade','Capacidade','Abundância','Visão','Execução','Empatia','Foco','Resiliência'];
+  const data = [
+    disc.D, disc.I, disc.S, disc.C,
+    Math.round((disc.D+cap)/2), disc.I,
+    disc.S, disc.C,
+    id, cap, ab,
+    Math.round((disc.D+disc.I)/2),
+    Math.round((disc.D+disc.C)/2),
+    Math.round((disc.I+disc.S)/2),
+    Math.round((disc.C+id)/2),
+    Math.round((id+cap)/2),
+  ];
+  radarChart = new Chart(ctx,{
+    type:'radar',
+    data:{ labels, datasets:[{ label:'Suas competências', data, backgroundColor:'rgba(86,33,32,.18)', borderColor:'#562120', borderWidth:2, pointBackgroundColor:'#3F1817', pointRadius:3 }] },
+    options:{
+      responsive:true,
+      plugins:{ legend:{ display:false } },
+      scales:{ r:{ min:0, max:100, ticks:{ stepSize:25, color:'#857D75', backdropColor:'transparent', font:{size:9} }, grid:{ color:'#E8E2D9' }, angleLines:{ color:'#E8E2D9' }, pointLabels:{ color:'#1A1818', font:{ size:10, family:'Inter' } } } }
+    }
+  });
+}
+
+/* ════════ EMAILJS ════════ */
+function submitToEmailJS(disc, mbti, vals, lid, ident, capac, abund) {
+  if (!EMAILJS_CFG.publicKey || EMAILJS_CFG.publicKey === 'SUA_PUBLIC_KEY') return;
+  try{
+    emailjs.init(EMAILJS_CFG.publicKey);
+    const profile = topDisc(disc);
+    const vs = Object.entries(vals).sort((a,b)=>b[1]-a[1]);
+    const ls = Object.entries({Executivo:lid.E,Motivador:lid.M,Orientador:lid.O,Sistemático:lid.S}).sort((a,b)=>b[1]-a[1]);
+    emailjs.send(EMAILJS_CFG.serviceId, EMAILJS_CFG.templateId, {
+      respondent_name: ST.name,
+      respondent_email: ST.email,
+      respondent_phone: ST.phone,
+      assessment_date: new Date().toLocaleDateString('pt-BR'),
+      disc_profile: profile,
+      disc_d: disc.D, disc_i: disc.I, disc_s: disc.S, disc_c: disc.C,
+      mbti_type: mbti.type,
+      mbti_name: MBTI_TYPES[mbti.type]?.name || '',
+      top_value: VINFO[vs[0][0]].name,
+      leadership: ls[0][0],
+      identity_score: ident,
+      capacity_score: capac,
+      abundance_score: abund,
+    });
+  }catch(e){ console.warn('EmailJS:',e); }
+}
+
+/* ════════ ACTIONS ════════ */
+function toast(msg){
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(window._toastTimer);
+  window._toastTimer = setTimeout(()=>t.classList.remove('show'), 2600);
+}
+function copyLink(){
+  const url = CFG.appUrl;
+  if(navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(url).then(()=>toast('🔗 Link copiado!')).catch(()=>fallbackCopy(url));
+  } else { fallbackCopy(url); }
+}
+function fallbackCopy(text){
+  const ta=document.createElement('textarea'); ta.value=text; document.body.appendChild(ta); ta.select();
+  try{ document.execCommand('copy'); toast('🔗 Link copiado!'); }catch(e){ toast('Não foi possível copiar.'); }
+  document.body.removeChild(ta);
+}
+function savePDF(){
+  const old = document.title;
+  document.title = `Perfil GMS — ${ST.name}`;
+  window.print();
+  setTimeout(()=>{ document.title = old; }, 500);
+}
+function restartTest(){
+  if(!confirm('Iniciar uma nova análise? Seu progresso atual será apagado.')) return;
+  clearST();
+  ST = {name:'',email:'',phone:'',section:1,disc:{},mbti:{},valores:{},lider:{},ident:{},capac:{},abund:{}};
+  if(radarChart){ radarChart.destroy(); radarChart=null; }
+  document.getElementById('pname').value='';
+  document.getElementById('pemail').value='';
+  document.getElementById('pphone').value='';
+  show('s-landing');
+}
+
+/* ════════ INIT ════════ */
+window.addEventListener('DOMContentLoaded', ()=>{
+  /* Landing is shown by default. Resume offered on register screen. */
+});
 </script>
 </body>
 </html>
