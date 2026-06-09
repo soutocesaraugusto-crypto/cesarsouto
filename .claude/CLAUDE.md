@@ -411,3 +411,89 @@ Este repositório tem o contexto do negócio **Dra. Lauriane Silva** salvo em
 4. Todo material criado deve respeitar o **design system** e a **voz** definidos acima.
 5. Mapa rápido dos arquivos: veja `workspace/businesses/lauriane_silva/INDEX.md`.
 <!-- END onboard-aliado:contexto-do-negocio -->
+
+<!-- BEGIN inself-assessment-app -->
+## App — Perfil Comportamental Inself
+
+### Descrição
+Assessment de perfil comportamental completo em arquivo HTML único, sem backend.
+**Produto:** Perfil Comportamental Inself® — por Dra. Lauriane Silva · Mentoria & Performance
+
+### URLs
+| Ambiente | URL |
+|----------|-----|
+| **App (produção)** | `https://dralaurianesilva.github.io/mastermind-dralaurianesilva-/` |
+| **Admin (gerar links)** | `https://dralaurianesilva.github.io/mastermind-dralaurianesilva-/admin.html` |
+| **Repositório** | `https://github.com/Dralaurianesilva/mastermind-dralaurianesilva-` |
+
+### Arquivos do App
+```
+docs/
+├── index.html       ← App principal (único arquivo, ~1250 linhas)
+├── admin.html       ← Gerador de links únicos (senha: inself2024)
+├── logo-white.png   ← Logo Inself versão branca (fundo escuro)
+└── logo-wine.png    ← Logo Inself versão vinho (fundo claro)
+```
+
+### Stack Técnica
+- **HTML/CSS/JS puro** — zero backend, zero dependências locais
+- **CDNs:** Google Fonts (Cormorant Garamond + Inter) · Chart.js 4 · EmailJS browser v4
+- **Deploy:** GitHub Pages (branch `master`, pasta `/docs`)
+- **Dados:** EmailJS → envio automático para `lauriane20@gmail.com` ao concluir
+
+### EmailJS — Credenciais Configuradas
+```javascript
+serviceId:  'service_agommze'
+templateId: 'template_ni3nh2s'
+publicKey:  'w5Pje4POkIn5zzHPD'
+```
+Variáveis enviadas: `name`, `email`, `respondent_name`, `respondent_email`, `respondent_phone`, `assessment_date`, `disc_profile`, `disc_d/i/s/c`, `mbti_type`, `mbti_name`, `top_value`, `leadership`, `identity_score`, `capacity_score`, `abundance_score`
+
+### Contatos da Mentora no App
+```javascript
+mentorWhatsApp: '5547988571458'
+mentorEmail:    'lauriane20@gmail.com'
+instagramUrl:   'https://www.instagram.com/dralauriane/'
+```
+
+### 8 Dimensões Avaliadas
+1. **DISC** (William M. Marston) — 16 grupos, ranking 1→4 por toque
+2. **MBTI Myers-Briggs** — 16 questões, 4 dimensões (E/I, N/S, T/F, J/P), 16 tipos
+3. **Hierarquia de Valores** (Eduard Spranger) — 12 questões Likert 1-5
+4. **Estilo de Liderança** — 10 situações, 4 estilos (Executivo/Motivador/Orientador/Sistemático)
+5. **Crenças de Identidade** — 8 questões Likert (algumas reversas)
+6. **Crenças de Capacidade** — 8 questões Likert (algumas reversas)
+7. **Merecimento de Abundância** — 10 questões Likert (algumas reversas)
+8. **Plano de Ação Inself** — gerado automaticamente pelo perfil
+
+### Sistema de Link Único (Token)
+- **Sem token na URL** → app abre normalmente
+- **Token válido** (`?t=TOKEN`) → abre e marca como usado ao concluir
+- **Token inválido/expirado/usado** → tela "Acesso Restrito" com botão WhatsApp
+- **Gerar tokens:** acessar `admin.html`, senha `inself2024`
+- **Formato do token:** `[8chars_random]_[expiry_base36]`
+
+### Diagnóstico Financeiro (Crenças)
+Score combinado `(abund×0.5 + ident×0.25 + capac×0.25)`:
+- **≥ 80** → Mentalidade Financeira Alinhada (verde)
+- **65–79** → Em Desenvolvimento — Zona de Atenção (âmbar)
+- **< 65** → Bloqueio Financeiro — Reprogramação Necessária (vinho)
+
+### LocalStorage Keys
+- `inself_assessment_v1` — estado do assessment em progresso
+- `inself_used_tokens` — tokens já utilizados (evita reuso)
+- `inself_admin_log` — histórico de links gerados (admin.html)
+
+### Como Atualizar e Publicar
+1. Editar `docs/index.html` ou `docs/admin.html`
+2. `git add docs/ && git commit -m "..."` 
+3. `git push origin master`
+4. GitHub Pages atualiza automaticamente em ~30 segundos
+
+### Design System Aplicado
+- **Cores:** Red Jam `#3F1817` · Red Wine `#562120` · Cream `#DDD7CA` · BG `#FAFAF8` · Surface `#F2EDE4`
+- **Fontes:** Cormorant Garamond (títulos/display) + Inter (corpo/UI)
+- **Seções numeradas:** I, II, III... (sem emojis — design profissional)
+- **Logo:** arquivos PNG reais em `docs/logo-white.png` e `docs/logo-wine.png`
+<!-- END inself-assessment-app -->
+<!-- END onboard-aliado:contexto-do-negocio -->
