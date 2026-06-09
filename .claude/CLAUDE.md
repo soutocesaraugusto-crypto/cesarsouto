@@ -501,23 +501,33 @@ Score combinado `(abund×0.5 + ident×0.25 + capac×0.25)`:
 ### Design System Aplicado
 - **Cores:** Red Jam `#3F1817` · Red Wine `#562120` · Cream `#DDD7CA` · BG `#FAFAF8` · Surface `#F2EDE4`
 - **Fontes:** Cormorant Garamond (títulos/display) + Inter (corpo/UI)
-- **Seções numeradas:** I, II, III... (sem emojis — design profissional)
+- **Seções:** eyebrow "Dimensão I/II/III..." acima do heading (sem emojis — design profissional)
 - **Logo:** arquivos PNG reais em `docs/logo-white.png` e `docs/logo-wine.png`
+- **Transições:** fade 280ms entre telas via JS + CSS opacity
+- **Loading screen:** 2.6s de "Analisando seu perfil..." antes dos resultados
 
 ### Funcionalidades Ativas
 - Relatório completo enviado automaticamente por email ao concluir assessment
-- Avaliação com estrelas (1-5) + comentário enviada por email separado
+- Avaliação com estrelas (1-5) + comentário enviada por email separado (template_g3pc2tc)
 - Sistema de link único com token (admin.html, senha: `inself2024`)
 - Diagnóstico financeiro de crenças com 3 níveis de alerta
 - Plano de ação personalizado baseado no perfil
-- Botão "Salvar PDF" com nome do respondente no título
+- Botão "Salvar PDF" com nome do respondente no título (rating section oculta no PDF)
 - Auto-save em localStorage — retoma de onde parou
 - Domínio customizado com HTTPS (via GitHub Pages + Registro.br)
+- OG tags para preview no WhatsApp/redes sociais
+- DISC: contador de grupos "X de 16 concluídos" + borda verde por grupo completo
+- Botão "Próxima Seção" fica mais escuro quando seção está 100% respondida
+- Hint "Discordo ← Concordo" aparece apenas no celular (oculto no desktop)
+- Stars da avaliação resetam automaticamente a cada nova análise
+- Onboarding visual antes do DISC explicando o método de ranking
+- Seção de prova social na landing (500+ perfis, depoimento)
+- MBTI: revelação dramática com tipo em 5.5rem + nome grande
 
 ### Domínio
 - **Registrado em:** Registro.br
 - **CNAME configurado:** `perfil` → `dralaurianesilva.github.io.`
 - **Custom domain no GitHub Pages:** `perfil.dralaurianesilva.com.br`
-- **HTTPS:** sendo emitido automaticamente pelo GitHub (Let's Encrypt)
+- **HTTPS:** ativo (Let's Encrypt via GitHub Pages, Enforce HTTPS habilitado)
 <!-- END inself-assessment-app -->
 <!-- END onboard-aliado:contexto-do-negocio -->
