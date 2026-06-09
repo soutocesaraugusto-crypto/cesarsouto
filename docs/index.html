@@ -4,6 +4,11 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Perfil Comportamental Inself — Dra. Lauriane Silva</title>
+<meta property="og:title" content="Perfil Comportamental Inself — Dra. Lauriane Silva">
+<meta property="og:description" content="Descubra seu perfil completo: DISC, MBTI, Valores, Liderança e Crenças de Abundância.">
+<meta property="og:image" content="https://perfil.dralaurianesilva.com.br/logo-wine.png">
+<meta property="og:url" content="https://perfil.dralaurianesilva.com.br">
+<meta property="og:type" content="website">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -285,14 +290,25 @@ img{max-width:100%}
   .disc-word{padding:14px 10px;font-size:.88rem}
 }
 
+/* DISC grupo completo */
+.q-block.group-complete{border-color:#2A6B4A;background:linear-gradient(135deg,#F0F8F4,#fff)}
+.disc-complete-badge{display:none;font-size:.72rem;font-weight:700;color:#2A6B4A;text-transform:uppercase;letter-spacing:.08em;margin-top:.6rem;text-align:center}
+.q-block.group-complete .disc-complete-badge{display:block}
+
+/* Botão pronto para avançar */
+.btn-wine.section-ready{background:var(--jam);box-shadow:0 4px 20px rgba(63,24,23,.35)}
+
 /* Print */
 @media print{
-  .test-nav,.res-nav,.share-bar,.bonus-block,.mentor-card,.toast{display:none!important}
+  .test-nav,.res-nav,.share-bar,.bonus-block,.mentor-card,.toast,.rating-section,#s-loading,#s-blocked{display:none!important}
   .res-header{background:var(--wine)!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
   .res-card,.summary-card{box-shadow:none;border:1px solid #ccc;break-inside:avoid;page-break-inside:avoid}
   body{background:#fff}
   #s-results{padding-bottom:0}
 }
+
+/* Hint Likert — oculto no desktop, visível no mobile */
+.lk-scale-hint{display:none}
 </style>
 </head>
 <body>
@@ -741,7 +757,8 @@ function buildAllSections(){
 
 function buildDISC(){
   const el = document.getElementById('sec1');
-  let html = `<div class="disc-intro">
+  let html = `<div id="discCounter" style="text-align:center;font-size:.8rem;color:var(--muted);margin-bottom:-.5rem;padding:0 0 1rem">0 de 16 grupos concluídos</div>
+  <div class="disc-intro">
     <div class="di-title">Como responder esta seção</div>
     <p class="di-body">Para cada grupo de 4 palavras, toque nelas <strong>na ordem em que se identificam com você</strong> — do comportamento que mais descreve você (1º) ao que menos descreve (4º).</p>
     <div class="di-steps">
@@ -757,7 +774,7 @@ function buildDISC(){
     g.forEach((w,wi)=>{
       html += `<div class="disc-word" data-gi="${gi}" data-wi="${wi}" onclick="discTap(${gi},${wi})"><span class="rank-badge"></span>${w.t}</div>`;
     });
-    html += `</div></div>`;
+    html += `</div><div class="disc-complete-badge">Grupo concluído</div></div>`;
   });
   el.innerHTML = html;
   DG.forEach((g,gi)=>renderDISCGroup(gi));
@@ -773,6 +790,11 @@ function renderDISCGroup(gi){
     if(rank>=0){ cell.classList.add('ranked'); badge.textContent = rank+1; }
     else { cell.classList.remove('ranked'); badge.textContent = ''; }
   });
+  const qblock = grid.closest('.q-block');
+  if(qblock) qblock.classList.toggle('group-complete', order.length === 4);
+  const done = DG.filter((g,i)=>(ST.disc[i]||[]).length===4).length;
+  const counter = document.getElementById('discCounter');
+  if(counter) counter.textContent = `${done} de 16 grupos concluídos`;
 }
 function discTap(gi,wi){
   let order = ST.disc[gi] ? ST.disc[gi].slice() : [];
@@ -905,6 +927,8 @@ function updateProgress(){
   done += AQ.filter((q,qi)=>ST.abund[qi]!==undefined).length;
   const pct = Math.round(done/total*100);
   document.getElementById('progFill').style.width = pct+'%';
+  const nextBtn = document.getElementById('btnNext');
+  if(nextBtn) nextBtn.classList.toggle('section-ready', sectionComplete(ST.section));
 }
 function prevSection(){
   if(ST.section>1) goToSection(ST.section-1);
@@ -1100,7 +1124,7 @@ function showResults(){
 
   /* 10. Bonus CTA */
   html += `<div class="bonus-block">
-    <div style="font-family:'Cormorant Garamond',serif;font-size:1rem;text-transform:uppercase;letter-spacing:.2em;opacity:.7;margin-bottom:1rem">Presente Exclusivo</div>
+    <div style="font-family:'Cormorant Garamond',serif;font-size:.85rem;text-transform:uppercase;letter-spacing:.22em;opacity:.65;margin-bottom:.9rem">Presente Exclusivo</div>
     <h3>30 minutos gratuitos com a Dra. Lauriane Silva</h3>
     <p>Este é um presente exclusivo para quem concluiu o Perfil Comportamental Inself. Use esse tempo para transformar seu diagnóstico em um plano de ação real.</p>
     <div class="bonus-steps">
@@ -1146,6 +1170,7 @@ function showResults(){
 
   document.getElementById('resBody').innerHTML = html;
   markTokenUsed(window._activeToken);
+  resetRating();
   show('s-results');
 
   /* animate bars */
@@ -1280,6 +1305,7 @@ function submitToEmailJS(disc, mbti, vals, lid, ident, capac, abund) {
 
 /* ════════ RATING ════════ */
 let _selectedStars = 0;
+function resetRating(){ _selectedStars = 0; }
 
 function selectStar(n){
   _selectedStars = n;
