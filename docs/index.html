@@ -1113,6 +1113,8 @@ function submitToEmailJS(disc, mbti, vals, lid, ident, capac, abund) {
     const vs = Object.entries(vals).sort((a,b)=>b[1]-a[1]);
     const ls = Object.entries({Executivo:lid.E,Motivador:lid.M,Orientador:lid.O,Sistemático:lid.S}).sort((a,b)=>b[1]-a[1]);
     emailjs.send(EMAILJS_CFG.serviceId, EMAILJS_CFG.templateId, {
+      name: ST.name,
+      email: ST.email,
       respondent_name: ST.name,
       respondent_email: ST.email,
       respondent_phone: ST.phone,
