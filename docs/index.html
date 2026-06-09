@@ -183,6 +183,20 @@ img{max-width:100%}
 .res-nav{position:fixed;bottom:0;left:0;right:0;background:rgba(250,250,248,.97);backdrop-filter:blur(8px);border-top:1px solid var(--line);padding:14px 20px;z-index:30}
 .res-nav-inner{max-width:820px;margin:0 auto;display:flex;justify-content:space-between;gap:12px}
 
+/* Rating section */
+.rating-section{background:#fff;border:1px solid var(--line);border-radius:18px;padding:30px 28px;margin-top:24px;text-align:center}
+.rating-title{font-family:'Cormorant Garamond',serif;font-size:1.7rem;color:var(--wine);margin-bottom:.4rem}
+.rating-sub{font-size:.88rem;color:var(--muted);margin-bottom:1.5rem}
+.star-row{display:flex;justify-content:center;gap:12px;margin-bottom:1.5rem}
+.star{font-size:2.6rem;cursor:pointer;color:var(--line);transition:color .15s;line-height:1;user-select:none}
+.star.active{color:#C07010}
+.star:hover{color:#C07010}
+.rating-msg{width:100%;border:1.5px solid var(--line);border-radius:11px;padding:13px 15px;font-family:'Inter',sans-serif;font-size:.95rem;resize:vertical;min-height:100px;background:var(--bg);margin-bottom:1rem;display:block}
+.rating-msg:focus{outline:none;border-color:var(--wine)}
+.rating-thanks{display:none;text-align:center;padding:1.5rem}
+.rating-thanks .rt-title{font-family:'Cormorant Garamond',serif;font-size:1.6rem;color:var(--wine);margin-bottom:.5rem}
+.rating-thanks .rt-sub{font-size:.9rem;color:var(--muted)}
+
 /* Financial diagnosis */
 .financial-diag{border-radius:12px;padding:1.5rem;margin-top:1.25rem;border-left:4px solid}
 .diag-aligned{background:#F0F8F4;border-color:#2A6B4A}
@@ -348,8 +362,7 @@ img{max-width:100%}
   </div>
   <div class="res-body" id="resBody"></div>
   <div class="res-nav">
-    <div class="res-nav-inner">
-      <button class="btn btn-outline" onclick="restartTest()">← Nova Análise</button>
+    <div class="res-nav-inner" style="justify-content:center">
       <button class="btn btn-wine" onclick="savePDF()">Salvar PDF</button>
     </div>
   </div>
@@ -376,7 +389,8 @@ img{max-width:100%}
    ════════════════════════════════════════════════════════════ */
 const EMAILJS_CFG = {
   serviceId: 'service_agommze',
-  templateId: 'template_ni3nh2s',
+  templateId: 'template_ni3nh2s',       // template do relatório
+  ratingTemplateId: 'template_AVALIAC', // ← substitua pelo ID do template de avaliações
   publicKey: 'w5Pje4POkIn5zzHPD',
 };
 
@@ -1006,6 +1020,25 @@ function showResults(){
     </div>
   </div>`;
 
+  /* Rating section */
+  html += `<div class="rating-section" id="ratingSection">
+    <div class="rating-title">Como você avalia esta experiência?</div>
+    <div class="rating-sub">Sua opinião é muito importante para continuarmos evoluindo.</div>
+    <div class="star-row" id="starRow">
+      <span class="star" data-n="1" onclick="selectStar(1)">&#9733;</span>
+      <span class="star" data-n="2" onclick="selectStar(2)">&#9733;</span>
+      <span class="star" data-n="3" onclick="selectStar(3)">&#9733;</span>
+      <span class="star" data-n="4" onclick="selectStar(4)">&#9733;</span>
+      <span class="star" data-n="5" onclick="selectStar(5)">&#9733;</span>
+    </div>
+    <textarea id="ratingMsg" class="rating-msg" placeholder="Deixe um comentário sobre sua experiência (opcional)..."></textarea>
+    <button class="btn btn-wine" id="ratingBtn" onclick="submitRating()" style="width:100%;justify-content:center">Enviar Avaliação</button>
+    <div class="rating-thanks" id="ratingThanks">
+      <div class="rt-title">Obrigada pelo seu feedback!</div>
+      <div class="rt-sub">Sua avaliação foi registrada e enviada.</div>
+    </div>
+  </div>`;
+
   document.getElementById('resBody').innerHTML = html;
   markTokenUsed(window._activeToken);
   show('s-results');
@@ -1112,24 +1145,68 @@ function submitToEmailJS(disc, mbti, vals, lid, ident, capac, abund) {
     const profile = topDisc(disc);
     const vs = Object.entries(vals).sort((a,b)=>b[1]-a[1]);
     const ls = Object.entries({Executivo:lid.E,Motivador:lid.M,Orientador:lid.O,Sistemático:lid.S}).sort((a,b)=>b[1]-a[1]);
+
+    const all_values = vs.map(([k,v])=>`${VINFO[k].name}: ${v}/100`).join(' | ');
+    const all_leadership = ls.map(([n,v])=>`${n}: ${v}%`).join(' | ');
+    const mbti_details = `E:${mbti.Ep}% I:${mbti.Ip}% | N:${mbti.Np}% S:${mbti.Sp}% | T:${mbti.Tp}% F:${mbti.Fp}% | J:${mbti.Jp}% P:${mbti.Pp}%`;
+
     emailjs.send(EMAILJS_CFG.serviceId, EMAILJS_CFG.templateId, {
       name: ST.name,
       email: ST.email,
       respondent_name: ST.name,
       respondent_email: ST.email,
-      respondent_phone: ST.phone,
+      respondent_phone: ST.phone || '—',
       assessment_date: new Date().toLocaleDateString('pt-BR'),
       disc_profile: profile,
       disc_d: disc.D, disc_i: disc.I, disc_s: disc.S, disc_c: disc.C,
       mbti_type: mbti.type,
       mbti_name: MBTI_TYPES[mbti.type]?.name || '',
+      mbti_details,
       top_value: VINFO[vs[0][0]].name,
+      all_values,
       leadership: ls[0][0],
+      all_leadership,
       identity_score: ident,
       capacity_score: capac,
       abundance_score: abund,
     });
-  }catch(e){ console.warn('EmailJS:',e); }
+  }catch(e){ console.warn('EmailJS relatório:',e); }
+}
+
+/* ════════ RATING ════════ */
+let _selectedStars = 0;
+
+function selectStar(n){
+  _selectedStars = n;
+  document.querySelectorAll('.star').forEach((s,i)=>{
+    s.classList.toggle('active', i < n);
+  });
+}
+
+function submitRating(){
+  if(!_selectedStars){ toast('Selecione pelo menos 1 estrela.'); return; }
+  const msg = document.getElementById('ratingMsg').value.trim();
+  const stars = '★'.repeat(_selectedStars) + '☆'.repeat(5-_selectedStars);
+
+  if(EMAILJS_CFG.publicKey && EMAILJS_CFG.ratingTemplateId !== 'template_AVALIAC'){
+    try{
+      emailjs.send(EMAILJS_CFG.serviceId, EMAILJS_CFG.ratingTemplateId, {
+        name: ST.name,
+        email: ST.email,
+        respondent_name: ST.name,
+        respondent_email: ST.email,
+        respondent_phone: ST.phone || '—',
+        assessment_date: new Date().toLocaleDateString('pt-BR'),
+        rating_stars: `${_selectedStars}/5 ${stars}`,
+        rating_message: msg || '(sem mensagem)',
+      });
+    }catch(e){ console.warn('EmailJS avaliação:',e); }
+  }
+
+  document.getElementById('ratingBtn').style.display = 'none';
+  document.getElementById('ratingMsg').style.display = 'none';
+  document.getElementById('starRow').style.pointerEvents = 'none';
+  document.getElementById('ratingThanks').style.display = 'block';
 }
 
 /* ════════ ACTIONS ════════ */
