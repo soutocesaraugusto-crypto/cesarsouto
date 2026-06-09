@@ -422,17 +422,19 @@ Assessment de perfil comportamental completo em arquivo HTML único, sem backend
 ### URLs
 | Ambiente | URL |
 |----------|-----|
-| **App (produção)** | `https://dralaurianesilva.github.io/mastermind-dralaurianesilva-/` |
-| **Admin (gerar links)** | `https://dralaurianesilva.github.io/mastermind-dralaurianesilva-/admin.html` |
+| **App (produção)** | `https://perfil.dralaurianesilva.com.br` |
+| **Admin (gerar links)** | `https://perfil.dralaurianesilva.com.br/admin.html` |
 | **Repositório** | `https://github.com/Dralaurianesilva/mastermind-dralaurianesilva-` |
+| **GitHub Pages (fallback)** | `https://dralaurianesilva.github.io/mastermind-dralaurianesilva-/` |
 
 ### Arquivos do App
 ```
 docs/
-├── index.html       ← App principal (único arquivo, ~1250 linhas)
+├── index.html       ← App principal (~1350 linhas)
 ├── admin.html       ← Gerador de links únicos (senha: inself2024)
 ├── logo-white.png   ← Logo Inself versão branca (fundo escuro)
-└── logo-wine.png    ← Logo Inself versão vinho (fundo claro)
+├── logo-wine.png    ← Logo Inself versão vinho (fundo claro)
+└── CNAME            ← Domínio customizado: perfil.dralaurianesilva.com.br
 ```
 
 ### Stack Técnica
@@ -443,11 +445,17 @@ docs/
 
 ### EmailJS — Credenciais Configuradas
 ```javascript
-serviceId:  'service_agommze'
-templateId: 'template_ni3nh2s'
-publicKey:  'w5Pje4POkIn5zzHPD'
+serviceId:        'service_agommze'
+templateId:       'template_ni3nh2s'   // relatório completo
+ratingTemplateId: 'template_g3pc2tc'   // avaliações com estrelas
+publicKey:        'w5Pje4POkIn5zzHPD'
 ```
-Variáveis enviadas: `name`, `email`, `respondent_name`, `respondent_email`, `respondent_phone`, `assessment_date`, `disc_profile`, `disc_d/i/s/c`, `mbti_type`, `mbti_name`, `top_value`, `leadership`, `identity_score`, `capacity_score`, `abundance_score`
+
+**Template relatório** (`template_ni3nh2s`) — variáveis:
+`name`, `email`, `respondent_name`, `respondent_email`, `respondent_phone`, `assessment_date`, `disc_profile`, `disc_d`, `disc_i`, `disc_s`, `disc_c`, `mbti_type`, `mbti_name`, `mbti_details`, `top_value`, `all_values`, `leadership`, `all_leadership`, `identity_score`, `capacity_score`, `abundance_score`
+
+**Template avaliação** (`template_g3pc2tc`) — variáveis:
+`name`, `email`, `respondent_name`, `respondent_email`, `respondent_phone`, `assessment_date`, `rating_stars`, `rating_message`
 
 ### Contatos da Mentora no App
 ```javascript
@@ -495,5 +503,21 @@ Score combinado `(abund×0.5 + ident×0.25 + capac×0.25)`:
 - **Fontes:** Cormorant Garamond (títulos/display) + Inter (corpo/UI)
 - **Seções numeradas:** I, II, III... (sem emojis — design profissional)
 - **Logo:** arquivos PNG reais em `docs/logo-white.png` e `docs/logo-wine.png`
+
+### Funcionalidades Ativas
+- Relatório completo enviado automaticamente por email ao concluir assessment
+- Avaliação com estrelas (1-5) + comentário enviada por email separado
+- Sistema de link único com token (admin.html, senha: `inself2024`)
+- Diagnóstico financeiro de crenças com 3 níveis de alerta
+- Plano de ação personalizado baseado no perfil
+- Botão "Salvar PDF" com nome do respondente no título
+- Auto-save em localStorage — retoma de onde parou
+- Domínio customizado com HTTPS (via GitHub Pages + Registro.br)
+
+### Domínio
+- **Registrado em:** Registro.br
+- **CNAME configurado:** `perfil` → `dralaurianesilva.github.io.`
+- **Custom domain no GitHub Pages:** `perfil.dralaurianesilva.com.br`
+- **HTTPS:** sendo emitido automaticamente pelo GitHub (Let's Encrypt)
 <!-- END inself-assessment-app -->
 <!-- END onboard-aliado:contexto-do-negocio -->
