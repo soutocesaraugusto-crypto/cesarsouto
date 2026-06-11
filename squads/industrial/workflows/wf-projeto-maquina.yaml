@@ -1,0 +1,133 @@
+name: wf-projeto-maquina
+title: "Projeto de Máquina Industrial — Fluxo V-Model Multidisciplinar"
+version: "1.0.0"
+language: pt-BR
+description: >
+  Workflow mestre que coordena os 10 squads da indústria no desenvolvimento
+  completo de uma máquina industrial, do conceito à entrega, seguindo o V-model
+  e stage-gates. Garante que segurança (NR-12) e qualidade sejam gates obrigatórios
+  e que as interfaces entre disciplinas sejam explícitas.
+
+orchestrator: industrial-chief
+
+# Fluxo unidirecional com gates. Nada avança sem o gate aprovado.
+phases:
+
+  - id: G1
+    name: "Conceito e Requisitos"
+    squad: gestao-projetos → mecatronica
+    inputs: ["Requisitos do cliente", "Restrições (prazo, custo, espaço)"]
+    activities:
+      - "gestao-projetos: levanta requisitos, abre projeto, define WBS preliminar"
+      - "mecatronica: concebe arquitetura de sistema, decompõe funções"
+      - "mecatronica: cria matriz de interfaces preliminar"
+      - "seguranca-maquinas: apreciação de risco PRELIMINAR"
+    outputs: ["Conceito de sistema", "Matriz de interfaces v0", "Risco preliminar"]
+    gate:
+      criterios:
+        - "Conceito atende todos os requisitos do cliente (rastreável)"
+        - "Apreciação de risco preliminar realizada"
+        - "Interfaces principais identificadas"
+      veto: "Conceito sem rastreabilidade a requisito → não avança (No Invention)"
+    checkpoint: "Sign-off de gestao-projetos + mecatronica"
+
+  - id: G2
+    name: "Projeto Disciplinar e Risco Formal"
+    squad: "mecanica + eletrica + eletronica (paralelo) + seguranca-maquinas"
+    inputs: ["Conceito de sistema (G1)", "Matriz de interfaces"]
+    activities:
+      - "seguranca-maquinas: apreciação de risco FORMAL (ISO 12100) + PLr (ISO 13849)"
+      - "mecanica: projeto estrutural, cálculo de elementos (fadiga, fator de segurança)"
+      - "eletrica: balanço de potência, motores, painel, dimensionamento de condutores"
+      - "eletronica: mapa de I/O, seleção de sensores, lógica de PLC"
+      - "mecatronica: valida interfaces entre os projetos disciplinares"
+    outputs: ["Projetos disciplinares", "Apreciação de risco formal", "Requisitos de proteção"]
+    gate:
+      criterios:
+        - "Fator de segurança mecânico ≥ 1.5 (ou justificado)"
+        - "Condutores dimensionados pelos 3 critérios"
+        - "Apreciação de risco formal aprovada (seguranca-maquinas)"
+        - "Funções de segurança com PLr definido e arquitetura compatível"
+        - "Interfaces validadas (mecatronica)"
+      veto: "Risco grave sem medida de proteção adequada → VETO (seguranca-maquinas)"
+    checkpoint: "Sign-off OBRIGATÓRIO de seguranca-maquinas + mecatronica"
+
+  - id: G3
+    name: "Detalhamento e Documentação"
+    squad: "documentacao-tecnica + suprimentos + automacao-controle"
+    inputs: ["Projetos disciplinares aprovados (G2)"]
+    activities:
+      - "documentacao-tecnica: desenhos técnicos, GD&T, BOM, diagramas elétricos"
+      - "suprimentos: estrutura BOM, verifica lead-time e disponibilidade, homologa fornecedores"
+      - "automacao-controle: arquitetura de rede, projeto SCADA, integração de PLCs"
+      - "documentacao-tecnica: inicia manual de operação/manutenção (NR-12)"
+    outputs: ["Desenhos completos", "BOM com fornecedores", "Arquitetura de automação"]
+    gate:
+      criterios:
+        - "Desenhos sem ambiguidade, com revisão e responsável"
+        - "BOM completa com fornecedores homologados e lead-time mapeado"
+        - "Componentes de lead-time crítico identificados (alerta gestão)"
+      veto: "Componente crítico sem disponibilidade verificada → BLOQUEIA (suprimentos)"
+    checkpoint: "Sign-off de documentacao-tecnica + suprimentos"
+
+  - id: G4
+    name: "Construção e Montagem"
+    squad: "(execução física) — coordenado por gestao-projetos"
+    inputs: ["Desenhos (G3)", "Componentes adquiridos"]
+    activities:
+      - "Fabricação de peças conforme desenho"
+      - "Montagem mecânica, elétrica e eletrônica"
+      - "documentacao-tecnica: registra desvios → atualiza as-built"
+    outputs: ["Máquina construída", "As-built atualizado"]
+    gate:
+      criterios: ["Construção conforme desenho (ou desvios registrados em as-built)"]
+    checkpoint: "Inspeção de montagem (qualidade-normas)"
+
+  - id: G5
+    name: "Comissionamento e Verificação de Segurança"
+    squad: "automacao-controle + seguranca-maquinas + eletronica"
+    inputs: ["Máquina construída (G4)"]
+    activities:
+      - "automacao-controle: comissiona SCADA, redes, malhas de controle"
+      - "eletronica: testa I/O, sensores e lógica"
+      - "seguranca-maquinas: VERIFICA proteções, intertravamentos, parada de emergência"
+      - "seguranca-maquinas: valida PL alcançado ≥ PLr requerido"
+    outputs: ["Máquina comissionada", "Verificação de segurança aprovada"]
+    gate:
+      criterios:
+        - "Todas as funções de segurança testadas e aprovadas"
+        - "Parada de emergência e intertravamentos funcionais"
+        - "Controle e supervisão operacionais"
+      veto: "Qualquer função de segurança reprovada → VETO TOTAL (seguranca-maquinas)"
+    checkpoint: "Sign-off OBRIGATÓRIO de seguranca-maquinas"
+
+  - id: G6
+    name: "Validação, Conformidade e Entrega"
+    squad: "qualidade-normas + documentacao-tecnica + gestao-projetos"
+    inputs: ["Máquina comissionada (G5)"]
+    activities:
+      - "qualidade-normas: valida máquina vs requisitos do cliente"
+      - "qualidade-normas: matriz de conformidade norma→evidência, FMEA final"
+      - "documentacao-tecnica: finaliza dossiê técnico + manual + as-built"
+      - "qualidade-normas: declaração de conformidade (NR-12 / CE se aplicável)"
+      - "gestao-projetos: encerra projeto, treinamento, entrega"
+    outputs: ["Máquina validada e entregue", "Dossiê técnico completo", "Declaração de conformidade"]
+    gate:
+      criterios:
+        - "Máquina atende todos os requisitos validados"
+        - "Dossiê técnico completo (desenhos, cálculos, risco, manual, certificados)"
+        - "Declaração de conformidade emitida com evidência objetiva"
+      veto: "Conformidade sem evidência objetiva → BLOQUEIA entrega (qualidade-normas)"
+    checkpoint: "Sign-off final de qualidade-normas + gestao-projetos"
+
+# Regras transversais
+cross_cutting_rules:
+  - "seguranca-maquinas tem PODER DE VETO em qualquer fase com risco não tratado"
+  - "Toda decisão cross-disciplina é registrada na matriz de interfaces"
+  - "Nenhum gate avança sem sign-off; fluxo é unidirecional"
+  - "Todo requisito rastreável a norma, cálculo ou requisito de cliente (No Invention)"
+  - "Lead-time crítico identificado por suprimentos vira risco gerenciado por gestao-projetos"
+
+quality_gates:
+  obrigatorios: [G2 (segurança formal), G5 (verificação de segurança), G6 (conformidade)]
+  normas_aplicaveis: [NR-12, ISO-12100, ISO-13849, NBR-5410, NBR-10067]

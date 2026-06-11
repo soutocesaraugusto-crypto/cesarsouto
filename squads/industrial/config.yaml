@@ -1,0 +1,140 @@
+name: industrial
+version: "1.0.0"
+score: 9.0
+slashPrefix: industrial
+title: "Indústria de Máquinas Industriais — Engenharia Completa Multi-Squad"
+description: >
+  Indústria completa de engenharia de máquinas industriais com 10 squads
+  especializados organizados em setores. Cobre o ciclo completo de
+  desenvolvimento de máquinas: da concepção (mecatrônica) ao projeto
+  detalhado (mecânica, elétrica, eletrônica), segurança (NR-12), automação,
+  qualidade, documentação técnica, gestão de projetos e suprimentos.
+  Baseada em frameworks documentados (Shigley, Norton, Wildi, Bolton, Lamb)
+  e normas técnicas brasileiras (ABNT, NRs) e internacionais (ISO, IEC).
+author: "Squad Architect (AIOX)"
+icon: "🏭"
+type: engineering
+language: pt-BR
+
+independence: true
+independence_details: |
+  Squad totalmente self-contained. Todos os frameworks de engenharia,
+  normas e metodologias estão embutidos nos agentes. Não requer APIs
+  externas. WebSearch/WebFetch são opcionais para consulta de datasheets
+  e normas atualizadas.
+
+# ═══════════════════════════════════════════════════════════════════════════
+# ARQUITETURA DA INDÚSTRIA — 10 SQUADS EM 4 CAMADAS
+# ═══════════════════════════════════════════════════════════════════════════
+architecture:
+  layers:
+    L0_orquestracao:
+      description: "Coordenação central da indústria"
+      squads: [industrial-chief]
+    L1_integracao:
+      description: "Engenharia de sistemas — integra todas as disciplinas"
+      squads: [mecatronica]
+    L2_disciplinas_core:
+      description: "Disciplinas de engenharia fundamentais"
+      squads: [mecanica, eletrica, eletronica]
+    L3_governanca:
+      description: "Segurança, qualidade e conformidade normativa"
+      squads: [seguranca-maquinas, qualidade-normas, automacao-controle]
+    L4_suporte:
+      description: "Documentação, gestão e suprimentos"
+      squads: [documentacao-tecnica, gestao-projetos, suprimentos]
+
+squads:
+  mecatronica:
+    domain: "Engenharia de integração de sistemas mecânicos, elétricos e eletrônicos"
+    chief: mecatronica-chief
+    based_on: "Devdas Shetty, William Bolton"
+    keywords: [mecatronica, integracao, sistema, V-model, R&D, prototipo, concepcao]
+  mecanica:
+    domain: "Projeto mecânico estrutural, resistência de materiais, dinâmica de máquinas"
+    chief: mecanica-chief
+    based_on: "Shigley/Budynas, Robert Norton, Beer & Johnston"
+    keywords: [mecanica, estrutura, fadiga, fator-seguranca, eixo, rolamento, engrenagem, soldagem]
+  eletrica:
+    domain: "Projeto elétrico de potência, painéis, motores, distribuição de energia"
+    chief: eletrica-chief
+    based_on: "Theodore Wildi, Austin Hughes, NBR 5410/IEC 60204"
+    keywords: [eletrica, painel, motor, inversor, disjuntor, dimensionamento, aterramento, NBR5410]
+  eletronica:
+    domain: "Eletrônica industrial, PLC, sensores, instrumentação, firmware"
+    chief: eletronica-chief
+    based_on: "Frank Lamb, William Bolton"
+    keywords: [eletronica, plc, sensor, instrumentacao, firmware, microcontrolador, sinal]
+  seguranca-maquinas:
+    domain: "Segurança de máquinas, NR-12, análise de risco, proteções, laudos"
+    chief: seguranca-chief
+    based_on: "NR-12, ISO 12100, ISO 13849, ISO 13855"
+    keywords: [seguranca, nr-12, risco, protecao, intertravamento, performance-level, laudo, apreciacao]
+  automacao-controle:
+    domain: "SCADA, CLP, redes industriais, sistemas de controle"
+    chief: automacao-chief
+    based_on: "ISA-95, IEC 61131-3, Frank Lamb"
+    keywords: [automacao, scada, supervisorio, rede, profinet, modbus, controle, malha]
+  qualidade-normas:
+    domain: "Sistema de qualidade, ISO 9001, ABNT, certificações CE/INMETRO"
+    chief: qualidade-chief
+    based_on: "ISO 9001, FMEA (AIAG-VDA), Marcação CE"
+    keywords: [qualidade, iso9001, abnt, certificacao, fmea, ce, inmetro, auditoria]
+  documentacao-tecnica:
+    domain: "Desenhos técnicos, manuais, datasheets, GD&T, dossiê técnico"
+    chief: documentacao-chief
+    based_on: "ABNT NBR 10067/8403, GD&T (ASME Y14.5), ISO 128"
+    keywords: [desenho, manual, datasheet, gdt, tolerancia, cotagem, dossie, as-built]
+  gestao-projetos:
+    domain: "Gestão de projetos industriais, cronograma, custos, stakeholders"
+    chief: gestao-chief
+    based_on: "PMI/PMBOK, Stage-Gate (Cooper)"
+    keywords: [projeto, cronograma, custo, prazo, stakeholder, milestone, risco-projeto, escopo]
+  suprimentos:
+    domain: "Suprimentos técnicos, BOM, fornecedores, componentes"
+    chief: suprimentos-chief
+    based_on: "Lista de Materiais (BOM), homologação de fornecedores"
+    keywords: [suprimentos, bom, fornecedor, componente, compra, homologacao, lead-time]
+
+# ═══════════════════════════════════════════════════════════════════════════
+# INTEGRAÇÕES ENTRE SQUADS (handoffs cross-disciplina)
+# ═══════════════════════════════════════════════════════════════════════════
+integrations:
+  - from: mecatronica
+    to: [mecanica, eletrica, eletronica]
+    pattern: "Mecatrônica define requisitos de sistema → distribui para disciplinas"
+  - from: mecanica
+    to: [eletrica, seguranca-maquinas, documentacao-tecnica]
+    pattern: "Estrutura mecânica → cargas para motores, pontos de proteção, desenhos"
+  - from: eletrica
+    to: [eletronica, automacao-controle, seguranca-maquinas]
+    pattern: "Potência → sinais de comando, I/O do CLP, circuitos de segurança"
+  - from: eletronica
+    to: [automacao-controle, seguranca-maquinas]
+    pattern: "Sensores/PLC → lógica SCADA, intertravamentos de segurança"
+  - from: seguranca-maquinas
+    to: [mecanica, eletrica, eletronica, documentacao-tecnica]
+    pattern: "Apreciação de risco → requisitos de proteção em todas disciplinas + laudo"
+  - from: [mecanica, eletrica, eletronica]
+    to: documentacao-tecnica
+    pattern: "Projetos detalhados → desenhos, BOM, manuais, dossiê técnico"
+  - from: qualidade-normas
+    to: [todos]
+    pattern: "Requisitos normativos → gates de qualidade em todas disciplinas"
+  - from: gestao-projetos
+    to: [todos]
+    pattern: "Cronograma e escopo → coordena execução de todos os squads"
+  - from: suprimentos
+    to: [mecanica, eletrica, eletronica]
+    pattern: "Disponibilidade/lead-time de componentes → restringe escolhas de projeto"
+
+quality_standards:
+  fator_seguranca_minimo: 1.5
+  normas_obrigatorias: [NR-12, NBR-5410, ISO-12100]
+  rastreabilidade: "Todo requisito de projeto rastreável a norma ou cálculo"
+
+dependencies:
+  required: []
+  optional:
+    - name: WebSearch
+      description: "Consulta de datasheets e normas atualizadas"
